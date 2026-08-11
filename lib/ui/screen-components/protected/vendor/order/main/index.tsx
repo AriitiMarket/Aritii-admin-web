@@ -71,7 +71,7 @@ export default function OrderVendorMain() {
         ...order,
         itemsTitle:
           order.items
-            .map((item) => item.title)
+            ?.map((item) => item.title)
             .join(', ')
             .slice(0, 15) + '...',
         OrderdeliveryAddress:

@@ -25,6 +25,22 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
+        {/* Unregister stale service workers (e.g. old /sw.js) */}
+        <Script id="cleanup-stale-sw" strategy="beforeInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function () {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                  registrations.forEach(function (registration) {
+                    if (!registration.active || !registration.active.scriptURL.endsWith('/firebase-messaging-sw.js')) {
+                      registration.unregister();
+                    }
+                  });
+                });
+              });
+            }
+          `}
+        </Script>
         {/* Microsoft Clarity */}
         <Script id="microsoft-clarity" strategy="afterInteractive">
           {`

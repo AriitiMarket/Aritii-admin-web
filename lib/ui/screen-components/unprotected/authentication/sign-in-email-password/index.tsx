@@ -39,7 +39,6 @@ import { ToastContext } from '@/lib/context/global/toast.context';
 // Schema
 import { onUseLocalStorage } from '@/lib/utils/methods';
 import { setAuthTokens } from '@/lib/utils/methods/auth';
-import { SignInSchema } from '@/lib/utils/schema';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/lib/hooks/useUser';
 import { DEFAULT_ROUTES } from '@/lib/utils/constants/routes';
@@ -127,7 +126,6 @@ export default function LoginEmailPasswordMain() {
             <div>
               <Formik
                 initialValues={initialValues}
-                validationSchema={SignInSchema}
                 onSubmit={onSubmitHandler}
                 validateOnChange={false}
               >

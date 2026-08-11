@@ -12,6 +12,10 @@
  *
  * NOTE: data is stored in-memory. Restarting the server resets all changes.
  */
+/**   Enatega Admin �?" Mock REST API                                                
+  ┃    Base URL : http://localhost:4000/api/v1                                        
+  ┃    Health   : http://localhost:4000/api/v1/health                                 
+  ┃    Demo login: admin@enatega.com / any-password   */
 'use strict';
 
 const http = require('http');
@@ -160,7 +164,7 @@ function currentAdminSession() {
 // ===========================================================================
 // AUTH  (lib/api/api.ts -> authAPI)
 // ===========================================================================
-route('POST', '/auth/login', async (req, res, body) => {
+route('POST', '/auth/login', async (req, res, params, query, body) => {
   const { email = '', password = '', type = 'email' } = body || {};
   if (!email || !password) {
     return fail(res, 400, 'Email and password are required');
@@ -205,18 +209,18 @@ route('POST', '/auth/login', async (req, res, body) => {
   return ok(res, session, 'Logged in successfully');
 });
 
-route('POST', '/auth/register', async (req, res, body) => {
+route('POST', '/auth/register', async (req, res, params, query, body) => {
   const user = { _id: nextId('user'), ...(body || {}), createdAt: new Date().toISOString() };
   db.users.unshift(user);
   return created(res, user);
 });
 
-route('POST', '/auth/email-exists', async (req, res, body) => {
+route('POST', '/auth/email-exists', async (req, res, params, query, body) => {
   const exists = db.users.some((u) => u.email === (body || {}).email);
   return ok(res, { exists });
 });
 
-route('POST', '/auth/phone-exists', async (req, res, body) => {
+route('POST', '/auth/phone-exists', async (req, res, params, query, body) => {
   const exists = db.users.some((u) => u.phone === (body || {}).phone);
   return ok(res, { exists });
 });
@@ -224,25 +228,25 @@ route('POST', '/auth/phone-exists', async (req, res, body) => {
 route('POST', '/auth/send-otp-email', async (req, res) => ok(res, { success: true }));
 route('POST', '/auth/send-otp-phone', async (req, res) => ok(res, { success: true }));
 
-route('POST', '/auth/verify-otp', async (req, res, body) => {
+route('POST', '/auth/verify-otp', async (req, res, params, query, body) => {
   const { otp } = body || {};
   if (!otp) return fail(res, 400, 'OTP is required');
   return ok(res, { verified: true, success: true });
 });
 
-route('POST', '/auth/forgot-password', async (req, res, body) => {
+route('POST', '/auth/forgot-password', async (req, res, params, query, body) => {
   const { email } = body || {};
   if (!email) return fail(res, 400, 'Email is required');
   return ok(res, { success: true });
 });
 
-route('POST', '/auth/reset-password', async (req, res, body) => {
+route('POST', '/auth/reset-password', async (req, res, params, query, body) => {
   const { email, token, password } = body || {};
   if (!email || !token || !password) return fail(res, 400, 'Missing required fields');
   return ok(res, { success: true });
 });
 
-route('PUT', '/auth/user', async (req, res, body) => {
+route('PUT', '/auth/user', async (req, res, params, query, body) => {
   const index = db.users.findIndex((u) => u._id === (body || {})._id);
   if (index === -1) return fail(res, 404, 'User not found');
   db.users[index] = { ...db.users[index], ...body, _id: db.users[index]._id };
@@ -252,9 +256,9 @@ route('PUT', '/auth/user', async (req, res, body) => {
 // ===========================================================================
 // ADMIN PROFILE
 // ===========================================================================
-route('GET', '/admin/profile', async () => ok(res, currentAdminSession()));
+route('GET', '/admin/profile', async (req, res) => ok(res, currentAdminSession()));
 
-route('PUT', '/admin/profile', async (req, res, body) =>
+route('PUT', '/admin/profile', async (req, res, params, query, body) =>
   ok(res, { ...currentAdminSession(), ...(body || {}) })
 );
 
@@ -301,7 +305,8 @@ route('DELETE', '/admin/user/:userId', async (req, res, params) => {
   return ok(res, { success: true });
 });
 
-// ===========================================================================
+// ==========================================================================
+// =
 // VENDORS
 // ===========================================================================
 route('GET', '/admin/vendors', async (req, res, params, query) => {
@@ -329,7 +334,7 @@ route('GET', '/admin/vendor/:vendorId', async (req, res, params) => {
   return ok(res, { vendor });
 });
 
-route('POST', '/admin/vendor', async (req, res, body) => {
+route('POST', '/admin/vendor', async (req, res, params, query, body) => {
   const vendor = {
     _id: nextId('vendor'),
     unique_id: `VEN-${String(1100 + db.vendors.length)}`,
@@ -371,7 +376,7 @@ route('GET', '/admin/restaurants', async (req, res) =>
   ok(res, { restaurants: db.restaurants })
 );
 
-route('POST', '/admin/restaurant', async (req, res, body) => {
+route('POST', '/admin/restaurant', async (req, res, params, query, body) => {
   const { owner, restaurant } = body || {};
   const vendor = db.vendors.find((v) => v._id === owner || v.email === owner);
   const full = {
@@ -399,7 +404,7 @@ route('POST', '/admin/restaurant', async (req, res, body) => {
   return created(res, full);
 });
 
-route('POST', '/admin/restaurant/duplicate', async (req, res, body) => {
+route('POST', '/admin/restaurant/duplicate', async (req, res, params, query, body) => {
   const { id } = body || {};
   const source = db.restaurants.find((r) => r._id === id);
   if (!source) return fail(res, 404, 'Restaurant not found');
@@ -419,7 +424,7 @@ route('GET', '/admin/restaurant/profile', async (req, res, params, query) => {
   return ok(res, { restaurant });
 });
 
-route('PUT', '/admin/restaurant/delivery', async (req, res, body) => {
+route('PUT', '/admin/restaurant/delivery', async (req, res, params, query, body) => {
   const { id, minDeliveryFee, deliveryDistance, deliveryFee } = body || {};
   const restaurant = db.restaurants.find((r) => r._id === id);
   if (!restaurant) return fail(res, 404, 'Restaurant not found');
@@ -427,7 +432,7 @@ route('PUT', '/admin/restaurant/delivery', async (req, res, body) => {
   return ok(res, { restaurant });
 });
 
-route('PUT', '/admin/restaurant/timings', async (req, res, body) => {
+route('PUT', '/admin/restaurant/timings', async (req, res, params, query, body) => {
   const { id, openingTimes } = body || {};
   const restaurant = db.restaurants.find((r) => r._id === id);
   if (!restaurant) return fail(res, 404, 'Restaurant not found');
@@ -455,7 +460,7 @@ route('GET', '/admin/rider/:riderId', async (req, res, params) => {
   return ok(res, { rider });
 });
 
-route('POST', '/admin/rider', async (req, res, body) => {
+route('POST', '/admin/rider', async (req, res, params, query, body) => {
   const rider = {
     _id: nextId('rider'),
     __typename: 'Rider',
@@ -493,7 +498,7 @@ route('GET', '/admin/zone/:zoneId', async (req, res, params) => {
   return ok(res, { zone });
 });
 
-route('POST', '/admin/zone', async (req, res, body) => {
+route('POST', '/admin/zone', async (req, res, params, query, body) => {
   const zone = {
     _id: nextId('zone'),
     __typename: 'Zone',
@@ -532,7 +537,7 @@ route('GET', '/admin/coupon/:couponId', async (req, res, params) => {
   return ok(res, { coupon });
 });
 
-route('POST', '/admin/coupon', async (req, res, body) => {
+route('POST', '/admin/coupon', async (req, res, params, query, body) => {
   const coupon = { _id: nextId('coupon'), __typename: 'Coupon', enabled: true, ...(body || {}) };
   db.coupons.unshift(coupon);
   return created(res, { coupon });
@@ -566,7 +571,7 @@ route('GET', '/admin/banner/:bannerId', async (req, res, params) => {
   return ok(res, { banner });
 });
 
-route('POST', '/admin/banner', async (req, res, body) => {
+route('POST', '/admin/banner', async (req, res, params, query, body) => {
   const banner = { _id: nextId('banner'), __typename: 'Banner', action: 'navigate', ...(body || {}) };
   db.banners.unshift(banner);
   return created(res, { banner });
@@ -603,7 +608,7 @@ route('GET', '/admin/cuisine/:cuisineId', async (req, res, params) => {
   return ok(res, { cuisine });
 });
 
-route('POST', '/admin/cuisine', async (req, res, body) => {
+route('POST', '/admin/cuisine', async (req, res, params, query, body) => {
   const cuisine = { _id: nextId('cuisine'), __typename: 'Cuisine', ...(body || {}) };
   db.cuisines.unshift(cuisine);
   return created(res, { cuisine });
@@ -634,7 +639,7 @@ route('GET', '/admin/shop-type/:shopTypeId', async (req, res, params) => {
   return ok(res, { shopType });
 });
 
-route('POST', '/admin/shop-type', async (req, res, body) => {
+route('POST', '/admin/shop-type', async (req, res, params, query, body) => {
   const shopType = { _id: nextId('stype'), __typename: 'ShopType', isActive: true, ...(body || {}) };
   db.shopTypes.unshift(shopType);
   return created(res, { shopType });
@@ -664,7 +669,7 @@ route('GET', '/admin/notifications', async (req, res, params, query) => {
   return ok(res, { notifications: items, total, page, limit, totalPages });
 });
 
-route('POST', '/admin/notification', async (req, res, body) => {
+route('POST', '/admin/notification', async (req, res, params, query, body) => {
   const notification = {
     _id: nextId('notif'),
     __typename: 'Notification',
@@ -680,7 +685,7 @@ route('POST', '/admin/notification', async (req, res, body) => {
 // ===========================================================================
 route('GET', '/admin/tipping', async (req, res) => ok(res, { tips: db.tipping }));
 
-route('POST', '/admin/tipping', async (req, res, body) => {
+route('POST', '/admin/tipping', async (req, res, params, query, body) => {
   db.tipping = { _id: nextId('tips'), __typename: 'Tipping', enabled: true, ...(body || {}) };
   return created(res, { tips: db.tipping });
 });
@@ -793,7 +798,7 @@ route('GET', '/admin/active-orders', async (req, res, params, query) => {
   });
 });
 
-route('GET', '/admin/stats', async () => {
+route('GET', '/admin/stats', async (req, res) => {
   const delivered = db.orders.filter((o) => o.orderStatus === 'DELIVERED').length;
   return ok(res, {
     stats: {
@@ -844,7 +849,7 @@ route('GET', '/admin/dashboard/users-by-year', async (req, res, params, query) =
   });
 });
 
-route('GET', '/admin/dashboard/orders-by-type', async () => {
+route('GET', '/admin/dashboard/orders-by-type', async (req, res) => {
   const count = (type) => db.orders.filter((o) => o.orderType === type).length;
   return ok(res, {
     getDashboardOrdersByType: [
@@ -854,7 +859,7 @@ route('GET', '/admin/dashboard/orders-by-type', async () => {
   });
 });
 
-route('GET', '/admin/dashboard/sales-by-type', async () => {
+route('GET', '/admin/dashboard/sales-by-type', async (req, res) => {
   const sum = (type) =>
     db.orders.filter((o) => o.orderType === type).reduce((s, o) => s + o.orderAmount, 0);
   return ok(res, {
@@ -936,13 +941,13 @@ route('GET', '/admin/staffs-paginated', async (req, res, params, query) => {
   });
 });
 
-route('POST', '/admin/staff', async (req, res, body) => {
+route('POST', '/admin/staff', async (req, res, params, query, body) => {
   const staff = { _id: nextId('staff'), __typename: 'Staff', isActive: true, permissions: [], ...(body || {}) };
   db.staff.unshift(staff);
   return created(res, { staff });
 });
 
-route('PUT', '/admin/staff', async (req, res, body) => {
+route('PUT', '/admin/staff', async (req, res, params, query, body) => {
   const id = (body || {})._id;
   const index = db.staff.findIndex((s) => s._id === id);
   if (index === -1) return fail(res, 404, 'Staff not found');
@@ -994,7 +999,7 @@ route('GET', '/admin/support/ticket-messages', async (req, res, params, query) =
   });
 });
 
-route('POST', '/admin/support/ticket-message', async (req, res, body) => {
+route('POST', '/admin/support/ticket-message', async (req, res, params, query, body) => {
   const { content, ticketId } = body || {};
   if (!content || !ticketId) return fail(res, 400, 'content and ticketId are required');
   const message = {
@@ -1015,7 +1020,7 @@ route('POST', '/admin/support/ticket-message', async (req, res, body) => {
   return created(res, { message });
 });
 
-route('PUT', '/admin/support/ticket-status', async (req, res, body) => {
+route('PUT', '/admin/support/ticket-status', async (req, res, params, query, body) => {
   const { ticketId, status } = body || {};
   const ticket = db.supportTickets.find((t) => t._id === ticketId);
   if (!ticket) return fail(res, 404, 'Ticket not found');
@@ -1037,7 +1042,7 @@ route('GET', '/admin/configuration/versions', async (req, res) =>
   })
 );
 
-route('POST', '/admin/configuration/versions', async (req, res, body) => {
+route('POST', '/admin/configuration/versions', async (req, res, params, query, body) => {
   Object.assign(db.configuration, body || {});
   return ok(res, {
     versions: {
@@ -1066,7 +1071,7 @@ const CONFIG_UPDATERS = {
 };
 
 Object.entries(CONFIG_UPDATERS).forEach(([section, updater]) => {
-  route('POST', `/admin/configuration/${section}`, async (req, res, body) => {
+  route('POST', `/admin/configuration/${section}`, async (req, res, params, query, body) => {
     const patch = updater(body || {});
     Object.assign(db.configuration, patch);
     return ok(res, { configuration: db.configuration });
@@ -1099,7 +1104,7 @@ route('GET', '/order/:orderId', async (req, res, params) => {
 // CONFIG API  (lib/api/api.ts -> configAPI)
 // ===========================================================================
 route('GET', '/config', async (req, res) => ok(res, { configuration: db.configuration }));
-route('PUT', '/config', async (req, res, body) => {
+route('PUT', '/config', async (req, res, params, query, body) => {
   Object.assign(db.configuration, body || {});
   return ok(res, { configuration: db.configuration });
 });

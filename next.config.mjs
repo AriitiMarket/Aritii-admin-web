@@ -57,6 +57,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'assets.enatega.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
       }
     ], // Add placehold.co as an allowed domain
   },

@@ -10,6 +10,8 @@
  * operates on these arrays while the process is alive.
  */
 'use strict';
+//     cd mock-backend
+  //   node server.js
 
 // ---------------------------------------------------------------------------
 // Small helpers

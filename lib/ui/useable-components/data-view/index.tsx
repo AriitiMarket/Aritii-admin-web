@@ -17,7 +17,7 @@ const CustomDataView: React.FC<ICustomDataViewProps> = ({
 }) => {
   const itemTemplate = (review: IReview) => {
     const orderedItems = review?.createdAt
-      ? review.order.items.map((item) => item.title).join(', ')
+      ? (review.order.items ?? []).map((item) => item.title).join(', ')
       : '';
 
     const createdAt = review?.createdAt

@@ -61,7 +61,7 @@ export default function OrderTable({
           ...order,
           itemsTitle:
             order?.items
-              .map((item) => item?.title)
+              ?.map((item) => item?.title)
               .join(', ')
               .slice(0, 15) + '...',
           OrderdeliveryAddress:
@@ -78,7 +78,7 @@ export default function OrderTable({
         ...order,
         itemsTitle:
           order?.items
-            .map((item) => item?.title)
+            ?.map((item) => item?.title)
             .join(', ')
             .slice(0, 15) + '...',
         OrderdeliveryAddress:

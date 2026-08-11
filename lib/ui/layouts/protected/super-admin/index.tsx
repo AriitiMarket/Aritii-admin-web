@@ -109,6 +109,13 @@ const Layout = ({ children }: IProvider) => {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          if (!registration.active || !registration.active.scriptURL.endsWith('/firebase-messaging-sw.js')) {
+            registration.unregister();
+          }
+        });
+      });
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')
         .catch((err) => console.error('❌ Service Worker Error:', err));
