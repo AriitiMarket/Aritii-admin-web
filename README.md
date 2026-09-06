@@ -1,4 +1,4 @@
-# Enatega Admin Dashboard
+# Ariiti Market Admin Dashboard
 
 ## Requirements
 

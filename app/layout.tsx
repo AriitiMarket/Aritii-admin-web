@@ -5,7 +5,7 @@ import { ThemeProvider } from 'next-themes';
 
 // ✅ Add metadata export for favicon
 export const metadata = {
-  title: 'Enatega Admin Dashboard',
+  title: 'Ariiti Market Admin Dashboard',
   icons: {
     icon: '/favsicons.png',
     // You can add more like:
