@@ -1,5 +1,5 @@
 /**
- * Enatega Admin — Mock REST API server.
+ * Ariiti Market Admin — Mock REST API server.
  *
  * Zero-dependency Node.js HTTP server that implements every REST endpoint the
  * admin dashboard calls through `lib/api/api.ts` (see `lib/api/restClient.ts`).
@@ -12,10 +12,10 @@
  *
  * NOTE: data is stored in-memory. Restarting the server resets all changes.
  */
-/**   Enatega Admin �?" Mock REST API                                                
-  ┃    Base URL : http://localhost:4000/api/v1                                        
-  ┃    Health   : http://localhost:4000/api/v1/health                                 
-  ┃    Demo login: admin@enatega.com / any-password   */
+/**   Ariiti Market Admin — Mock REST API                                                
+   ┃    Base URL : http://localhost:4000/api/v1                                        
+   ┃    Health   : http://localhost:4000/api/v1/health                                 
+   ┃    Demo login: admin@aritii.com / any-password   */
 'use strict';
 
 const http = require('http');
@@ -150,8 +150,8 @@ function currentAdminSession() {
     tokenExpiration: new Date(Date.now() + 24 * 3600000).toISOString(),
     refreshToken: 'mock-refresh-token',
     refreshTokenExpiration: new Date(Date.now() + 7 * 24 * 3600000).toISOString(),
-    email: 'admin@enatega.com',
-    name: 'Enatega Super Admin',
+    email: 'admin@aritii.com',
+    name: 'Ariiti Market Super Admin',
     image: 'https://i.pravatar.cc/150?img=68',
     userType: 'ADMIN',
     userTypeId: 'admin_1',
@@ -1009,7 +1009,7 @@ route('POST', '/admin/support/ticket-message', async (req, res, params, query, b
     ticketId,
     from: 'ADMIN',
     createdAt: String(Date.now()),
-    user: { _id: 'admin_1', name: 'Enatega Support', email: 'admin@enatega.com' },
+    user: { _id: 'admin_1', name: 'Ariiti Market Support', email: 'admin@aritii.com' },
   };
   db.supportMessages.unshift(message);
   const ticket = db.supportTickets.find((t) => t._id === ticketId);
@@ -1114,7 +1114,7 @@ route('GET', '/config/cuisines', async (req, res) => ok(res, { cuisines: db.cuis
 // HEALTH / ROOT
 // ===========================================================================
 route('GET', '/health', async (req, res) =>
-  ok(res, { server: 'enatega-mock-rest-api', uptime: process.uptime(), dbSize: Object.keys(db).length })
+  ok(res, { server: 'aritii-admin-web-mock-rest-api', uptime: process.uptime(), dbSize: Object.keys(db).length })
 );
 
 // ===========================================================================
@@ -1167,9 +1167,9 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log('==========================================================');
-  console.log('  Enatega Admin — Mock REST API');
+  console.log('  Ariiti Market Admin — Mock REST API');
   console.log(`  Base URL : http://${HOST}:${PORT}${BASE}`);
   console.log(`  Health   : http://${HOST}:${PORT}${BASE}/health`);
-  console.log('  Demo login: admin@enatega.com / any-password');
+  console.log('  Demo login: admin@aritii.com / any-password');
   console.log('==========================================================');
 });

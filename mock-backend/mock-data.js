@@ -1,5 +1,5 @@
 /**
- * Mock seed data for the Enatega Admin REST API.
+ * Mock seed data for the Ariiti Market Admin REST API.
  *
  * The shapes below intentionally mirror the response structures the admin
  * dashboard expects (the screens read `response.data.<field>` after the REST
