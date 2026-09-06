@@ -6,7 +6,6 @@ import { DataTableRowClickEvent } from 'primereact/datatable';
 // Interface and Types
 import {
   IUserResponse,
-  IUsersPaginatedDataResponse,
 } from '@/lib/utils/interfaces/users.interface';
 
 // Components
@@ -34,7 +33,7 @@ export default function UsersMain({
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
   const registrationMethod =

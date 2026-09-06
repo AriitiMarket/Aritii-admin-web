@@ -58,7 +58,7 @@ const RestaurantTiming = ({
   const { showToast } = useToast();
 
   // State
-  const [restaurantProfile, setRestaurantProfile] = useState<any>(null);
+  const [restaurantProfile, setRestaurantProfile] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [mutationLoading, setMutationLoading] = useState(false);
 

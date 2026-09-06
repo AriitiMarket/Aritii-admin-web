@@ -14,8 +14,8 @@ export default function StatesTable() {
   const { CURRENCY_CODE } = useConfiguration();
 
   // State
-  const [data, setData] = useState<any>(null);
-  const [salesData, setSalesData] = useState<any>(null);
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [salesData, setSalesData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [salesLoading, setSalesLoading] = useState(false);
 

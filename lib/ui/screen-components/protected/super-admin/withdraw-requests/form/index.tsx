@@ -22,7 +22,7 @@ export default function WithdrawRequestForm({
   selectedRequest,
 }: IWithdrawRequestFormProps) {
   const { showToast } = useContext(ToastContext);
-  const [mutationLoading, setMutationLoading] = useState(false);
+  const [_mutationLoading, setMutationLoading] = useState(false);
 
   const initialValues = {
     accountHolder:

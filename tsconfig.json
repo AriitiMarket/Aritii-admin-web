@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,7 +22,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "target": "ES2017"
   },
@@ -26,11 +32,12 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/types/app/(unprotected)/layout.tss",
-    ".next/types/app/(protected)/layout.tss",
-    "lib/context/query-context.tsx",
-    "public/firebase-messaging-sw.js"
+    "public/firebase-messaging-sw.js",
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["cypress.config.ts", "cypress", "node_modules"]
+  "exclude": [
+    "cypress.config.ts",
+    "cypress",
+    "node_modules"
+  ]
 }

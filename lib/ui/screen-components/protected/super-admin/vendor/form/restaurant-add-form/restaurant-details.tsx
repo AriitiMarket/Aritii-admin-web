@@ -38,7 +38,6 @@ import {
 import { IRestaurantForm } from '@/lib/utils/interfaces';
 import {
   ICuisine,
-  IGetCuisinesData,
 } from '@/lib/utils/interfaces/cuisine.interface';
 
 // Methods
@@ -91,9 +90,9 @@ export default function RestaurantDetails({
     useContext(RestaurantContext);
 
   // State
-  const [restaurantData, setRestaurantData] = useState<any>(null);
-  const [cuisineData, setCuisineData] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [restaurantData, setRestaurantData] = useState<Record<string, unknown> | null>(null);
+  const [cuisineData, setCuisineData] = useState<Record<string, unknown> | null>(null);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
 
   // API calls
   useEffect(() => {
@@ -168,8 +167,8 @@ export default function RestaurantDetails({
 
       // check if values.name is present in restaurantData and show error toast
       const existingRestaurant = restaurantData?.restaurants?.find(
-        (restaurant: any) =>
-          restaurant.name.toLowerCase() === data.name.toLowerCase()
+        (restaurant: Record<string, unknown>) =>
+          (restaurant.name as string).toLowerCase() === data.name.toLowerCase()
       );
       if (existingRestaurant) {
         showToast({

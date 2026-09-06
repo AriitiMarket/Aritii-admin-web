@@ -80,7 +80,7 @@ export default function NotificationForm({
           return (
             <Form onSubmit={handleSubmit}>
               <div className="mb-2 flex flex-col">
-                <h2 className='className="mb-3 text-xl font-bold">
+                <h2 className="mb-3 text-xl font-bold">
                   {t('Send Notification')}
                 </h2>
               </div>

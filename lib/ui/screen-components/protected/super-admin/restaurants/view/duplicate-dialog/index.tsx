@@ -37,7 +37,7 @@ const RestaurantDuplicateDialog = ({
     label: '',
     code: '',
   });
-  const [vendorData, setVendorData] = useState<any>(null);
+  const [vendorData, setVendorData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
   // API

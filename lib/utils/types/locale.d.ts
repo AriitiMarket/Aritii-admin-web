@@ -1,1 +1,1 @@
-export type TLocale = 'ar' | 'az' | 'bn' | 'de' | 'en' | 'es' | 'fa' | 'fr' | 'gu' | 'he' | 'hi' | 'id' | 'it' | 'jp' | 'km' | 'ko' | 'ku' | 'mr' | 'nl' | 'pl' | 'ps' | 'pt' | 'ro' | 'ru' | 'te' | 'th' | 'tr' | 'ur' | 'uz' | 'vi' | 'zh';
+export type TLocale = 'am' | 'ar' | 'az' | 'bn' | 'de' | 'en' | 'es' | 'fa' | 'fr' | 'gu' | 'he' | 'hi' | 'id' | 'it' | 'jp' | 'km' | 'ko' | 'ku' | 'mr' | 'nl' | 'om' | 'pl' | 'ps' | 'pt' | 'ro' | 'ru' | 'te' | 'th' | 'tr' | 'ur' | 'uz' | 'vi' | 'zh';

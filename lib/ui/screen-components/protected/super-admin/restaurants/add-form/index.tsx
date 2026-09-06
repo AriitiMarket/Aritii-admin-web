@@ -47,8 +47,8 @@ const RestaurantsForm = ({
   } = useContext(RestaurantsContext);
 
   // State
-  const [vendorResponse, setVendorResponse] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [vendorResponse, setVendorResponse] = useState<Record<string, unknown> | null>(null);
+  const [_loading, setLoading] = useState(false);
 
   // Fetch vendors using REST API
   useEffect(() => {

@@ -21,7 +21,7 @@ const VersionConfigAddForm = () => {
   const { showToast } = useToast();
   
   // State
-  const [versionsData, setVersionsData] = useState<any>(null);
+  const [versionsData, setVersionsData] = useState<Record<string, unknown> | null>(null);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   // Fetch versions

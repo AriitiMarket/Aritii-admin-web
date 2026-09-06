@@ -1,10 +1,17 @@
 // WebSocket client for Admin Dashboard real-time features
+interface WebSocketMessage {
+  type: string;
+  data: unknown;
+}
+
+type WebSocketCallback = (data: unknown) => void;
+
 class WebSocketClient {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
-  private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private listeners: Map<string, Set<WebSocketCallback>> = new Map();
   private url: string;
 
   constructor(url: string) {
@@ -24,7 +31,7 @@ class WebSocketClient {
 
         this.ws.onmessage = (event) => {
           try {
-            const message = JSON.parse(event.data);
+            const message = JSON.parse(event.data) as WebSocketMessage;
             this.notifyListeners(message.type, message.data);
           } catch (error) {
             console.error('Error parsing WebSocket message:', error);
@@ -56,14 +63,14 @@ class WebSocketClient {
     }
   }
 
-  subscribe(eventType: string, callback: (data: any) => void) {
+  subscribe(eventType: string, callback: WebSocketCallback) {
     if (!this.listeners.has(eventType)) {
       this.listeners.set(eventType, new Set());
     }
     this.listeners.get(eventType)!.add(callback);
   }
 
-  unsubscribe(eventType: string, callback: (data: any) => void) {
+  unsubscribe(eventType: string, callback: WebSocketCallback) {
     const listeners = this.listeners.get(eventType);
     if (listeners) {
       listeners.delete(callback);
@@ -73,14 +80,14 @@ class WebSocketClient {
     }
   }
 
-  private notifyListeners(eventType: string, data: any) {
+  private notifyListeners(eventType: string, data: unknown) {
     const listeners = this.listeners.get(eventType);
     if (listeners) {
       listeners.forEach(callback => callback(data));
     }
   }
 
-  send(type: string, data: any) {
+  send(type: string, data: unknown) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type, data }));
     } else {
@@ -102,7 +109,7 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000';
 export const wsClient = new WebSocketClient(WS_URL);
 
 // Subscription hooks for real-time order updates
-export const useOrderSubscription = (restaurantId: string, callback: (data: any) => void) => {
+export const useOrderSubscription = (restaurantId: string, callback: WebSocketCallback) => {
   wsClient.subscribe('PLACE_ORDER', callback);
   
   // Send subscription request
@@ -114,7 +121,7 @@ export const useOrderSubscription = (restaurantId: string, callback: (data: any)
   };
 };
 
-export const useDispatchSubscription = (callback: (data: any) => void) => {
+export const useDispatchSubscription = (callback: WebSocketCallback) => {
   wsClient.subscribe('DISPATCH_ORDER', callback);
   
   wsClient.send('SUBSCRIBE_DISPATCH', {});
@@ -125,7 +132,7 @@ export const useDispatchSubscription = (callback: (data: any) => void) => {
   };
 };
 
-export const useOrderStatusSubscription = (orderId: string, callback: (data: any) => void) => {
+export const useOrderStatusSubscription = (orderId: string, callback: WebSocketCallback) => {
   wsClient.subscribe('ORDER_STATUS', callback);
   
   wsClient.send('SUBSCRIBE_ORDER_STATUS', { orderId });

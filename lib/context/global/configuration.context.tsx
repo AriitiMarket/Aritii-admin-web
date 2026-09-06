@@ -86,8 +86,8 @@ export const ConfigurationProvider: React.FC<IConfigurationProviderProps> = ({
   const [configuration, setConfiguration] = useState<
     IConfiguration | undefined
   >();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState<Error | null>(null);
 
   // Handlers
   const fetchConfiguration = useCallback(async () => {

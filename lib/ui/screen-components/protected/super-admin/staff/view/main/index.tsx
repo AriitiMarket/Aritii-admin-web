@@ -39,7 +39,7 @@ export default function StaffMain({
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [mutationLoading, setMutationLoading] = useState(false);
   const debouncedSearch = useDebounce(globalFilterValue, 500);

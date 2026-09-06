@@ -36,7 +36,7 @@ const AppConfigAddForm = () => {
   } = useConfiguration();
   const { showToast } = useToast();
   const [zonesLoading, setZonesLoading] = useState(false);
-  const [zoneData, setZoneData] = useState<any>(null);
+  const [zoneData, setZoneData] = useState<Record<string, unknown> | null>(null);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   // Fetch zones using REST API

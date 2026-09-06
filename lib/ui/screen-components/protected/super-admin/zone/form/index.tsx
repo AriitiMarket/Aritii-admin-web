@@ -8,7 +8,6 @@ import { Sidebar } from 'primereact/sidebar';
 import {
   IZoneAddFormComponentProps,
 } from '@/lib/utils/interfaces';
-import { IRiderZonesResponse } from '@/lib/utils/interfaces';
 
 // Components
 import CustomButton from '@/lib/ui/useable-components/button';

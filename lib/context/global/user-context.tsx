@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
-import { ILoginResponse, IOwnerSessionDataResponse } from '@/lib/utils/interfaces';
+import { ILoginResponse } from '@/lib/utils/interfaces';
 import {
   clearStoredSessionState,
   getAccessToken,

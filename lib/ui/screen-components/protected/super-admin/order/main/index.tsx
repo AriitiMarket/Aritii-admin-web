@@ -40,7 +40,7 @@ export default function OrderSuperAdminMain() {
   const [rows, setRows] = useState(10); // For PrimeReact Table's 'rows' prop
   const [currentPage, setCurrentPage] = useState(1); // For API 'page' parameter
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 

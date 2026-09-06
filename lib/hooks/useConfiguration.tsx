@@ -72,7 +72,7 @@ export const useConfiguration = () => {
   const ENABLE_CUSTOMER_DEMO_MODE = configuration?.enableCustomerDemoMode;
   const CUSTOMER_DEMO_ZONE_ID = configuration?.customerDemoZoneId;
   const CURRENCY_CODE = configuration?.currency;
-  const CURRENCY_SYMBOL = configuration?.currency;
+  const CURRENCY_SYMBOL = configuration?.currencySymbol;
   const ISPAID_VERSION = configuration?.isPaidVersion;
 
   return {

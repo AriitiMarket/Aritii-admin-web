@@ -1,9 +1,11 @@
 // REST Client for Admin Dashboard
 // This client handles all HTTP requests to the REST API
 
-const API_BASE_URL = typeof window !== 'undefined' 
+const API_BASE_URL = typeof window !== 'undefined'
   ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
   : 'http://localhost:4000/api/v1'
+
+type HeadersInit = Record<string, string> | string[][] | Headers;
 
 class RestClient {
   private baseUrl: string
@@ -47,7 +49,7 @@ class RestClient {
     return headers
   }
 
-  async get(endpoint: string, params?: Record<string, any>) {
+  async get(endpoint: string, params?: Record<string, unknown>) {
     const url = new URL(`${this.baseUrl}${endpoint}`)
     if (params) {
       Object.keys(params).forEach(key => {
@@ -70,7 +72,7 @@ class RestClient {
     return response.json()
   }
 
-  async post(endpoint: string, data?: any) {
+  async post(endpoint: string, data?: unknown) {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       headers: this.getHeaders(),
@@ -85,7 +87,7 @@ class RestClient {
     return response.json()
   }
 
-  async put(endpoint: string, data?: any) {
+  async put(endpoint: string, data?: unknown) {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'PUT',
       headers: this.getHeaders(),

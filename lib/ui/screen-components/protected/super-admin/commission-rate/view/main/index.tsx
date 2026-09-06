@@ -59,8 +59,7 @@ export default function CommissionRateMain() {
       const vendors = response.data?.vendors || [];
       setRestaurants(vendors);
       setTotalRecords(response.data?.total || 0);
-    } catch (error) {
-      const err = error as Error;
+    } catch {
       showToast({
         type: 'error',
         title: t('Error Fetching Restaurants'),
@@ -110,8 +109,7 @@ export default function CommissionRateMain() {
           return newSet;
         });
         fetchCommissionRates();
-      } catch (error) {
-        const err = error as Error;
+      } catch {
         showToast({
           type: 'error',
           title: t('Error'),

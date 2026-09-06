@@ -8,7 +8,6 @@ import { useContext, useMemo } from 'react';
 
 // Interface and Types
 import {
-  ICreateRestaurant,
   IDropdownSelectItem,
 } from '@/lib/utils/interfaces';
 
@@ -111,8 +110,8 @@ export default function RestaurantDetailsForm({
     useContext(RestaurantsContext);
 
   // State
-  const [restaurantData, setRestaurantData] = useState<any>(null);
-  const [cuisineData, setCuisineData] = useState<any>(null);
+  const [restaurantData, setRestaurantData] = useState<Record<string, unknown> | null>(null);
+  const [cuisineData, setCuisineData] = useState<Record<string, unknown> | null>(null);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   // Fetch restaurants using REST API

@@ -79,13 +79,6 @@ export default function RestaurantsMain() {
     setCurrentPage(1);
   }, [debouncedSearchTerm, currentTab]);
 
-  // Query variables
-  const queryVariables = {
-    page: currentPage,
-    limit: rowsPerPage,
-    search: debouncedSearchTerm || undefined,
-  };
-
   // Fetch restaurants using REST API
   const fetchRestaurants = async () => {
     try {

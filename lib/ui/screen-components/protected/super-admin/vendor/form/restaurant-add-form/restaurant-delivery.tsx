@@ -54,7 +54,6 @@ export default function RestaurantDelivery({
   // Context
   const { isLoaded } = useContext(GoogleMapsContext);
   const { showToast } = useContext(ToastContext);
-  const { vendorId } = useContext(RestaurantContext);
   const { restaurantContextData } = useContext(RestaurantContext);
   const restaurantId = restaurantContextData?.id || '';
 
