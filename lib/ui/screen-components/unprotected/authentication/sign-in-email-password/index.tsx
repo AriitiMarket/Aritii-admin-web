@@ -42,6 +42,7 @@ import { setAuthTokens } from '@/lib/utils/methods/auth';
 import { useRouter } from 'next/navigation';
 import { useUserContext } from '@/lib/hooks/useUser';
 import { DEFAULT_ROUTES } from '@/lib/utils/constants/routes';
+import { useTranslations } from 'next-intl';
 
 const initialValues: ISignInForm = {
   email: process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? '',
@@ -53,6 +54,7 @@ export default function LoginEmailPasswordMain() {
   const { showToast } = useContext(ToastContext);
 
   // Hooks
+  const t = useTranslations();
   const router = useRouter();
   const { refreshUserSession } = useUserContext();
   const [loading, setLoading] = useState(false);
@@ -94,15 +96,15 @@ export default function LoginEmailPasswordMain() {
 
       showToast({
         type: 'success',
-        title: 'Login',
-        message: 'User has been logged in successfully.',
+        title: t('Login'),
+        message: t('User has been logged in successfully'),
       });
     } catch (err) {
       const error = err as Error;
       showToast({
         type: 'error',
-        title: 'Login',
-        message: error.message || 'Login Failed',
+        title: t('Login'),
+        message: error.message || t('Login Failed'),
       });
     } finally {
       setLoading(false);
@@ -116,10 +118,10 @@ export default function LoginEmailPasswordMain() {
           <div className="flex flex-col gap-2 ">
             <div className="mb-2 flex flex-col items-center gap-y-[0.5rem] p-2">
               <span className="font-inter text-center text-3xl font-semibold dark:text-white">
-                Login to your account
+                {t('Login to your account')}
               </span>
               <span className="font-inter text-center text-base font-normal text-[#667085] dark:bg-dark-900 dark:text-white">
-                Welcome back! Please enter your details.
+                {t('Welcome back! Please enter your details')}.
               </span>
             </div>
 
@@ -134,7 +136,7 @@ export default function LoginEmailPasswordMain() {
                     <Form>
                       <div className="mb-2">
                         <CustomIconTextField
-                          placeholder="Email"
+                          placeholder={t('Email')}
                           name="email"
                           type="email"
                           maxLength={35}
@@ -163,7 +165,7 @@ export default function LoginEmailPasswordMain() {
                       <div className="mb-2">
                         <CustomPasswordTextField
                           className="h-[2.4rem] w-full"
-                          placeholder="Password"
+                          placeholder={t('Password')}
                           name="password"
                           maxLength={20}
                           showLabel={false}
@@ -184,7 +186,7 @@ export default function LoginEmailPasswordMain() {
 
                       <CustomButton
                         className="hover-border-black h-10 w-full border border-black dark:border-dark-600 bg-[#18181B] px-32 text-white hover:bg-white hover:text-black"
-                        label="Login"
+                        label={t('Login')}
                         type="submit"
                         loading={loading}
                       />

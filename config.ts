@@ -1,1 +1,1 @@
-export const locales: string[] = ['ar', 'az', 'bn', 'de', 'en', 'es', 'fa', 'fr', 'gu', 'he', 'hi', 'id', 'it', 'jp', 'km', 'ko', 'ku', 'mr', 'nl', 'om', 'pl', 'ps', 'pt', 'ro', 'ru', 'te', 'th', 'tr', 'ur', 'uz', 'vi', 'zh'];
+export const locales: string[] = ['am', 'ar', 'az', 'bn', 'de', 'en', 'es', 'fa', 'fr', 'gu', 'he', 'hi', 'id', 'it', 'jp', 'km', 'ko', 'ku', 'mr', 'nl', 'om', 'pl', 'ps', 'pt', 'ro', 'ru', 'te', 'th', 'tr', 'ur', 'uz', 'vi', 'zh'];

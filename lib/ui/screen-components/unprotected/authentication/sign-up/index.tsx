@@ -25,6 +25,7 @@ import { PasswordErrors, SignUpErrors } from '@/lib/utils/constants';
 
 // Interface
 import { ISignUpForm } from '@/lib/utils/interfaces/forms';
+import { useTranslations } from 'next-intl';
 
 const initialValues: ISignUpForm = {
   firstName: '',
@@ -36,6 +37,7 @@ const initialValues: ISignUpForm = {
 
 export default function SignupMain() {
   const [account] = useState<ISignUpForm>(initialValues);
+  const t = useTranslations();
 
   const SignupSchema = Yup.object().shape({
     firstName: Yup.string().min(2).max(35).required('Required'),
@@ -54,9 +56,9 @@ export default function SignupMain() {
         <Card className="w-full">
           <div className="flex flex-col gap-2">
             <div className="mb-2 flex flex-col p-2">
-              <span className="text-2xl">Let&apos;s get started!</span>
+              <span className="text-2xl">{t("Let's get started!")}</span>
               <span className="text-sm text-gray-400">
-                First, let&apos;s create your Enatega account
+                {t("First, let's create your Ariiti Market account")}
               </span>
             </div>
 
@@ -74,7 +76,7 @@ export default function SignupMain() {
                         <CusomtTextField
                           type="text"
                           className="w-full"
-                          placeholder="First Name"
+                          placeholder={t('First Name')}
                           name="firstName"
                           value={values.firstName}
                           onChange={handleChange}
@@ -95,7 +97,7 @@ export default function SignupMain() {
                       <div className="mb-2">
                         <CusomtTextField
                           type="text"
-                          placeholder="Last Name"
+                          placeholder={t('Last Name')}
                           name="lastName"
                           value={values.lastName}
                           onChange={handleChange}
@@ -117,7 +119,7 @@ export default function SignupMain() {
                         <CustomIconTextField
                           type="email"
                           name="email"
-                          placeholder="Email"
+                          placeholder={t('Email')}
                           maxLength={35}
                           iconProperties={{
                             icon: faEnvelope,
@@ -140,7 +142,7 @@ export default function SignupMain() {
 
                       <div className="mb-2">
                         <CustomIconTextField
-                          placeholder="Password"
+                          placeholder={t('Password')}
                           name="password"
                           type="password"
                           maxLength={20}
@@ -165,7 +167,7 @@ export default function SignupMain() {
 
                       <div className="mb-2">
                         <CustomIconTextField
-                          placeholder="Confirm Password"
+                          placeholder={t('Confirm Password')}
                           name="confirmPassword"
                           type="password"
                           maxLength={20}
@@ -192,7 +194,7 @@ export default function SignupMain() {
                         <Divider align="left" className="m-0">
                           <div className="align-items-center inline-flex">
                             <i className="pi pi-lock mr-2"></i>
-                            <b>Password Strength</b>
+                            <b>{t('Password Strength')}</b>
                           </div>
                         </Divider>
 
@@ -203,7 +205,7 @@ export default function SignupMain() {
                               className={`${errors.password?.includes(pmessage) ? 'text-red-500' : 'text-gray-500'} text-sm`}
                             >
                               <i className="pi pi-times mr-2" />
-                              <span>{pmessage}</span>
+                              <span>{t(pmessage)}</span>
                             </div>
                           );
                         })}
@@ -211,7 +213,7 @@ export default function SignupMain() {
 
                       <CustomButton
                         className="hover:bg-whit h-12 w-full border-gray-300 bg-transparent px-32 text-black dark:text-white"
-                        label="Create Account"
+                        label={t('Create Account')}
                         rounded={true}
                         icon="pi pi-google"
                         type="submit"
