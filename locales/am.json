@@ -1107,5 +1107,18 @@
   "Store Creation Failed - Please select a vendor": "የሱቅ መፍጠር አልተሳካም - እባክዎ ቬንደር ይምረጡ",
   "Something went wrong - Please try again": "የሆነ ስህተት ተከስቷል - እባክዎ እንደገና ይሞክሩ",
   "An error occurred while fetching restaurants - Please try again later": "ሬስቶራንቶችን በማምጣት ላይ ስህተት ተከስቷል - እባክዎ በኋላ እንደገና ይሞክሩ",
-  "We have sent OTP code to your email": "የOTP ኮድ ወደ ኢሜይልዎ ልከናል"
+  "We have sent OTP code to your email": "የOTP ኮድ ወደ ኢሜይልዎ ልከናል","Catalog": "ካታሎግ",
+  "Operations": "ኦፕሬሽኖች",
+  "Sellers": "ሻጮች",
+  "Customers": "ደንበኞች",
+  "Disputes": "አለመግባባቶች",
+  "Admins": "አስተዳዳሪዎች",
+  "Analytics": "ትንታኔ",
+  "Sectors": "ዘርፎች",
+  "New Admin": "አዲስ አስተዳዳሪ",
+  "Pending Reviews": "በመጠባበቅ ላይ ያሉ ግምገማዎች",
+  "Reports": "ሪፖርቶች",
+  "Platform": "መድረክ",
+  "System": "ስርዓት",
+  "All sectors": "ሁሉም ዘርፎች"
 }

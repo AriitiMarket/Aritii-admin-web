@@ -1,0 +1,54 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { SearchInput } from '@/components/common/SearchInput';
+import { SectorSelector } from '@/components/layout/SectorSelector';
+import { NotificationsBell } from '@/components/layout/NotificationsBell';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher';
+import { UserMenu } from '@/components/layout/UserMenu';
+
+export interface HeaderProps {
+  onToggleSidebar: () => void;
+  onToggleMobile: () => void;
+}
+
+export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
+  return (
+    <header className="layout-top-container flex items-center justify-between gap-3 bg-white px-4 dark:bg-dark-900 dark:text-white lg:px-6">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleMobile}
+          aria-label="Open navigation menu"
+          className="rounded-md p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-950 lg:hidden"
+        >
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label="Toggle sidebar"
+          className="hidden rounded-md p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-950 lg:inline-flex"
+        >
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+        <div className="hidden md:block">
+          <SearchInput
+            value=""
+            onChange={() => undefined}
+            placeholder="Search…"
+            aria-label="Search"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1 sm:gap-2">
+        <SectorSelector />
+        <LocaleSwitcher />
+        <NotificationsBell />
+        <ThemeToggle />
+        <UserMenu />
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,1 @@
+export { useSectorContext as useSector } from '@/context/SectorContext';

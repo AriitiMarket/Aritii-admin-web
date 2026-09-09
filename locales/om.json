@@ -1107,5 +1107,19 @@
   "Store Creation Failed - Please select a vendor": "Uuminsa Maqaa hin milkaanne - Maaloo vendor filadhu.",
   "Something went wrong - Please try again": "Waaqayyuu dogongora uumame. Maaloo irra deebi'i",
   "An error occurred while fetching restaurants - Please try again later": "Manejyaalee fe'uu yeroo dogongora uumame. Maaloo irra deebi'i.",
-  "We have sent OTP code to your email": "OTP lakkofsa email kee erginee jirra"
+  "We have sent OTP code to your email": "OTP lakkofsa email kee erginee jirra",
+  "Catalog": "Kaataaloojii",
+  "Operations": "Hojiilee",
+  "Sellers": "Daldaltootaa",
+  "Customers": "Maamiltoota",
+  "Disputes": "Falmiiwwan",
+  "Admins": "Bulchitoota",
+  "Analytics": "Xiinxalama",
+  "Sectors": "Kutaa",
+  "New Admin": "Bulchaa Haaraa",
+  "Pending Reviews": "Madaalliin Eeggachaa",
+  "Reports": "Gabaasa",
+  "Platform": "Pilaatfoormii",
+  "System": "Sistimii",
+  "All sectors": "Kutaa hunda"
 }

@@ -1107,5 +1107,19 @@
   "Store Creation Failed - Please select a vendor": "Store Creation Failed - Please select a vendor.",
   "Something went wrong - Please try again": "Something went wrong. Please try again",
   "An error occurred while fetching restaurants - Please try again later": "An error occurred while fetching restaurants. Please try again later.",
-  "We have sent OTP code to your email": "We have sent OTP code to john@email.com"
+  "We have sent OTP code to your email": "We have sent OTP code to john@email.com",
+  "Catalog": "Catalog",
+  "Operations": "Operations",
+  "Sellers": "Sellers",
+  "Customers": "Customers",
+  "Disputes": "Disputes",
+  "Admins": "Admins",
+  "Analytics": "Analytics",
+  "Sectors": "Sectors",
+  "New Admin": "New Admin",
+  "Pending Reviews": "Pending Reviews",
+  "Reports": "Reports",
+  "Platform": "Platform",
+  "System": "System",
+  "All sectors": "All sectors"
 }

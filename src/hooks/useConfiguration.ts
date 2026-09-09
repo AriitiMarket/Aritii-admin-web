@@ -1,0 +1,1 @@
+export { useConfigurationContext as useConfiguration } from '@/context/ConfigurationContext';
