@@ -5,7 +5,7 @@
  * admin dashboard calls through `lib/api/api.ts` (see `lib/api/restClient.ts`).
  *
  * Run it with:
- *   node server.js            ->  http://localhost:4000/api/v1
+ *   node server.cjs           ->  http://localhost:4000/api/v1
  *
  * Every successful response is wrapped in an envelope:
  *   { data: <payload>, message: "Success", status: "success" }
@@ -19,7 +19,7 @@
 'use strict';
 
 const http = require('http');
-const { createDatabase } = require('./mock-data');
+const { createDatabase } = require('./mock-data.cjs');
 
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 4000;

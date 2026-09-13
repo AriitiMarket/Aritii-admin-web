@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "preview": "vite preview",
-    "mock": "node mock-backend/server.js",
+    "mock": "node mock-backend/server.cjs",
     "prettier": "prettier --write src",
     "cy:open": "cypress open",
     "cy:run": "cypress run"
