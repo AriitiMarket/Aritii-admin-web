@@ -1,30 +1,23 @@
 /** Users service facade. */
-import { isMockMode } from '@/utils/env';
 import type { PaginatedResult, User, UsersFilter } from '@/types';
-import {
-  mockDeleteUser,
-  mockGetUser,
-  mockListUsers,
-  mockUpdateUser,
-} from './mock/users';
-import {
-  realDeleteUser,
-  realGetUser,
-  realListUsers,
-  realUpdateUser,
-} from './real/users';
+import { identityAdmin } from '@/api/admin';
 
 export const usersService = {
-  list(filter: UsersFilter): Promise<PaginatedResult<User>> {
-    return isMockMode() ? mockListUsers(filter) : realListUsers(filter);
+  async list(filter: UsersFilter): Promise<PaginatedResult<User>> {
+    return identityAdmin.listUsers(
+      filter.page || 1,
+      filter.limit || 10,
+      filter.search || '',
+      filter.role || ''
+    ) as unknown as Promise<PaginatedResult<User>>;
   },
-  get(id: string): Promise<User> {
-    return isMockMode() ? mockGetUser(id) : realGetUser(id);
+  async get(id: string): Promise<User> {
+    return identityAdmin.getUser(id) as unknown as Promise<User>;
   },
-  update(id: string, patch: Record<string, unknown>): Promise<User> {
-    return isMockMode() ? mockUpdateUser(id, patch) : realUpdateUser(id, patch);
+  async update(id: string, patch: Record<string, unknown>): Promise<User> {
+    return identityAdmin.setUserStatus(id, patch.status as string) as unknown as Promise<User>;
   },
-  remove(id: string): Promise<void> {
-    return isMockMode() ? mockDeleteUser(id) : realDeleteUser(id);
+  async remove(id: string): Promise<void> {
+    await identityAdmin.setUserStatus(id, 'banned');
   },
 };

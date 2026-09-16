@@ -14,7 +14,7 @@ import { DataTable, type Column } from '@/components/tables/DataTable';
 import { formatDate, formatNumber } from '@/utils/format';
 import type { Seller } from '@/types';
 
-export function SellersPage() {
+export function SellersManagementPage() {
   const { t } = useLocalization();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);

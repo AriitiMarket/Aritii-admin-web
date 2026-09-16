@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -13,6 +15,16 @@ export interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    if (value.trim()) {
+      navigate(`/users?search=${encodeURIComponent(value.trim())}`);
+    }
+  };
+
   return (
     <header className="layout-top-container flex items-center justify-between gap-3 bg-white px-4 dark:bg-dark-900 dark:text-white lg:px-6">
       <div className="flex items-center gap-2">
@@ -34,9 +46,9 @@ export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
         </button>
         <div className="hidden md:block">
           <SearchInput
-            value=""
-            onChange={() => undefined}
-            placeholder="Search…"
+            value={search}
+            onChange={handleSearch}
+            placeholder="Search users, stores, orders..."
             aria-label="Search"
           />
         </div>

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface Column<T> {
   key: string;
-  header: string;
+  header: string | ReactNode;
   render?: (row: T) => ReactNode;
   /** Show raw string value when no render fn is provided. */
   accessor?: (row: T) => string | number | undefined;

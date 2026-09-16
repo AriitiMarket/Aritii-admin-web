@@ -72,11 +72,11 @@ export function SellerDetailPage() {
             </dd>
           </dl>
 
-          {seller.stores.length > 0 && (
+          {(seller.stores || []).length > 0 && (
             <div className="mt-4">
               <p className="card-h2 mb-2 dark:text-gray-300">{t('Stores')}</p>
               <ul className="space-y-1 text-sm">
-                {seller.stores.map((storeId) => (
+                {(seller.stores || []).map((storeId) => (
                   <li key={storeId}>
                     <button
                       type="button"

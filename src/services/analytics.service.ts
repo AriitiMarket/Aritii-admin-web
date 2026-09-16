@@ -1,40 +1,63 @@
 /** Analytics service facade. */
-import { isMockMode } from '@/utils/env';
 import type {
   DashboardStats,
   DistributionSlice,
   SalesByType,
   UsersGrowthSeries,
+  SalesOverTimePoint,
+  CategoryActivity,
+  ProductStats,
+  DisputeStats,
+  DeliveryStatsData,
+  ShopStats,
+  RiderPerformanceItem,
 } from '@/types';
-import {
-  mockGetDashboardUsers,
-  mockGetOrdersByType,
-  mockGetSalesByType,
-  mockGetStats,
-  mockGetUsersGrowth,
-} from './mock/analytics';
-import {
-  realGetDashboardUsers,
-  realGetOrdersByType,
-  realGetSalesByType,
-  realGetStats,
-  realGetUsersGrowth,
-} from './real/analytics';
+import { analyticsAdmin, reportsAdmin } from '@/api/admin';
 
 export const analyticsService = {
-  getStats(): Promise<DashboardStats> {
-    return isMockMode() ? mockGetStats() : realGetStats();
+  async getStats(startDate?: string, endDate?: string): Promise<DashboardStats> {
+    return reportsAdmin.getStats(startDate, endDate);
   },
-  getUsersGrowth(): Promise<UsersGrowthSeries> {
-    return isMockMode() ? mockGetUsersGrowth() : realGetUsersGrowth();
+  async getUsersGrowth(startDate?: string, endDate?: string): Promise<UsersGrowthSeries> {
+    return reportsAdmin.getGrowth(startDate, endDate);
   },
-  getOrdersByType(): Promise<DistributionSlice[]> {
-    return isMockMode() ? mockGetOrdersByType() : realGetOrdersByType();
+  async getOrdersByType(startDate?: string, endDate?: string): Promise<DistributionSlice[]> {
+    return reportsAdmin.getOrdersByType(startDate, endDate);
   },
-  getSalesByType(): Promise<SalesByType> {
-    return isMockMode() ? mockGetSalesByType() : realGetSalesByType();
+  async getSalesByType(startDate?: string, endDate?: string): Promise<SalesByType> {
+    return reportsAdmin.getSalesByType(startDate, endDate);
   },
-  getDashboardUsers(): Promise<{ users: number; sellers: number; stores: number; riders: number }> {
-    return isMockMode() ? mockGetDashboardUsers() : realGetDashboardUsers();
+  async getSalesOverTime(startDate?: string, endDate?: string): Promise<SalesOverTimePoint[]> {
+    return reportsAdmin.getSalesOverTime(startDate, endDate);
+  },
+  async getOrdersByStatus(startDate?: string, endDate?: string): Promise<DistributionSlice[]> {
+    return reportsAdmin.getOrdersByStatus(startDate, endDate);
+  },
+  async getCategoryActivity(startDate?: string, endDate?: string): Promise<CategoryActivity[]> {
+    return reportsAdmin.getCategoryActivity(startDate, endDate);
+  },
+  async getProductStats(startDate?: string, endDate?: string): Promise<ProductStats> {
+    return reportsAdmin.getProductStats(startDate, endDate);
+  },
+  async getDisputeStats(startDate?: string, endDate?: string): Promise<DisputeStats> {
+    return reportsAdmin.getDisputeStats(startDate, endDate);
+  },
+  async getDeliveryStats(startDate?: string, endDate?: string): Promise<DeliveryStatsData> {
+    return reportsAdmin.getDeliveryStats(startDate, endDate);
+  },
+  async getRiderPerformance(startDate?: string, endDate?: string): Promise<RiderPerformanceItem[]> {
+    return reportsAdmin.getRiderPerformance(startDate, endDate);
+  },
+  async getShopStats(startDate?: string, endDate?: string): Promise<ShopStats> {
+    return reportsAdmin.getShopStats(startDate, endDate);
+  },
+  async getDashboardUsers(): Promise<{ users: number; sellers: number; stores: number; riders: number }> {
+    return analyticsAdmin.getDashboardUsers();
+  },
+  async getPendingApprovals(): Promise<{ pendingStores: number; pendingRiders: number; pendingSellers: number; total: number }> {
+    return analyticsAdmin.getPendingApprovals();
+  },
+  async getRecentActivity(): Promise<{ recentOrders: any[] }> {
+    return analyticsAdmin.getRecentActivity();
   },
 };

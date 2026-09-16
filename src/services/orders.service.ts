@@ -1,20 +1,20 @@
 /** Orders service facade. */
-import { isMockMode } from '@/utils/env';
 import type { Order, OrderDetail, OrderStatus, PaginatedResult } from '@/types';
-import { mockGetOrder, mockListOrders } from './mock/orders';
-import { realGetOrder, realListOrders } from './real/orders';
+import { commerceAdmin } from '@/api/admin';
+
+export interface ListOrdersOptions {
+  page: number;
+  limit: number;
+  status?: OrderStatus;
+  startDate?: string;
+  endDate?: string;
+}
 
 export const ordersService = {
-  list(
-    page: number,
-    limit: number,
-    status?: OrderStatus
-  ): Promise<PaginatedResult<Order>> {
-    return isMockMode()
-      ? mockListOrders(page, limit, status)
-      : realListOrders(page, limit, status);
+  async list(options: ListOrdersOptions): Promise<PaginatedResult<Order>> {
+    return commerceAdmin.listOrders(options);
   },
-  get(id: string): Promise<OrderDetail> {
-    return isMockMode() ? mockGetOrder(id) : realGetOrder(id);
+  async get(id: string): Promise<OrderDetail> {
+    return commerceAdmin.getOrder(id);
   },
 };

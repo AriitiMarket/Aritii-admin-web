@@ -1,14 +1,24 @@
 /** Customers service facade. */
-import { isMockMode } from '@/utils/env';
 import type { Customer, CustomerDetail, PaginatedResult, UsersFilter } from '@/types';
-import { mockGetCustomer, mockListCustomers } from './mock/customers';
-import { realGetCustomer, realListCustomers } from './real/customers';
+import { identityAdmin } from '@/api/admin';
 
 export const customersService = {
-  list(filter: UsersFilter): Promise<PaginatedResult<Customer>> {
-    return isMockMode() ? mockListCustomers(filter) : realListCustomers(filter);
+  async list(filter: UsersFilter): Promise<PaginatedResult<Customer>> {
+    const result = await identityAdmin.listUsers(
+      filter.page,
+      filter.limit,
+      filter.search,
+      'BUYER'
+    );
+    return {
+      items: result.items as Customer[],
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    };
   },
-  get(id: string): Promise<CustomerDetail> {
-    return isMockMode() ? mockGetCustomer(id) : realGetCustomer(id);
+  async get(id: string): Promise<CustomerDetail> {
+    return identityAdmin.getUser(id) as Promise<CustomerDetail>;
   },
 };

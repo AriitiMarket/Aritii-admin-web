@@ -30,10 +30,28 @@ export const SectorContext = createContext<SectorContextValue | undefined>(undef
 export function SectorProvider({ children }: { children: ReactNode }) {
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [selectedSector, setSelectedSectorState] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    
+    // Only fetch sectors if they haven't been fetched yet
+    if (sectors.length > 0) {
+      setLoading(false);
+      return;
+    }
+
+    // Skip if no token (not logged in)
+    const token = typeof window !== 'undefined' 
+      ? window.localStorage.getItem('token')
+      : null;
+    
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     catalogService
       .listSectors()
       .then((list) => {

@@ -44,7 +44,24 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     'react-refresh/only-export-components': [
       'warn',
-      { allowConstantExport: true },
+      {
+        allowConstantExport: true,
+        allowExportNames: [
+          'statusVariantFor',
+          'AuthContext',
+          'useAuthContext',
+          'ConfigurationContext',
+          'useConfigurationContext',
+          'SectorContext',
+          'useSectorContext',
+          'ThemeContext',
+          'useThemeContext',
+          'ToastContext',
+          'useToastContext',
+          'I18nContext',
+          'useLocalization',
+        ],
+      },
     ],
   },
 };

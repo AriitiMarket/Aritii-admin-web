@@ -72,9 +72,7 @@ export function LoginPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t('Welcome back! Please enter your details')}.
         </p>
-        <p className="mt-1 text-xs text-gray-400">
-          Demo: admin@aritii.com (any password)
-        </p>
+
       </div>
 
       <form onSubmit={onSubmit} noValidate className="space-y-4">

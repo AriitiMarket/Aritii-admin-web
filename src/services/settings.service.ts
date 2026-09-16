@@ -1,18 +1,9 @@
 /** Settings service facade. */
-import { isMockMode } from '@/utils/env';
 import type {
   NotificationsSettings,
   PlatformSettings,
   SystemSettings,
 } from '@/types';
-import {
-  mockGetNotificationSettings,
-  mockGetPlatformSettings,
-  mockGetSystemSettings,
-  mockUpdateNotificationSettings,
-  mockUpdatePlatformSettings,
-  mockUpdateSystemSettings,
-} from './mock/settings';
 import {
   realGetNotificationSettings,
   realGetPlatformSettings,
@@ -23,32 +14,24 @@ import {
 } from './real/settings';
 
 export const settingsService = {
-  getPlatform(): Promise<PlatformSettings> {
-    return isMockMode() ? mockGetPlatformSettings() : realGetPlatformSettings();
+  async getPlatform(): Promise<PlatformSettings> {
+    return realGetPlatformSettings();
   },
-  updatePlatform(patch: Partial<PlatformSettings>): Promise<PlatformSettings> {
-    return isMockMode()
-      ? mockUpdatePlatformSettings(patch)
-      : realUpdatePlatformSettings(patch);
+  async updatePlatform(patch: Partial<PlatformSettings>): Promise<PlatformSettings> {
+    return realUpdatePlatformSettings(patch);
   },
-  getNotifications(): Promise<NotificationsSettings> {
-    return isMockMode()
-      ? mockGetNotificationSettings()
-      : realGetNotificationSettings();
+  async getNotifications(): Promise<NotificationsSettings> {
+    return realGetNotificationSettings();
   },
-  updateNotifications(
+  async updateNotifications(
     patch: Partial<NotificationsSettings>
   ): Promise<NotificationsSettings> {
-    return isMockMode()
-      ? mockUpdateNotificationSettings(patch)
-      : realUpdateNotificationSettings(patch);
+    return realUpdateNotificationSettings(patch);
   },
-  getSystem(): Promise<SystemSettings> {
-    return isMockMode() ? mockGetSystemSettings() : realGetSystemSettings();
+  async getSystem(): Promise<SystemSettings> {
+    return realGetSystemSettings();
   },
-  updateSystem(patch: Partial<SystemSettings>): Promise<SystemSettings> {
-    return isMockMode()
-      ? mockUpdateSystemSettings(patch)
-      : realUpdateSystemSettings(patch);
+  async updateSystem(patch: Partial<SystemSettings>): Promise<SystemSettings> {
+    return realUpdateSystemSettings(patch);
   },
 };

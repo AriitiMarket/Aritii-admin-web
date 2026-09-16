@@ -1,21 +1,29 @@
-/** Registered marketplace user (any account: customer, rider, seller staff, ...). */
+/** Registered marketplace user (any account: customer, seller, agent, admin, ...). */
 export interface User {
   id: string;
   name: string;
   email: string;
-  phone?: string;
-  userType: 'CUSTOMER' | 'RIDER' | 'STORE' | 'SELLER';
-  status: 'ACTIVE' | 'BLOCKED' | 'PENDING';
-  isActive: boolean;
-  registrationMethod?: string;
+  phoneNumber?: string;
+  role: 'CUSTOMER' | 'SELLER' | 'AGENT' | 'ADMIN';
+  avatar?: {
+    public_id: string | null;
+    url: string | null;
+  };
+  addresses?: any[];
+  shopId?: string | null;
+  status: 'active' | 'inactive' | 'suspended' | 'banned';
+  isVerified?: boolean;
+  sellerStatus?: 'INACTIVE' | 'PENDING' | 'ACTIVE' | 'REJECTED';
+  createdAt: string;
+  updatedAt?: string;
   lastLoginAt?: string;
-  createdAt?: string;
-  sectors: string[];
+  lastActivityAt?: string;
 }
 
 export interface UsersFilter {
-  page: number;
-  limit: number;
+  page?: number;
+  limit?: number;
   search?: string;
-  status?: User['status'];
+  role?: string;
+  status?: string;
 }

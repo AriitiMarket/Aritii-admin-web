@@ -51,6 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(async () => {
+    // Revoke the refresh token at the Identity Service (RFC 7009) before
+    // dropping local state, so the server-side session really ends.
+    try {
+      await authService.logout();
+    } catch {
+      /* best-effort: local state is cleared below regardless */
+    }
     clearStoredSessionState();
     setUser(null);
   }, []);
@@ -97,24 +104,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Bootstrap session on first mount.
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+
     const bootstrap = async () => {
-      const cachedUser = getStoredUser();
-      if (cachedUser) setUser(cachedUser);
+      try {
+        const cachedUser = getStoredUser();
+        if (cachedUser) setUser(cachedUser);
 
-      if (!getAccessToken()) {
-        if (mounted) setLoading(false);
-        return;
+        const token = getAccessToken();
+        if (!token) {
+          // No token stored, skip refresh
+          if (mounted) setLoading(false);
+          return;
+        }
+
+        // Set a safety timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.warn('Auth bootstrap timeout - clearing session');
+            clearStoredSessionState();
+            setUser(null);
+            setLoading(false);
+          }
+        }, 5000); // 5 second timeout
+
+        // Token exists, try to refresh and get current user
+        try {
+          const currentUser = await authService.getCurrentAdmin();
+          if (mounted && timeoutId) {
+            clearTimeout(timeoutId);
+            persistUserSession(currentUser);
+            setUser(currentUser);
+            setLoading(false);
+          }
+        } catch {
+          // If refresh fails, clear session but don't throw
+          if (mounted && timeoutId) {
+            clearTimeout(timeoutId);
+            clearStoredSessionState();
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      } catch {
+        if (mounted) {
+          if (timeoutId) clearTimeout(timeoutId);
+          setLoading(false);
+        }
       }
-
-      await refreshSession();
-      if (mounted) setLoading(false);
     };
 
     void bootstrap();
     return () => {
       mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [refreshSession]);
+  }, []);
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<AdminUser> => {

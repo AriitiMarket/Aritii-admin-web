@@ -48,7 +48,7 @@ export function AdminDetailPage() {
           <div className="flex justify-between text-sm">
             <dt className="text-gray-500 dark:text-gray-400">{t('Sectors')}</dt>
             <dd className="text-gray-800 dark:text-gray-100">
-              {admin.sectors.length === 3 ? 'All' : `${admin.sectors.length} sectors`}
+              {(!admin.sectors || admin.sectors.length === 0) ? '-' : admin.sectors.length === 3 ? 'All' : `${admin.sectors.length} sectors`}
             </dd>
           </div>
           <div className="flex justify-between text-sm">

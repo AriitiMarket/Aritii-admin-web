@@ -15,8 +15,8 @@ const VARIANT_STYLES: Record<StatusVariant, string> = {
   neutral: 'bg-gray-100 text-gray-700 dark:bg-dark-900 dark:text-gray-300',
 };
 
-export function statusVariantFor(input: string): StatusVariant {
-  const value = input.toLowerCase();
+export function statusVariantFor(input: string | undefined): StatusVariant {
+  const value = (input || '').toLowerCase();
   if (
     value.includes('active') ||
     value.includes('approved') ||
@@ -57,7 +57,7 @@ export function StatusBadge({
   variant,
   className,
 }: {
-  label: string;
+  label?: string;
   variant?: StatusVariant;
   className?: string;
 }) {
@@ -70,7 +70,7 @@ export function StatusBadge({
         className
       )}
     >
-      {label}
+      {label || '—'}
     </span>
   );
 }

@@ -1,47 +1,33 @@
 /** Catalog service facade (categories, sectors, reviews, disputes). */
-import { isMockMode } from '@/utils/env';
 import type { Category, Dispute, Review, Sector } from '@/types';
-import {
-  mockApproveReview,
-  mockListCategories,
-  mockListDisputes,
-  mockListPendingReviews,
-  mockListSectors,
-  mockRejectReview,
-  mockUpdateDisputeStatus,
-} from './mock/catalog';
-import {
-  realApproveReview,
-  realListCategories,
-  realListDisputes,
-  realListPendingReviews,
-  realListSectors,
-  realRejectReview,
-  realUpdateDisputeStatus,
-} from './real/catalog';
+import { commerceAdmin } from '@/api/admin';
+import { http } from '@/services/client/httpClient';
 
 export const catalogService = {
-  listCategories(): Promise<Category[]> {
-    return isMockMode() ? mockListCategories() : realListCategories();
+  async listCategories(): Promise<Category[]> {
+    return commerceAdmin.listCategories();
   },
-  listSectors(): Promise<Sector[]> {
-    return isMockMode() ? mockListSectors() : realListSectors();
+  async listSectors(): Promise<Sector[]> {
+    return commerceAdmin.listSectors();
   },
-  listPendingReviews(): Promise<Review[]> {
-    return isMockMode() ? mockListPendingReviews() : realListPendingReviews();
+  async listPendingReviews(): Promise<Review[]> {
+    return commerceAdmin.listPendingReviews();
   },
-  approveReview(id: string): Promise<Review> {
-    return isMockMode() ? mockApproveReview(id) : realApproveReview(id);
+  async approveReview(id: string): Promise<Review> {
+    return commerceAdmin.approveReview(id);
   },
-  rejectReview(id: string): Promise<Review> {
-    return isMockMode() ? mockRejectReview(id) : realRejectReview(id);
+  async rejectReview(id: string): Promise<Review> {
+    return commerceAdmin.rejectReview(id);
   },
-  listDisputes(): Promise<Dispute[]> {
-    return isMockMode() ? mockListDisputes() : realListDisputes();
+  async listDisputes(): Promise<Dispute[]> {
+    const res = await http.get<{ success: boolean; disputes?: Dispute[] }>('/disputes');
+    return (res.disputes || []).map(d => ({ ...d, id: d.id || (d as any)._id }));
   },
-  updateDisputeStatus(id: string, status: Dispute['status']): Promise<Dispute> {
-    return isMockMode()
-      ? mockUpdateDisputeStatus(id, status)
-      : realUpdateDisputeStatus(id, status);
+  async updateDisputeStatus(id: string, status: Dispute['status']): Promise<Dispute> {
+    const res = await http.patch<{ success: boolean; dispute: Dispute }>(
+      `/disputes/${id}/status`,
+      { status }
+    );
+    return { ...res.dispute, id: res.dispute.id || (res.dispute as any)._id };
   },
 };

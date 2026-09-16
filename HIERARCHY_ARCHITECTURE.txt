@@ -1,0 +1,185 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                   HIERARCHY CONTEXT ARCHITECTURE OVERVIEW                       ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─ ADMIN BROWSER SESSION ───────────────────────────────────────────────────────┐
+│                                                                               │
+│  ┌─ DashboardLayout ─────────────────────────────────────────────────────┐  │
+│  │                                                                       │  │
+│  │  ┌─ Header ─────────────────────────────────────────┐               │  │
+│  │  │ [Menu] Search   [Theme] [Lang] [Bell] [User]    │               │  │
+│  │  └──────────────────────────────────────────────────┘               │  │
+│  │                                                                       │  │
+│  │  ┌─ HierarchySelector ────────────────────────────────┐             │  │
+│  │  │ 📍 Region ▾ / City ▾ / Sector ▾ / Business ▾     │   ← ALWAYS  │  │
+│  │  │    (Desktop: full bar; Mobile: breadcrumb)       │      VISIBLE │  │
+│  │  └────────────────────────────────────────────────────┘             │  │
+│  │                                                                       │  │
+│  │  ┌─ Sidebar ────────┐  ┌─ Main Content ──────────────────────────┐ │  │
+│  │  │  Dashboard       │  │  ┌─ Page (any admin module) ──────────┐ │ │  │
+│  │  │  Businesses      │  │  │                                    │ │ │  │
+│  │  │  Orders          │  │  │ const { selection } =               │ │ │  │
+│  │  │  Shops           │  │  │   useHierarchy();                  │ │ │  │
+│  │  │  Locations       │  │  │                                    │ │ │  │
+│  │  │  Riders          │  │  │ const data =                        │ │ │  │
+│  │  │  Analytics       │  │  │   platformAdminService             │ │ │  │
+│  │  │  ...             │  │  │   .getStatsByHierarchy({            │ │ │  │
+│  │  │                  │  │  │     sectorId: selection.sector?.id │ │ │  │
+│  │  │                  │  │  │   });                              │ │ │  │
+│  │  │                  │  │  │                                    │ │ │  │
+│  │  │                  │  │  │ return (                           │ │ │  │
+│  │  │                  │  │  │   <> ... <Table data={data} />  │ │ │  │
+│  │  │                  │  │  │ );                               │ │ │  │
+│  │  │                  │  │  └────────────────────────────────┘ │ │  │
+│  │  │                  │  └──────────────────────────────────────┘ │  │
+│  │  └──────────────────┘                                            │  │
+│  │                                                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ COMPONENT HIERARCHY ─────────────────────────────────────────────────────────┐
+│                                                                               │
+│  App                                                                         │
+│  └── AppProviders                                                           │
+│      ├── ThemeProvider                                                      │
+│      ├── I18nProvider                                                       │
+│      ├── ToastProvider                                                      │
+│      ├── ConfigurationProvider                                              │
+│      ├── SectorProvider                                                     │
+│      ├── HierarchyProvider  ← NEW: Manages hierarchical state              │
+│      │   └── AuthProvider                                                   │
+│      │       └── AppRoutes                                                  │
+│      │           └── DashboardLayout  ← NEW: Renders HierarchySelector    │
+│      │               ├── Header                                             │
+│      │               ├── HierarchySelector  ← NEW: UI for selection       │
+│      │               ├── Sidebar                                            │
+│      │               └── Route Outlet                                       │
+│      │                   └── Pages (HomePage, OrdersPage, etc.)           │
+│      │                       └── Components call useHierarchy()            │
+│      └── ToastViewport                                                      │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DATA FLOW ───────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  1. SELECTION                                                               │
+│     Admin clicks HierarchySelector dropdown                                 │
+│     └── HierarchySelector calls setSector(node)                            │
+│         └── HierarchyContext updates state                                  │
+│             └── Persists to localStorage                                    │
+│                 └── Notifies all subscribers (pages)                        │
+│                                                                               │
+│  2. PAGE RENDER                                                             │
+│     HomePage calls useHierarchy()                                           │
+│     └── Gets { selection, ... } from HierarchyContext                      │
+│         └── useAsync(() =>                                                  │
+│             platformAdminService.getStatsByHierarchy({                      │
+│               sectorId: selection.sector?.id                                │
+│             })                                                               │
+│         )                                                                    │
+│         └── API call includes hierarchy params                              │
+│                                                                               │
+│  3. BACKEND FILTERING                                                       │
+│     platformAdminService.getStatsByHierarchy({sectorId})                   │
+│     └── http.get('/admin/platform/stats', {                                │
+│           params: { sectorId: '...' }                                       │
+│         })                                                                   │
+│     └── Backend filters query:                                              │
+│         SELECT * FROM stats WHERE sector_id = $1                            │
+│                                                                               │
+│  4. PAGE UPDATE                                                             │
+│     useAsync detects selection change                                       │
+│     └── Re-fetches data from API                                            │
+│         └── Page re-renders with new data                                   │
+│             └── All tables, charts, KPIs update instantly                   │
+│                                                                               │
+│  5. PERSISTENCE                                                             │
+│     User navigates to OrdersPage                                            │
+│     └── DashboardLayout renders HierarchySelector                          │
+│         └── useHierarchy() returns cached selection from context            │
+│             └── OrdersPage sees same hierarchy (not lost!)                  │
+│                 └── OrdersPage filters orders by same sector/business       │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ HIERARCHY LEVELS ────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  HierarchyContext.selection = {                                             │
+│    platform: HierarchyNode,           ← Always present, represents "All"    │
+│    region: HierarchyNode | null,      ← E.g., "East Africa"                │
+│    city: HierarchyNode | null,        ← E.g., "Nairobi"                    │
+│    area: HierarchyNode | null,        ← E.g., "Central Business District"  │
+│    sector: HierarchyNode | null,      ← E.g., "Quick Commerce"             │
+│    business: HierarchyNode | null,    ← E.g., "FreshMart Ltd"              │
+│    shop: HierarchyNode | null,        ← E.g., "FreshMart - Westlands"      │
+│  }                                                                            │
+│                                                                               │
+│  Cascading Clearing:                                                         │
+│  └── Select region                                                           │
+│      └── Auto-clear: city, area, sector, business, shop                     │
+│  └── Select city                                                             │
+│      └── Auto-clear: area, sector, business, shop                           │
+│  └── Select sector                                                           │
+│      └── Auto-clear: business, shop                                          │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ API METHODS ─────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  platformAdminService.listBusinessesByHierarchy(parentId, level)            │
+│  └── GET /admin/businesses?regionId=... | cityId=... | sectorId=...       │
+│                                                                               │
+│  platformAdminService.listShopsByHierarchy(parentId, level)                 │
+│  └── GET /admin/shops?sectorId=... | businessId=...                        │
+│                                                                               │
+│  platformAdminService.listOrdersByHierarchy(hierarchyContext)               │
+│  └── GET /admin/operations/orders?regionId=...&sectorId=...                │
+│                                                                               │
+│  platformAdminService.getStatsByHierarchy(hierarchyContext)                 │
+│  └── GET /admin/platform/stats?sectorId=...&businessId=...                 │
+│                                                                               │
+│  platformAdminService.getGrowthAnalyticsByHierarchy(hierarchyContext)      │
+│  └── GET /admin/growth-analytics?sectorId=...&shopId=...                   │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ STORAGE (localStorage) ──────────────────────────────────────────────────────┐
+│                                                                               │
+│  Key: "adminHierarchySelection"                                             │
+│  Value: {                                                                    │
+│    "region": "region-uuid-1234",                                            │
+│    "city": "city-uuid-5678",                                                │
+│    "area": null,                                                             │
+│    "sector": "sector-uuid-9012",                                            │
+│    "business": null,                                                         │
+│    "shop": null                                                              │
+│  }                                                                            │
+│                                                                               │
+│  Lifecycle:                                                                  │
+│  └── Page load → HierarchyProvider reads localStorage                       │
+│      └── HierarchyContext hydrates state                                    │
+│  └── Admin selects region → setState() + localStorage.setItem()            │
+│      └── All pages re-render with new selection                             │
+│  └── Page refresh → localStorage read → state restored                      │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ RESPONSIVE DESIGN ───────────────────────────────────────────────────────────┐
+│                                                                               │
+│  DESKTOP (md breakpoint and above):                                         │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ 📍 Region ▾ / City ▾ / Area ▾ / Sector ▾ / Business ▾ / Shop ▾ [Clear]│ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│  └── All dropdowns visible, can scroll horizontally if needed               │
+│                                                                               │
+│  MOBILE (below md breakpoint):                                              │
+│  ┌──────────────────────────────────┐                                       │
+│  │ Platform / Region / City / [X]   │                                       │
+│  └──────────────────────────────────┘                                       │
+│  └── Compact breadcrumb, drill-down navigation                              │
+│      └── Tap any level to see options                                       │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════

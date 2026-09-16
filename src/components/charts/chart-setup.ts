@@ -7,19 +7,26 @@ import {
   DoughnutController,
   Legend,
   LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
   Tooltip,
+  Filler,
 } from 'chart.js';
 
-// Single registration point for every Chart.js type used by this app.
 Chart.register(
   BarController,
   BarElement,
   DoughnutController,
   ArcElement,
+  LineController,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 export {};

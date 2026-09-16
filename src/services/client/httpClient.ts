@@ -237,7 +237,7 @@ export function assertGatewayConfigured(): void {
   if (!env.apiGatewayUrl) {
     throw new ApiError(
       503,
-      'Ariiti API Gateway is not configured. Set VITE_API_GATEWAY_URL or run with VITE_USE_MOCKS=true.'
+      'Ariiti API Gateway is not configured. Set VITE_API_GATEWAY_URL in your .env file.'
     );
   }
 }

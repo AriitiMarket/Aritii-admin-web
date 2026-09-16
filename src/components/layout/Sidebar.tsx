@@ -1,5 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 import { NavList } from '@/components/layout/NavList';
+import { HierarchySidebar } from '@/components/HierarchySidebar';
 import { Logo } from '@/components/common/Logo';
 
 export function Sidebar({ open }: { open: boolean }) {
@@ -14,14 +15,20 @@ export function Sidebar({ open }: { open: boolean }) {
     >
       <div
         className={twMerge(
-          'flex h-full w-64 flex-col py-4 transition-opacity duration-300',
+          'flex h-full w-64 flex-col overflow-y-auto transition-opacity duration-300',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
       >
-        <div className="mb-4 px-5">
+        <div className="mb-4 flex-shrink-0 px-5 py-4">
           <Logo />
         </div>
-        <NavList />
+        <nav className="flex-1 overflow-y-auto">
+          <NavList />
+        </nav>
+        {/* Platform Hierarchy Management */}
+        <div className="flex-shrink-0">
+          <HierarchySidebar />
+        </div>
       </div>
     </aside>
   );

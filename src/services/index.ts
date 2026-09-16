@@ -13,4 +13,3 @@ export * from './settings.service';
 export * from './notifications.service';
 export { http, assertGatewayConfigured } from './client/httpClient';
 export type { HttpRequestOptions } from './client/httpClient';
-export { isMockMode } from '@/utils/env';

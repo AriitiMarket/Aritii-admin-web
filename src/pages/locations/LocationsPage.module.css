@@ -1,0 +1,582 @@
+/* LocationsPage.module.css - Hierarchy Explorer Styling */
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* TABS */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.tabsContainer {
+  display: flex;
+  gap: 0;
+  margin: 2rem 0 1.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.tab {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  background: #f5f5f5;
+  color: #666;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab:hover {
+  background: #efefef;
+}
+
+.tabActive {
+  background: white;
+  color: #2196F3;
+  border-bottom-color: #2196F3;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* BREADCRUMB BAR */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.breadcrumbBar {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #2196F3;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+}
+
+.breadcrumbItem {
+  padding: 0.4rem 0.8rem;
+  background: #E3F2FD;
+  border-radius: 4px;
+  color: #1565C0;
+  font-weight: 500;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.breadcrumbItem:hover {
+  background: #BBDEFB;
+  cursor: pointer;
+}
+
+.breadcrumbItem small {
+  font-size: 0.8rem;
+  color: #0D47A1;
+  margin-left: 0.3rem;
+}
+
+.breadcrumbSeparator {
+  color: #999;
+  font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* EXPLORER CONTAINER */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.explorerContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* LEFT PANEL: TREE */
+.treePanel {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.treePanel h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #1a1a1a;
+  border-bottom: 2px solid #2196F3;
+  padding-bottom: 0.5rem;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* TREE NODES */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.treeNode {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.nodeContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: #F9F9F9;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.nodeContent:hover {
+  background: #F0F7FF;
+  border-color: #2196F3;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.15);
+}
+
+.nodeContent.nodeSelected {
+  background: #E3F2FD;
+  border-color: #2196F3;
+  border-width: 2px;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+  font-weight: 600;
+}
+
+.expandIcon {
+  font-size: 0.8rem;
+  color: #666;
+  min-width: 1rem;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.nodeInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.nodeType {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0D47A1;
+  background: #E3F2FD;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nodeName {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.nodeMeta {
+  font-size: 0.75rem;
+  color: #999;
+  background: #F5F5F5;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+}
+
+.nodeInactive {
+  font-size: 0.75rem;
+  color: #D32F2F;
+  background: #FFEBEE;
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* TREE CHILDREN (NESTING) */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.nodeChildren {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 1.2rem;
+  border-left: 2px solid #E0E0E0;
+  margin-left: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* RIGHT PANEL: DETAILS */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.rightPanel {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detailsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detailsPanel h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1a1a1a;
+  border-bottom: 2px solid #2196F3;
+  padding-bottom: 0.5rem;
+}
+
+.detailsPanel p {
+  margin: 0.5rem 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.nextLevel {
+  background: #E8F5E9;
+  color: #1B5E20;
+  padding: 0.8rem;
+  border-radius: 4px;
+  border-left: 3px solid #4CAF50;
+}
+
+.resetButton {
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  background: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 1rem;
+}
+
+.resetButton:hover {
+  background: #F57C00;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* DATA SECTIONS (Businesses, Orders, Shops) */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.dataSection {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.dataSection h4 {
+  margin: 0 0 0.8rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0D47A1;
+}
+
+.dataList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dataItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  background: #F5F5F5;
+  border-radius: 4px;
+  border-left: 3px solid #2196F3;
+}
+
+.dataName {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 0.9rem;
+}
+
+.dataBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status_active {
+  background: #E8F5E9;
+  color: #1B5E20;
+}
+
+.status_pending {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.status_rejected {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.dataMeta {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.dataMore {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: #999;
+  font-style: italic;
+}
+
+.loading {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #E3F2FD;
+  color: #1565C0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.noData {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #F5F5F5;
+  color: #999;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* CLICKABLE ITEMS (Business, Shop) */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.clickableItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background: #F9F9F9;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.clickableItem:hover {
+  background: #E3F2FD;
+  border-color: #2196F3;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2);
+  transform: translateX(4px);
+}
+
+.clickableItem:active {
+  transform: translateX(2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* ORDER STATUS BADGES */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.orderInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.statusRow {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.pickup_ready,
+.pickup_assigned,
+.pickup_picked_up {
+  background: #E8F5E9;
+  color: #1B5E20;
+}
+
+.pickup_pending {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.delivery_pending,
+.delivery_not_started {
+  background: #F3E5F5;
+  color: #6A1B9A;
+}
+
+.delivery_in_transit {
+  background: #E1F5FE;
+  color: #01579B;
+}
+
+.delivery_arrived,
+.delivery_delivered {
+  background: #E8F5E9;
+  color: #1B5E20;
+}
+
+.delivery_failed {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* SCROLLBAR STYLING */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.treePanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.treePanel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.treePanel::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.treePanel::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* RESPONSIVE DESIGN */
+/* ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .explorerContainer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .treePanel {
+    max-height: 400px;
+  }
+
+  .rightPanel {
+    order: -1; /* Display details first on tablet */
+  }
+}
+
+@media (max-width: 768px) {
+  .tabsContainer {
+    margin: 1rem 0 1rem 0;
+  }
+
+  .tab {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .explorerContainer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .treePanel,
+  .rightPanel {
+    padding: 1rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbItem {
+    padding: 0.3rem 0.6rem;
+  }
+
+  .nodeContent {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .nodeChildren {
+    padding-left: 0.8rem;
+  }
+
+  .treePanel h3,
+  .detailsPanel h3 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabsContainer {
+    margin: 0.8rem 0 0.8rem 0;
+  }
+
+  .tab {
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.75rem;
+  }
+
+  .breadcrumbItem {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .nodeType {
+    font-size: 0.65rem;
+  }
+
+  .nodeName {
+    font-size: 0.9rem;
+  }
+
+  .nodeChildren {
+    padding-left: 0.6rem;
+  }
+
+  .treePanel h3,
+  .detailsPanel h3 {
+    font-size: 0.95rem;
+  }
+
+  .detailsPanel p {
+    font-size: 0.9rem;
+  }
+}

@@ -1,14 +1,19 @@
 /** Sellers service facade. */
-import { isMockMode } from '@/utils/env';
 import type { PaginatedResult, Seller, SellerDetail, UsersFilter } from '@/types';
-import { mockGetSeller, mockListSellers } from './mock/sellers';
-import { realGetSeller, realListSellers } from './real/sellers';
+import { identityAdmin } from '@/api/admin';
 
 export const sellersService = {
-  list(filter: UsersFilter): Promise<PaginatedResult<Seller>> {
-    return isMockMode() ? mockListSellers(filter) : realListSellers(filter);
+  async list(filter: UsersFilter): Promise<PaginatedResult<Seller>> {
+    const sellers = await identityAdmin.listSellers(filter.page, filter.limit, filter.search);
+    return {
+      items: sellers,
+      total: sellers.length,
+      page: filter.page || 1,
+      limit: filter.limit || 10,
+      totalPages: 1,
+    };
   },
-  get(id: string): Promise<SellerDetail> {
-    return isMockMode() ? mockGetSeller(id) : realGetSeller(id);
+  async get(id: string): Promise<SellerDetail> {
+    return identityAdmin.getSeller(id);
   },
 };

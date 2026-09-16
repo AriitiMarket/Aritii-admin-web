@@ -14,7 +14,7 @@ import { DataTable, type Column } from '@/components/tables/DataTable';
 import { formatCurrency, formatNumber } from '@/utils/format';
 import type { Customer } from '@/types';
 
-export function CustomersPage() {
+export function CustomersManagementPage() {
   const { t } = useLocalization();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);

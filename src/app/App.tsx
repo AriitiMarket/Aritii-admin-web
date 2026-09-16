@@ -1,5 +1,6 @@
 import { AppProviders } from '@/app/providers/AppProviders';
 import { AppRoutes } from '@/routes/AppRoutes';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 /**
  * Ariiti Admin Web — root application component.
@@ -8,8 +9,10 @@ import { AppRoutes } from '@/routes/AppRoutes';
  */
 export default function App() {
   return (
-    <AppProviders>
-      <AppRoutes />
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </ErrorBoundary>
   );
 }

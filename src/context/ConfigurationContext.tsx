@@ -21,9 +21,14 @@ export const ConfigurationContext = createContext<ConfigurationContextValue | un
 );
 
 export function ConfigurationProvider({ children }: { children: ReactNode }) {
+  // Only fetch if user is authenticated
+  const hasToken = typeof window !== 'undefined'
+    ? Boolean(window.localStorage.getItem('token'))
+    : false;
+
   const { data, loading, error, refetch } = useAsync(
-    () => settingsService.getPlatform(),
-    []
+    () => (hasToken ? settingsService.getPlatform() : Promise.resolve(null)),
+    [hasToken]
   );
 
   const value = useMemo<ConfigurationContextValue>(

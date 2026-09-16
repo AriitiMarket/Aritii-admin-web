@@ -1,14 +1,27 @@
 /** Riders service facade. */
-import { isMockMode } from '@/utils/env';
 import type { PaginatedResult, Rider, RiderDetail, UsersFilter } from '@/types';
-import { mockGetRider, mockListRiders } from './mock/riders';
-import { realGetRider, realListRiders } from './real/riders';
+import { deliveryAdmin } from '@/api/admin';
 
 export const ridersService = {
-  list(filter: UsersFilter): Promise<PaginatedResult<Rider>> {
-    return isMockMode() ? mockListRiders(filter) : realListRiders(filter);
+  async list(filter: UsersFilter & { status?: string }): Promise<PaginatedResult<Rider>> {
+    const result = await deliveryAdmin.listRidersWithFilters(
+      filter.page,
+      filter.limit,
+      filter.search,
+      filter.status
+    );
+    return {
+      items: result.items,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: Math.ceil(result.total / result.limit),
+    };
   },
-  get(id: string): Promise<RiderDetail> {
-    return isMockMode() ? mockGetRider(id) : realGetRider(id);
+  async get(id: string): Promise<RiderDetail> {
+    return deliveryAdmin.getRider(id);
+  },
+  async updateStatus(id: string, status: string): Promise<Rider> {
+    return deliveryAdmin.updateRiderStatus(id, status);
   },
 };

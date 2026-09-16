@@ -11,7 +11,7 @@ import { Button } from '@/components/common/Button';
 import { Link } from 'react-router-dom';
 import type { AdminAccount } from '@/types/admin';
 
-export function AdminsPage() {
+export function AdminsManagementPage() {
   const { t } = useLocalization();
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useAsync(
@@ -39,7 +39,7 @@ export function AdminsPage() {
       header: t('Sectors'),
       render: (row) => (
         <span className="text-xs text-gray-500 dark:text-gray-400">
-          {row.sectors.length === 3 ? 'All' : `${row.sectors.length} sectors`}
+          {(row.sectors || []).length === 3 ? 'All' : `${(row.sectors || []).length} sectors`}
         </span>
       ),
     },
