@@ -150,19 +150,21 @@ export function HierarchySidebar() {
     <>
       {/* Section header */}
       <div className="border-t border-gray-200 px-4 py-2 dark:border-dark-700">
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="flex w-full items-center gap-2 rounded px-2 py-2 hover:bg-gray-100 dark:hover:bg-dark-800"
-        >
-          <FontAwesomeIcon
-            icon={expanded ? faChevronDown : faChevronRight}
-            size="sm"
-          />
-          <FontAwesomeIcon icon={faBuildingColumns} size="sm" />
-          <span className="flex-1 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Platform Hierarchy
-          </span>
+        <div className="flex w-full items-center gap-2 rounded px-2 py-2 hover:bg-gray-100 dark:hover:bg-dark-800">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex flex-1 items-center gap-2 rounded px-0 py-0 hover:bg-transparent dark:hover:bg-transparent"
+          >
+            <FontAwesomeIcon
+              icon={expanded ? faChevronDown : faChevronRight}
+              size="sm"
+            />
+            <FontAwesomeIcon icon={faBuildingColumns} size="sm" />
+            <span className="flex-1 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Platform Hierarchy
+            </span>
+          </button>
           {canManageHierarchy && (
             <button
               type="button"
@@ -176,7 +178,7 @@ export function HierarchySidebar() {
               <FontAwesomeIcon icon={faPlus} size="xs" />
             </button>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Expanded content */}

@@ -75,15 +75,19 @@ export function HierarchyNodeModal({
   const validate = () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.name || formData.name.trim().length === 0) {
+    // Ensure formData.name is a string before calling trim()
+    const name = typeof formData.name === 'string' ? formData.name : '';
+    const code = typeof formData.code === 'string' ? formData.code : '';
+
+    if (!name || name.trim().length === 0) {
       errors.name = 'Name is required';
     }
 
-    if (formData.name && formData.name.length > 100) {
+    if (name && name.length > 100) {
       errors.name = 'Name must be less than 100 characters';
     }
 
-    if (formData.code && formData.code.length > 20) {
+    if (code && code.length > 20) {
       errors.code = 'Code must be less than 20 characters';
     }
 
@@ -165,7 +169,8 @@ export function HierarchyNodeModal({
         <TextField
           label="Name"
           value={formData.name}
-          onChange={(val) => {
+          onChange={(e) => {
+            const val = typeof e === 'string' ? e : (e as any).target?.value || '';
             setFormData((prev) => ({ ...prev, name: val }));
             if (validationErrors.name) {
               setValidationErrors((prev) => {
@@ -184,7 +189,8 @@ export function HierarchyNodeModal({
         <TextField
           label="Code (optional)"
           value={formData.code}
-          onChange={(val) => {
+          onChange={(e) => {
+            const val = typeof e === 'string' ? e : (e as any).target?.value || '';
             setFormData((prev) => ({ ...prev, code: val }));
             if (validationErrors.code) {
               setValidationErrors((prev) => {

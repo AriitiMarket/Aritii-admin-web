@@ -61,7 +61,7 @@ export const hierarchyManagerService = {
   }> {
     return http
       .get<{ success: boolean; hierarchy: HierarchyNodeData[] }>(
-        '/admin/hierarchy'
+        '/admin/platform/hierarchy'
       )
       .then((res) => res);
   },
@@ -72,7 +72,7 @@ export const hierarchyManagerService = {
   getNodeDetail(nodeId: string): Promise<HierarchyNodeDetail> {
     return http
       .get<{ success: boolean; node: HierarchyNodeDetail }>(
-        `/admin/hierarchy/${nodeId}`
+        `/admin/platform/hierarchy/${nodeId}`
       )
       .then((res) => res.node);
   },
@@ -83,7 +83,7 @@ export const hierarchyManagerService = {
   createNode(payload: CreateNodePayload): Promise<HierarchyNodeData> {
     return http
       .post<{ success: boolean; node: HierarchyNodeData }>(
-        '/admin/hierarchy',
+        '/admin/platform/hierarchy',
         payload
       )
       .then((res) => res.node);
@@ -95,7 +95,7 @@ export const hierarchyManagerService = {
   updateNode(nodeId: string, payload: UpdateNodePayload): Promise<HierarchyNodeData> {
     return http
       .put<{ success: boolean; node: HierarchyNodeData }>(
-        `/admin/hierarchy/${nodeId}`,
+        `/admin/platform/hierarchy/${nodeId}`,
         payload
       )
       .then((res) => res.node);
@@ -110,7 +110,7 @@ export const hierarchyManagerService = {
   ): Promise<{ success: boolean; deletedCount: number }> {
     return http
       .delete<{ success: boolean; deletedCount: number }>(
-        `/admin/hierarchy/${nodeId}`,
+        `/admin/platform/hierarchy/${nodeId}`,
         { params: options as never }
       )
       .then((res) => res);
@@ -122,7 +122,7 @@ export const hierarchyManagerService = {
   moveNode(nodeId: string, payload: MoveNodePayload): Promise<HierarchyNodeData> {
     return http
       .patch<{ success: boolean; node: HierarchyNodeData }>(
-        `/admin/hierarchy/${nodeId}/move`,
+        `/admin/platform/hierarchy/${nodeId}/move`,
         payload
       )
       .then((res) => res.node);
@@ -137,7 +137,7 @@ export const hierarchyManagerService = {
   ): Promise<{ success: boolean }> {
     return http
       .patch<{ success: boolean }>(
-        `/admin/hierarchy/${parentId}/reorder`,
+        `/admin/platform/hierarchy/${parentId}/reorder`,
         { childIds }
       )
       .then((res) => res);
@@ -152,7 +152,7 @@ export const hierarchyManagerService = {
   ): Promise<{ success: boolean; updated: number }> {
     return http
       .patch<{ success: boolean; updated: number }>(
-        '/admin/hierarchy/bulk/active',
+        '/admin/platform/hierarchy/bulk/active',
         { nodeIds, isActive }
       )
       .then((res) => res);
