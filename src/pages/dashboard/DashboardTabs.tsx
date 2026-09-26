@@ -35,7 +35,7 @@ export function DashboardTabs() {
   const growth = useAsync(() => analyticsService.getUsersGrowth(), []);
   const recentUsers = useAsync(() => usersService.list({ page: 1, limit: 5, search: '' }), []);
   const recentSellers = useAsync(() => sellersService.list({ page: 1, limit: 5, search: '' }), []);
-  const recentStores = useAsync(() => storesService.list(), []);
+  const recentStores = useAsync(() => storesService.list({ page: 1, limit: 5 }), []);
   const pendingRiders = useAsync(() => ridersService.list({ page: 1, limit: 5, search: '' }), []);
   const recentOrders = useAsync(() => ordersService.list({ page: 1, limit: 5 }), []);
 
@@ -66,22 +66,22 @@ export function DashboardTabs() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label={t('Total Users')}
-            value={stats.data.totalUsers || 0}
+            value={String(stats.data.totalUsers || 0)}
             icon="👥"
           />
           <StatCard
             label={t('Total Sellers')}
-            value={stats.data.totalSellers || 0}
+            value={String(stats.data.totalSellers || 0)}
             icon="🏪"
           />
           <StatCard
             label={t('Total Stores')}
-            value={stats.data.totalStores || 0}
+            value={String(stats.data.totalStores || 0)}
             icon="🏬"
           />
           <StatCard
             label={t('Total Orders')}
-            value={stats.data.totalOrders || 0}
+            value={String(stats.data.totalOrders || 0)}
             icon="📦"
           />
         </div>
@@ -94,6 +94,8 @@ export function DashboardTabs() {
             key={tab.id}
             id={tab.id}
             label={`${tab.icon} ${tab.label}`}
+            isActive={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
           />
         ))}
       </Tabs>
@@ -197,7 +199,7 @@ export function DashboardTabs() {
 }
 
 // Overview Section Component
-function OverviewSection({ stats, growth, recentUsers, recentOrders, navigate }: any) {
+function OverviewSection({ stats, recentUsers, recentOrders, navigate }: any) {
   const { t } = useLocalization();
 
   return (

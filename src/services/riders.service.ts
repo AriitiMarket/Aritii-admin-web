@@ -21,6 +21,12 @@ export const ridersService = {
   async get(id: string): Promise<RiderDetail> {
     return deliveryAdmin.getRider(id);
   },
+  async create(data: Record<string, unknown>): Promise<Rider> {
+    return deliveryAdmin.createRider(data) as Promise<Rider>;
+  },
+  async update(id: string, data: Record<string, unknown>): Promise<Rider> {
+    return deliveryAdmin.updateRider(id, data) as Promise<Rider>;
+  },
   async updateStatus(id: string, status: string): Promise<Rider> {
     return deliveryAdmin.updateRiderStatus(id, status);
   },

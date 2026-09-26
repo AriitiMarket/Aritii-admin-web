@@ -7,9 +7,6 @@ import {
   faUsers,
   faExclamationTriangle,
   faArrowRight,
-  faMapPin,
-  faBriefcase,
-  faChartLine,
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +14,6 @@ import { useSector } from '@/hooks/useSector';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { analyticsService } from '@/services/analytics.service';
-import { adminApi } from '@/api/admin';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
 import { Card } from '@/components/common/Card';
@@ -44,7 +40,6 @@ export function AdminDashboardPage() {
   const ordersByType = useAsync(() => analyticsService.getOrdersByType(), []);
   const salesByType = useAsync(() => analyticsService.getSalesByType(), []);
   const pendingApprovals = useAsync(() => analyticsService.getPendingApprovals(), []);
-  const hierarchy = useAsync(() => adminApi.getPlatformHierarchy(), []);
 
   if (stats.loading) {
     return <PageLoader label={t('Loading')} />;
@@ -207,50 +202,6 @@ export function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* Platform Hierarchy Overview */}
-      {hierarchy.data && (
-        <Card>
-          <div className="flex items-center gap-2 mb-4">
-            <FontAwesomeIcon icon={faMapPin} className="text-blue-600 dark:text-blue-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('Platform Hierarchy')}
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {hierarchy.data.regions?.slice(0, 6).map((region: any) => (
-              <div
-                key={region.id}
-                className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition"
-                onClick={() => navigate('/locations')}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {region.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {region.children?.length || 0} cities
-                    </p>
-                  </div>
-                  <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">
-                    REGION
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button
-            onClick={() => navigate('/locations')}
-            variant="ghost"
-            className="mt-4 w-full text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-          >
-            <FontAwesomeIcon icon={faMapPin} className="mr-2" />
-            Explore Full Hierarchy
-            <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-          </Button>
-        </Card>
-      )}
-
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -295,7 +246,7 @@ export function AdminDashboardPage() {
         </h3>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Button
-            onClick={() => navigate('/sellers')}
+            onClick={() => navigate('/users?tab=sellers')}
             variant="secondary"
             className="text-sm"
           >

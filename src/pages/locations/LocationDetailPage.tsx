@@ -1,131 +1,326 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { locationsService } from '@/services/locations.service';
-import { useAsync } from '@/hooks/useAsync';
-import { useLocalization } from '@/i18n/I18nProvider';
-import { Card } from '@/components/common/Card';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
-import { PageLoader } from '@/components/common/PageLoader';
-import { ErrorState } from '@/components/common/ErrorState';
+import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { formatDate } from '@/utils/format';
+import { Spinner } from '@/components/common/Spinner';
+import { Modal } from '@/components/common/Modal';
+import { LocationForm } from '@/components/locations/LocationForm';
+import { LocationTree } from '@/components/locations/LocationTree';
+import {
+  locationsService,
+} from '@/services/locations.service';
+import { useAsync } from '@/hooks/useAsync';
 
-export function LocationDetailPage() {
-  const { locationId } = useParams<{ locationId: string }>();
-  const { t } = useLocalization();
-  const [isEditing, setIsEditing] = useState(false);
+const TYPE_LABELS: Record<string, string> = {
+  country: '🌍 Country',
+  region: '📍 Region',
+  city: '🏙️ City',
+  town: '🏘️ Town',
+  area: '🗺️ Area',
+  sector: '📐 Sector',
+  community: '👥 Community',
+  village: '🏡 Village',
+  rural: '🌾 Rural',
+  other: '📌 Other',
+};
 
-  // Guard against a missing/stale id (e.g. a bookmarked `/locations/undefined`):
-  // never issue `GET /delivery/location/undefined`.
-  const hasValidId = Boolean(locationId && locationId !== 'undefined');
-  const { data: location, loading, error, refetch } = useAsync(
-    () => (hasValidId
-      ? locationsService.get(locationId as string)
-      : Promise.reject(new Error('Missing location identifier'))),
-    [locationId]
-  );
+export default function LocationDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  if (loading) return <PageLoader label={t('Loading')} />;
-  if (error || !location) {
-    return <ErrorState message={error ?? 'Not found'} onRetry={refetch} />;
-  }
+  const {
+    data: location,
+    loading,
+    error,
+    refetch,
+  } = useAsync(() => locationsService.get(id!), [id]);
 
-  const handleToggleActive = async () => {
+  const {
+    data: children,
+    loading: childrenLoading,
+    refetch: refetchChildren,
+  } = useAsync(() => locationsService.getChildren(id!), [id]);
+
+  const {
+    data: ancestors,
+    loading: ancestorsLoading,
+  } = useAsync(() => locationsService.getAncestors(id!), [id]);
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [showAddChild, setShowAddChild] = useState(false);
+  const [toggling, setToggling] = useState(false);
+
+  async function handleToggleActive() {
+    if (!location) return;
+    setToggling(true);
     try {
-      await locationsService.setActive(location.id, !location.isActive);
+      if (location.isActive) {
+        await locationsService.deactivate(location._id);
+      } else {
+        await locationsService.activate(location._id);
+      }
       refetch();
     } catch (err) {
-      console.error('Failed to toggle active status:', err);
+      console.error('Failed to toggle location:', err);
+    } finally {
+      setToggling(false);
     }
-  };
+  }
+
+  if (loading || ancestorsLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error || !location) {
+    return (
+      <div className="py-24 text-center">
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {error || 'Location not found'}
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => navigate('/locations')}
+        >
+          Back to Locations
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
       <PageHeader
         title={location.name}
-        description={`${location.type} • ${location.code || 'No code'}`}
+        description={`${TYPE_LABELS[location.type] || location.type} • ID: ${location._id}`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate('/locations')}>
+              Back
+            </Button>
+            <Button variant="outline" onClick={() => setShowEdit(true)}>
+              Edit
+            </Button>
             <Button
+              variant={location.isActive ? 'danger' : 'primary'}
+              loading={toggling}
               onClick={handleToggleActive}
-              variant={location.isActive ? 'outline' : 'primary'}
             >
-              {location.isActive ? t('Deactivate') : t('Activate')}
+              {location.isActive ? 'Deactivate' : 'Activate'}
             </Button>
-            <Button onClick={() => setIsEditing(!isEditing)} variant="outline">
-              {isEditing ? t('Cancel') : t('Edit')}
-            </Button>
-            <Link to="/locations">
-              <Button variant="outline">{t('Back')}</Button>
-            </Link>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('Type')}</p>
-              <p className="heading-5 dark:text-white">{location.type}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('Status')}</p>
-              <StatusBadge label={location.isActive ? 'ACTIVE' : 'INACTIVE'} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('Code')}</p>
-              <p className="text-gray-800 dark:text-gray-100">
-                {location.code || '—'}
-              </p>
-            </div>
-          </div>
-        </Card>
+      {/* Breadcrumb */}
+      {ancestors && ancestors.length > 0 && (
+        <nav className="mb-4 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+          <Link to="/locations" className="hover:text-primary-dark hover:underline">
+            Locations
+          </Link>
+          {ancestors.map((a) => (
+            <span key={a._id} className="flex items-center gap-1">
+              <span>/</span>
+              <Link
+                to={`/locations/${a._id}`}
+                className="hover:text-primary-dark hover:underline"
+              >
+                {a.name}
+              </Link>
+            </span>
+          ))}
+          <span>/</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {location.name}
+          </span>
+        </nav>
+      )}
 
-        <Card className="lg:col-span-2">
-          <p className="card-h1 mb-4 dark:text-white">{t('Details')}</p>
-          <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <dt className="text-gray-500 dark:text-gray-400">{t('Name')}</dt>
-            <dd className="text-gray-800 dark:text-gray-100">{location.name}</dd>
-            
-            <dt className="text-gray-500 dark:text-gray-400">{t('Description')}</dt>
-            <dd className="text-gray-800 dark:text-gray-100">
-              {location.description || '—'}
-            </dd>
-            
-            <dt className="text-gray-500 dark:text-gray-400">{t('Parent Location')}</dt>
-            <dd className="text-gray-800 dark:text-gray-100">
-              {location.parentId ? (
-                <Link to={`/locations/${location.parentId}`} className="text-blue-600 hover:underline">
-                  View Parent
-                </Link>
-              ) : (
-                '—'
-              )}
-            </dd>
-            
-            <dt className="text-gray-500 dark:text-gray-400">{t('Created')}</dt>
-            <dd className="text-gray-800 dark:text-gray-100">
-              {formatDate(location.createdAt)}
-            </dd>
-            
-            <dt className="text-gray-500 dark:text-gray-400">{t('Updated')}</dt>
-            <dd className="text-gray-800 dark:text-gray-100">
-              {formatDate(location.updatedAt)}
-            </dd>
+      {/* Detail grid */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Main info */}
+        <Card className="p-4 lg:col-span-2">
+          <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+            Details
+          </h2>
+          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Name
+              </dt>
+              <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                {location.name}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Type
+              </dt>
+              <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                {TYPE_LABELS[location.type] || location.type}
+              </dd>
+            </div>
+            {location.code && (
+              <div>
+                <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Code
+                </dt>
+                <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                  {location.code}
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Status
+              </dt>
+              <dd className="mt-0.5">
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    location.isActive
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  }`}
+                >
+                  {location.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </dd>
+            </div>
+            {location.parentId && (
+              <div>
+                <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Parent
+                </dt>
+                <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                  <Link
+                    to={`/locations/${location.parentId}`}
+                    className="text-primary-dark hover:underline"
+                  >
+                    View parent
+                  </Link>
+                </dd>
+              </div>
+            )}
+            {location.description && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Description
+                </dt>
+                <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                  {location.description}
+                </dd>
+              </div>
+            )}
+            {location.coordinates && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  Coordinates
+                </dt>
+                <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">
+                  {location.coordinates.coordinates[1]},{' '}
+                  {location.coordinates.coordinates[0]}
+                </dd>
+              </div>
+            )}
           </dl>
         </Card>
 
-        {location.metadata && Object.keys(location.metadata).length > 0 && (
-          <Card className="lg:col-span-3">
-            <p className="card-h1 mb-4 dark:text-white">{t('Metadata')}</p>
-            <pre className="text-xs text-gray-800 dark:text-gray-100 overflow-auto">
-              {JSON.stringify(location.metadata, null, 2)}
-            </pre>
-          </Card>
-        )}
+        {/* Quick actions */}
+        <Card className="p-4">
+          <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+            Quick Actions
+          </h2>
+          <div className="space-y-2">
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => setShowAddChild(true)}
+            >
+              Add Child Location
+            </Button>
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => setShowEdit(true)}
+            >
+              Edit Details
+            </Button>
+            <Button
+              className="w-full"
+              variant={location.isActive ? 'danger' : 'primary'}
+              loading={toggling}
+              onClick={handleToggleActive}
+            >
+              {location.isActive ? 'Deactivate' : 'Activate'}
+            </Button>
+          </div>
+        </Card>
       </div>
+
+      {/* Children */}
+      <Card className="mt-4 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Children
+          </h2>
+          <Button size="sm" onClick={() => setShowAddChild(true)}>
+            Add Child
+          </Button>
+        </div>
+        {childrenLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : children && children.length > 0 ? (
+          <LocationTree
+            nodes={children.map((c) => ({ ...c, children: [] }))}
+            selectedId={null}
+          />
+        ) : (
+          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            No child locations. Click "Add Child" to create one.
+          </p>
+        )}
+      </Card>
+
+      {/* Edit modal */}
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Edit Location"
+      >
+        <LocationForm
+          initial={location}
+          onSuccess={() => {
+            setShowEdit(false);
+            refetch();
+          }}
+          onCancel={() => setShowEdit(false)}
+        />
+      </Modal>
+
+      {/* Add child modal */}
+      <Modal
+        open={showAddChild}
+        onClose={() => setShowAddChild(false)}
+        title="Add Child Location"
+      >
+        <LocationForm
+          parentId={location._id}
+          parentType={location.type}
+          onSuccess={() => {
+            setShowAddChild(false);
+            refetch();
+            refetchChildren();
+          }}
+          onCancel={() => setShowAddChild(false)}
+        />
+      </Modal>
     </div>
   );
 }

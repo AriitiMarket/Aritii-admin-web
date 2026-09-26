@@ -3,6 +3,15 @@ import type { User } from '@/types/user';
 
 export type CustomerStatus = 'ACTIVE' | 'BLOCKED' | 'PENDING';
 
+/** Maps the identity-service account status onto the admin customer status. */
+const CUSTOMER_STATUS_MAP: Record<string, CustomerStatus> = {
+  active: 'ACTIVE',
+  inactive: 'BLOCKED',
+  suspended: 'BLOCKED',
+  banned: 'BLOCKED',
+  pending: 'PENDING',
+};
+
 export interface Customer {
   id: string;
   name: string;
@@ -26,15 +35,15 @@ export interface CustomerDetail extends Customer {
 }
 
 export const toCustomer = (user: User): Customer | null => {
-  if (user.userType !== 'CUSTOMER') return null;
+  if (user.role !== 'CUSTOMER') return null;
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    phone: user.phone,
-    status: user.status as CustomerStatus,
+    phone: user.phoneNumber,
+    status: CUSTOMER_STATUS_MAP[user.status] ?? 'PENDING',
     ordersCount: 0,
     totalSpent: 0,
-    sector: user.sectors[0] ?? '',
+    sector: '',
   };
 };

@@ -3,6 +3,14 @@ import type { Category, Dispute, Review, Sector } from '@/types';
 import { commerceAdmin } from '@/api/admin';
 import { http } from '@/services/client/httpClient';
 
+/**
+ * Raw dispute payload: Mongo returns `_id`, the UI model uses `id`. Kept as a
+ * named type (not `any`) so the id normalisation below is explicit and checked.
+ */
+interface RawDispute extends Partial<Dispute> {
+  _id?: string;
+}
+
 export const catalogService = {
   async listCategories(): Promise<Category[]> {
     return commerceAdmin.listCategories();
@@ -14,20 +22,32 @@ export const catalogService = {
     return commerceAdmin.listPendingReviews();
   },
   async approveReview(id: string): Promise<Review> {
-    return commerceAdmin.approveReview(id);
+    const review = await commerceAdmin.approveReview(id);
+    // A successful moderation always echoes the record back; a null here means
+    // the response shape changed, so fail loudly rather than fake success.
+    if (!review) throw new Error('The API did not return the moderated review');
+    return review;
   },
-  async rejectReview(id: string): Promise<Review> {
-    return commerceAdmin.rejectReview(id);
+  async rejectReview(id: string, reason: string): Promise<Review> {
+    const review = await commerceAdmin.rejectReview(id, reason);
+    if (!review) throw new Error('The API did not return the moderated review');
+    return review;
   },
   async listDisputes(): Promise<Dispute[]> {
-    const res = await http.get<{ success: boolean; disputes?: Dispute[] }>('/disputes');
-    return (res.disputes || []).map(d => ({ ...d, id: d.id || (d as any)._id }));
+    const res = await http.get<{ success: boolean; disputes?: RawDispute[] }>('/disputes');
+    return (res.disputes || []).map((d) => ({
+      ...(d as unknown as Dispute),
+      id: d.id || d._id || '',
+    }));
   },
   async updateDisputeStatus(id: string, status: Dispute['status']): Promise<Dispute> {
-    const res = await http.patch<{ success: boolean; dispute: Dispute }>(
+    const res = await http.patch<{ success: boolean; dispute: RawDispute }>(
       `/disputes/${id}/status`,
       { status }
     );
-    return { ...res.dispute, id: res.dispute.id || (res.dispute as any)._id };
+    return {
+      ...(res.dispute as unknown as Dispute),
+      id: res.dispute.id || res.dispute._id || '',
+    };
   },
 };

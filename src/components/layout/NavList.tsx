@@ -12,7 +12,6 @@ import {
   faMotorcycle,
   faStar,
   faStore,
-  faUserGroup,
   faUsers,
   faMap,
   faUpload,
@@ -20,6 +19,9 @@ import {
   faShoppingCart,
   faTag,
   faExchangeAlt,
+  faTruck,
+  faClock,
+  faRoute,
   type IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -29,14 +31,11 @@ import { twMerge } from 'tailwind-merge';
 const ICONS: Record<string, IconDefinition> = {
   Home: faHome,
   Users: faUsers,
-  Sellers: faUserGroup,
   Businesses: faBuilding,
   Stores: faStore,
   Riders: faMotorcycle,
-  Customers: faUserGroup,
   Disputes: faHeadset,
   Locations: faMap,
-  'Location Hierarchy': faLayerGroup,
   'Bulk Import': faUpload,
   'Commerce Overview': faShoppingCart,
   Products: faBoxesStacked,
@@ -48,10 +47,14 @@ const ICONS: Record<string, IconDefinition> = {
   Sectors: faLayerGroup,
   'Pending Reviews': faStar,
   Analytics: faChartLine,
-  Admins: faUsers,
   Settings: faCog,
   Expansion: faMap,
   Commerce: faShoppingCart,
+  'Delivery Zones': faLayerGroup,
+  Routes: faRoute,
+  'Active Deliveries': faClock,
+  'Delivery & Logistics': faTruck,
+  'Locations & Expansion': faMap,
 };
 
 export function NavList({

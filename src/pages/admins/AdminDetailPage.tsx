@@ -30,7 +30,7 @@ export function AdminDetailPage() {
         title={admin.name}
         description={admin.email}
         actions={
-          <Link to="/admins">
+          <Link to="/users?tab=admins">
             <Button variant="outline">{t('Back to admins')}</Button>
           </Link>
         }

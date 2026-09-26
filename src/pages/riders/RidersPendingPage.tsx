@@ -19,7 +19,7 @@ export function RidersPendingPage() {
   const { data, loading, error, refetch } = useAsync(
     async () => {
       const result = await ridersService.list({ page: 1, limit: 100 });
-      return result.items.filter((rider) => rider.status === 'PENDING');
+      return result.items.filter((rider) => rider.status === 'pending');
     },
     []
   );

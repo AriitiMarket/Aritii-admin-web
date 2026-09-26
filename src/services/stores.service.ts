@@ -1,101 +1,133 @@
 /** Stores service facade — normalizes API sources into a paged list. */
 import type { PaginatedResult, Store, StoreDetail } from '@/types';
-import { commerceAdmin } from '@/api/admin';
+import { commerceAdmin, adminApi } from '@/api/admin';
 
 export interface StoreListFilter {
   page: number;
   limit: number;
   search?: string;
-  status?: 'PENDING' | 'ACTIVE' | 'INACTIVE';
-  locationId?: string;
+  status?: string;
+  sector?: string;
   sectorId?: string;
+  locationId?: string;
+  /** SellerApplication id (the business). */
+  businessId?: string;
+  ownerId?: string;
   ownerEmail?: string;
   dateFrom?: string;
   dateTo?: string;
 }
 
-function paginateStores(stores: Store[], page: number, limit: number): PaginatedResult<Store> {
-  const start = (page - 1) * limit;
-  const items = stores.slice(start, start + limit);
+function mapShopToStore(shop: any): Store {
   return {
-    items,
-    total: stores.length,
-    page,
-    limit,
-    totalPages: Math.ceil(stores.length / limit),
+    ...shop,
+    id: shop._id || shop.id,
+    ownerId: shop.ownerId,
+    ownerName: shop.ownerName || shop.owner?.name,
+    ownerEmail: shop.ownerEmail || shop.owner?.email || shop.email,
+    locationSnapshot: shop.locationSnapshot || undefined,
+    sectorId: shop.sectorId || (typeof shop.sector === 'string' ? shop.sector : shop.sector?.id),
   };
 }
 
 export const storesService = {
   async list(filter: StoreListFilter): Promise<PaginatedResult<Store>> {
-    const stores = await commerceAdmin.listShops(filter.page, filter.limit, filter.search);
-    const term = (filter.search ?? '').toLowerCase();
-    const filtered = stores.filter((store) => {
-      if (term && !store.name.toLowerCase().includes(term)) return false;
-      if (filter.status && store.status !== filter.status) return false;
-      if (filter.locationId && store.locationId !== filter.locationId) return false;
-      if (filter.sectorId && store.sectorId !== filter.sectorId) return false;
-      if (filter.ownerEmail && store.email?.toLowerCase() !== filter.ownerEmail.toLowerCase()) return false;
-      if (filter.dateFrom && store.createdAt && new Date(store.createdAt) < new Date(filter.dateFrom)) return false;
-      if (filter.dateTo && store.createdAt && new Date(store.createdAt) > new Date(filter.dateTo)) return false;
-      return true;
-    });
-    return paginateStores(filtered, filter.page, filter.limit);
+    const params: Record<string, unknown> = {
+      page: filter.page,
+      limit: filter.limit,
+    };
+    if (filter.search) params.search = filter.search;
+    if (filter.status && filter.status !== 'all') params.status = filter.status;
+    if (filter.sectorId && filter.sectorId !== 'all') params.sectorId = filter.sectorId;
+    if (filter.businessId) params.businessId = filter.businessId;
+    if (filter.ownerId) params.ownerId = filter.ownerId;
+    // The backend resolves the email to an owner id (Identity lookup) and
+    // answers "no match" for an unknown address — it is no longer ignored.
+    if (filter.ownerEmail) params.ownerEmail = filter.ownerEmail;
+
+    const result = await adminApi.getShopsPaged(params);
+    return {
+      items: (result.items || []).map(mapShopToStore),
+      total: result.total || 0,
+      page: result.page || filter.page,
+      limit: result.limit || filter.limit,
+      totalPages: result.totalPages || 1,
+    };
   },
+
   pending(): Promise<Store[]> {
     return commerceAdmin.listPendingShops();
   },
-  get(id: string): Promise<StoreDetail> {
-    return commerceAdmin.getShop(id);
+
+  async get(id: string): Promise<StoreDetail> {
+    const shop = await commerceAdmin.getShop(id);
+    return {
+      ...shop,
+      id: shop._id || shop.id,
+      ownerId: shop.ownerId,
+      ownerName: shop.ownerName || shop.owner?.name,
+      ownerEmail: shop.ownerEmail || shop.owner?.email || shop.email,
+      locationSnapshot: shop.locationSnapshot || undefined,
+    } as StoreDetail;
   },
+
   approve(id: string) {
     return commerceAdmin.approveShop(id);
   },
+
   reject(id: string, reason?: string) {
     return commerceAdmin.rejectShop(id, reason);
   },
-  async bulkUpdateStatus(ids: string[], status: Store['status']): Promise<void> {
-    for (const id of ids) {
-      if (status === 'ACTIVE') {
-        await commerceAdmin.approveShop(id);
-      } else if (status === 'INACTIVE') {
-        await commerceAdmin.rejectShop(id, 'Bulk deactivated');
-      }
-    }
+
+  /**
+   * Admin "allow in public" toggle (in-place switch on the Stores table).
+   * Server cascades the flag to the shop's embedded product/event snapshots.
+   */
+  setShowOnPublic(id: string, showOnPublic: boolean) {
+    return adminApi.setShopShowOnPublic(id, showOnPublic);
   },
+
+  /** Temporarily take a shop off the platform (status → SUSPENDED). */
+  suspend(id: string, reason?: string) {
+    return commerceAdmin.suspendShop(id, reason);
+  },
+
+  /** Bring a suspended/rejected shop back (status → APPROVED). */
+  activate(id: string) {
+    return commerceAdmin.activateShop(id);
+  },
+
   async exportToCSV(stores: Store[]): Promise<string> {
     const headers = [
       'ID',
       'Name',
+      'Owner',
       'Email',
       'Phone',
       'Address',
-      'Location',
+      'Region',
+      'City',
       'Sector',
       'Status',
       'Rating',
       'Total Orders',
-      'Commission Rate',
-      'Tax Rate',
       'Created At',
-      'Updated At',
     ];
 
     const rows = stores.map((store) => [
       store.id,
       store.name,
-      store.email || '',
-      store.phone || '',
-      store.address || '',
-      store.locationId || '',
-      typeof store.sector === 'string' ? store.sector : (store.sector?.name || ''),
+      store.ownerName || store.ownerEmail || '',
+      store.ownerEmail || store.email || '',
+      store.phoneNumber || store.phone || '',
+      store.address || store.locationSnapshot?.fullAddress || '',
+      store.locationSnapshot?.regionName || '',
+      store.locationSnapshot?.cityName || '',
+      store.locationSnapshot?.sectorName || (typeof store.sector === 'string' ? store.sector : store.sector?.name || ''),
       store.status,
-      store.rating || '',
-      store.totalOrders || '',
-      store.commissionRate || '',
-      store.tax || '',
+      store.ratings ?? store.rating ?? '',
+      store.orderCount ?? store.totalOrders ?? '',
       store.createdAt || '',
-      store.updatedAt || '',
     ]);
 
     const csvContent = [

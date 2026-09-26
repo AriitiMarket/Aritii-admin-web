@@ -30,7 +30,7 @@ export function CustomerDetailPage() {
         title={customer.name}
         description={customer.email}
         actions={
-          <Link to="/customers">
+          <Link to="/users?tab=customers">
             <Button variant="outline">{t('Back to customers')}</Button>
           </Link>
         }

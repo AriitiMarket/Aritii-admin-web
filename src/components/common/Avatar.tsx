@@ -1,4 +1,5 @@
 import { twMerge } from 'tailwind-merge';
+import { resolveImageUrl } from '@/utils/image';
 
 export function Avatar({
   src,
@@ -20,10 +21,11 @@ export function Avatar({
     .slice(0, 2)
     .join('')
     .toUpperCase();
+  const resolved = src ? resolveImageUrl(src) : null;
 
-  return src ? (
+  return resolved ? (
     <img
-      src={src}
+      src={resolved}
       alt={name}
       className={twMerge('rounded-full object-cover', dimensions, className)}
     />

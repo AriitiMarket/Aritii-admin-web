@@ -226,9 +226,13 @@ export const http = {
   },
   delete<T>(
     endpoint: string,
+    // Some destructive endpoints (e.g. purging audit logs) need a body to
+    // carry a reason + confirmation, so `body` is accepted here even though
+    // many HTTP clients omit DELETE bodies.
+    body: HttpBody = undefined,
     options: HttpRequestOptions = {}
   ): Promise<T> {
-    return doFetch<T>('DELETE', endpoint, undefined, options, true);
+    return doFetch<T>('DELETE', endpoint, body, options, true);
   },
 };
 

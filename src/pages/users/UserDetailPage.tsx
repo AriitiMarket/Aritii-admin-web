@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { usersService } from '@/services/users.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useToast } from '@/hooks/useToast';

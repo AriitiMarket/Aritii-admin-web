@@ -110,6 +110,7 @@ function DataTable<T extends Record<string, unknown>>({
 
 export function GrowthAnalyticsPage() {
   const { t } = useLocalization();
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 

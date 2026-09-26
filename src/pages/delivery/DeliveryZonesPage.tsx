@@ -1,75 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
-import { Card } from '@/components/common/Card';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/forms/SelectField';
+import { Button } from '@/components/common/Button';
+import { Modal } from '@/components/common/Modal';
 import { DataTable, type Column } from '@/components/tables/DataTable';
-import { http } from '@/services/client/httpClient';
+import { TextField } from '@/components/forms/TextField';
+import { zonesService, locationsService, type Zone, type Location } from '@/services/locations.service';
 import { formatDate } from '@/utils/format';
-
-interface Zone {
-  id?: string;
-  _id?: string;
-  name?: string;
-  code?: string;
-  status?: 'active' | 'inactive' | 'suspended';
-  description?: string;
-  locationIds?: string[];
-  coverage?: {
-    radiusKm?: number;
-    boundaries?: any;
-    notes?: string;
-  };
-  createdAt?: string;
-}
-
-interface ZonesResponse {
-  zones?: Zone[];
-  items?: Zone[];
-  count?: number;
-  total?: number;
-}
 
 const ZONE_STATUSES = [
   { value: '', label: 'All Statuses' },
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
-  { value: 'suspended', label: 'Suspended' },
 ];
 
 export function DeliveryZonesPage() {
-  const { t } = useLocalization();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [editZone, setEditZone] = useState<Zone | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
   const debouncedSearch = useDebounce(search, 300);
+
+  // Load locations for zone assignment
+  useEffect(() => {
+    locationsService.list({ type: 'sector' }).then(setLocations).catch(console.error);
+  }, []);
 
   const { data, loading, error, refetch } = useAsync(
     async () => {
       try {
-        const params = new URLSearchParams();
-        params.append('page', page.toString());
-        params.append('limit', '10');
-        if (debouncedSearch) params.append('search', debouncedSearch);
-        if (status) params.append('status', status);
-
-        const res = await http.get<ZonesResponse>(
-          `/delivery/zone?${params}`
-        );
-        const items = res.zones || res.items || [];
-        return {
-          items: items.map((z: Zone) => ({
-            ...z,
-            id: z._id || z.id,
-          })),
-          total: res.total || res.count || items.length,
-          totalPages: Math.ceil((res.total || res.count || 0) / 10),
-        };
+        const res = await zonesService.list({
+          status: status || undefined,
+          search: debouncedSearch || undefined,
+          page,
+          limit: 15,
+        });
+        return res;
       } catch (err) {
         console.error('Failed to fetch zones:', err);
         throw err;
@@ -78,128 +51,108 @@ export function DeliveryZonesPage() {
     [page, debouncedSearch, status]
   );
 
-  const getStatusColor = (s?: string) => {
-    const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-800',
-      inactive: 'bg-gray-100 text-gray-800',
-      suspended: 'bg-red-100 text-red-800',
-    };
-    return colors[s || ''] || 'bg-gray-100 text-gray-800';
+  const getStatusColor = (s: string) => {
+    return s === 'active'
+      ? 'bg-green-100 text-green-800'
+      : 'bg-gray-100 text-gray-800';
   };
 
   const columns: Column<Zone>[] = [
     {
       key: 'name',
-      header: t('Zone Name'),
+      header: 'Zone Name',
       render: (row) => (
-        <span className="font-medium text-gray-800 dark:text-gray-100">
-          {row.name || '—'}
-        </span>
+        <span className="font-medium text-gray-800 dark:text-gray-100">{row.name}</span>
       ),
     },
     {
       key: 'code',
       header: 'Code',
-      render: (row) => (
-        <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
-          {row.code || '—'}
-        </span>
-      ),
+      accessor: (row) => row.code || '—',
     },
     {
       key: 'status',
-      header: t('Status'),
+      header: 'Status',
       render: (row) => (
-        <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(row.status)}`}>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(row.status || '')}`}>
           {row.status || '—'}
         </span>
       ),
     },
     {
       key: 'locationIds',
-      header: 'Covered Locations',
+      header: 'Locations',
       render: (row) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {row.locationIds?.length || 0} locations
-        </span>
-      ),
-    },
-    {
-      key: 'coverage.radiusKm',
-      header: 'Coverage Radius',
-      render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {row.coverage?.radiusKm ? `${row.coverage.radiusKm} km` : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'description',
-      header: t('Description'),
-      render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {row.description || '—'}
+          {row.locationIds?.length || 0} location{row.locationIds?.length === 1 ? '' : 's'}
         </span>
       ),
     },
     {
       key: 'createdAt',
-      header: t('Created'),
+      header: 'Created',
       render: (row) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
           {formatDate(row.createdAt)}
         </span>
       ),
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditZone(row)}
+          >
+            Edit
+          </Button>
+          <Button
+            variant={row.status === 'active' ? 'danger' : 'primary'}
+            size="sm"
+            onClick={async () => {
+              if (row.status === 'active') {
+                await zonesService.deactivate(row._id);
+              } else {
+                await zonesService.activate(row._id);
+              }
+              refetch();
+            }}
+          >
+            {row.status === 'active' ? 'Deactivate' : 'Activate'}
+          </Button>
+        </div>
+      ),
+    },
   ];
-
-  const activeZones = data?.items?.filter(z => z.status === 'active').length || 0;
-  const totalZones = data?.total || 0;
 
   return (
     <div>
       <PageHeader
-        title={t('Delivery Zones')}
-        description={t('Manage delivery service zones and coverage areas')}
+        title="Delivery Zones"
+        description="Manage operational delivery coverage zones linked to location hierarchy"
         actions={
           <div className="flex gap-2">
             <SearchInput
               value={search}
               onChange={setSearch}
-              placeholder={t('Search zones')}
-              aria-label={t('Search')}
+              placeholder="Search zones"
+              aria-label="Search"
             />
             <SelectField
               value={status}
-              onChange={setStatus}
+              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               options={ZONE_STATUSES}
-              className="w-48"
+              className="w-44"
             />
+            <Button onClick={() => setShowCreate(true)}>
+              Create Zone
+            </Button>
           </div>
         }
       />
-
-      {/* Summary Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="flex flex-col items-center gap-2 p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total Zones</p>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {totalZones}
-          </p>
-        </Card>
-        <Card className="flex flex-col items-center gap-2 p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Active Zones</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {activeZones}
-          </p>
-        </Card>
-        <Card className="flex flex-col items-center gap-2 p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Coverage</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-            {totalZones > 0 ? Math.round((activeZones / totalZones) * 100) : 0}%
-          </p>
-        </Card>
-      </div>
 
       {error ? (
         <ErrorState message={error} onRetry={refetch} />
@@ -207,10 +160,11 @@ export function DeliveryZonesPage() {
         <>
           <DataTable<Zone>
             columns={columns}
-            rows={data?.items ?? []}
-            rowKey={(row) => row.id || row._id || ''}
+            rows={data?.zones ?? []}
+            rowKey={(row) => row._id}
             loading={loading}
-            emptyTitle={t('No zones')}
+            emptyTitle="No delivery zones found"
+            onRowClick={(row) => setEditZone(row)}
           />
           <Pagination
             className="mt-4"
@@ -221,6 +175,147 @@ export function DeliveryZonesPage() {
           />
         </>
       )}
+
+      {/* Create Zone Modal */}
+      <ZoneFormModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        locations={locations}
+        onSuccess={() => { setShowCreate(false); refetch(); }}
+      />
+
+      {/* Edit Zone Modal */}
+      {editZone && (
+        <ZoneFormModal
+          open={!!editZone}
+          onClose={() => setEditZone(null)}
+          zone={editZone}
+          locations={locations}
+          onSuccess={() => { setEditZone(null); refetch(); }}
+        />
+      )}
     </div>
+  );
+}
+
+function ZoneFormModal({
+  open,
+  onClose,
+  zone,
+  locations,
+  onSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  zone?: Zone;
+  locations: Location[];
+  onSuccess: () => void;
+}) {
+  const [name, setName] = useState(zone?.name || '');
+  const [code, setCode] = useState(zone?.code || '');
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(zone?.locationIds || []);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const isEditing = !!zone;
+
+  const toggleLocation = (locId: string) => {
+    setSelectedLocations((prev) =>
+      prev.includes(locId) ? prev.filter((id) => id !== locId) : [...prev, locId]
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) { setError('Name is required'); return; }
+    if (!code.trim()) { setError('Code is required'); return; }
+
+    setSaving(true);
+    setError('');
+    try {
+      if (isEditing) {
+        await zonesService.update(zone._id, {
+          name: name.trim(),
+          code: code.trim(),
+          locationIds: selectedLocations,
+        });
+      } else {
+        await zonesService.create({
+          name: name.trim(),
+          code: code.trim(),
+          locationIds: selectedLocations,
+        });
+      }
+      onSuccess();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save zone');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={isEditing ? 'Edit Zone' : 'Create Zone'} size="lg">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        <TextField
+          label="Zone Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Harar Central Zone"
+          required
+        />
+
+        <TextField
+          label="Zone Code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="e.g. HZ-001"
+          required
+        />
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Coverage Locations (Sectors)
+          </label>
+          <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200 p-3 dark:border-dark-600">
+            {locations.length === 0 ? (
+              <p className="text-sm text-gray-500">No sectors available</p>
+            ) : (
+              locations.map((loc) => (
+                <label
+                  key={loc._id}
+                  className="flex items-center gap-2 py-1 text-sm hover:bg-gray-50 dark:hover:bg-dark-800"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedLocations.includes(loc._id)}
+                    onChange={() => toggleLocation(loc._id)}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-gray-800 dark:text-gray-100">{loc.name}</span>
+                  {loc.code && <span className="text-xs text-gray-400">({loc.code})</span>}
+                </label>
+              ))
+            )}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            {selectedLocations.length} location{selectedLocations.length === 1 ? '' : ''} selected
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-dark-600">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={saving}>
+            {isEditing ? 'Update Zone' : 'Create Zone'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -1,6 +1,7 @@
 /** Marketplace sector. Sectors scope what an admin can see/manage. */
 export interface Sector {
   id: string;
+  _id?: string;
   name: string;
   code: string;
   status: 'ACTIVE' | 'INACTIVE';

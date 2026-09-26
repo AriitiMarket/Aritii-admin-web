@@ -17,7 +17,6 @@ const CRUMB_KEYS: Array<{ match: RegExp; key: string }> = [
   { match: /^\/admins\/new/, key: 'New Admin' },
   { match: /^\/admins/, key: 'Admins' },
   { match: /^\/categories/, key: 'Categories' },
-  { match: /^\/sectors/, key: 'Sectors' },
   { match: /^\/reviews\/pending/, key: 'Pending Reviews' },
   { match: /^\/reviews/, key: 'Reviews' },
   { match: /^\/orders/, key: 'Orders' },

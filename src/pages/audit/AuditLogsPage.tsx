@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { auditService } from '@/services/audit.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -7,6 +7,8 @@ import { Card } from '@/components/common/Card';
 import { StatCard } from '@/components/common/StatCard';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageLoader } from '@/components/common/PageLoader';
+import { Button } from '@/components/common/Button';
+import { ClearAuditLogsModal } from './ClearAuditLogsModal';
 import type { AuditLog, AuditLogFilters, AuditLogStats } from '@/types';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -90,17 +92,29 @@ export function AdminAuditLogsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
+  // Debounce search so typing doesn't fire a request per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const filterKey = `${page}-${search}-${adminFilter}-${actionFilter}-${moduleFilter}-${startDate}-${endDate}`;
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [search]);
+
+  const filterKey = `${page}-${debouncedSearch}-${adminFilter}-${actionFilter}-${moduleFilter}-${startDate}-${endDate}`;
 
   const logs = useAsync(() => auditService.listLogs({
     page, limit: 20,
     adminId: adminFilter || undefined,
     action: actionFilter || undefined,
     module: moduleFilter || undefined,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     startDate: startDate || undefined,
-    endDate: endDate || undefined,
+    // Cover the whole selected end day (backend also normalises bare dates).
+    endDate: endDate ? `${endDate}T23:59:59.999Z` : undefined,
   }), [filterKey]);
 
   const filters = useAsync(() => auditService.getFilters(), []);
@@ -121,6 +135,26 @@ export function AdminAuditLogsPage() {
       <PageHeader
         title={t('Audit Logs')}
         description={t('Track all sensitive admin actions across the platform')}
+        actions={
+          <Button variant="danger" onClick={() => setClearOpen(true)}>
+            Clear Logs
+          </Button>
+        }
+      />
+
+      <ClearAuditLogsModal
+        open={clearOpen}
+        onClose={() => setClearOpen(false)}
+        filterOptions={{
+          modules: filterData?.modules ?? [],
+          actions: filterData?.actions ?? [],
+        }}
+        onCleared={() => {
+          setClearOpen(false);
+          logs.refetch();
+          stats.refetch();
+          filters.refetch();
+        }}
       />
 
       {/* Stats Cards */}
@@ -141,7 +175,7 @@ export function AdminAuditLogsPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Search logs...')}
               className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />

@@ -1,6 +1,5 @@
 import { twMerge } from 'tailwind-merge';
 import { NavList } from '@/components/layout/NavList';
-import { HierarchySidebar } from '@/components/HierarchySidebar';
 import { Logo } from '@/components/common/Logo';
 
 export function Sidebar({ open }: { open: boolean }) {
@@ -25,10 +24,6 @@ export function Sidebar({ open }: { open: boolean }) {
         <nav className="flex-1 overflow-y-auto">
           <NavList />
         </nav>
-        {/* Platform Hierarchy Management */}
-        <div className="flex-shrink-0">
-          <HierarchySidebar />
-        </div>
       </div>
     </aside>
   );

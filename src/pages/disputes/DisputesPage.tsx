@@ -1,20 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/forms/SelectField';
-import { Card } from '@/components/common/Card';
 import { DataTable, type Column } from '@/components/tables/DataTable';
-import { Button } from '@/components/common/Button';
 import { formatDate } from '@/utils/format';
 import { disputesAdmin } from '@/api/admin';
-import type { Dispute } from '@/types/catalog';
 
 const DISPUTE_STATUSES = [
   { value: '', label: 'All Statuses' },
@@ -51,7 +46,6 @@ export function DisputesManagementPage() {
   const [status, setStatus] = useState('');
   const [priority, setPriority] = useState('');
   const [type, setType] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
 
   const { data, loading, error, refetch } = useAsync(
     async () => {
@@ -149,6 +143,18 @@ export function DisputesManagementPage() {
     },
   ];
 
+  // The disputes API has no server-side `search` filter yet, so the term is
+  // applied to the currently loaded page instead of being silently ignored.
+  const visibleItems = (data?.items ?? []).filter(
+    (dispute: Record<string, unknown>) => {
+      if (!search) return true;
+      const term = search.toLowerCase();
+      return [dispute.id, dispute.subject, dispute.buyerName, dispute.type]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term));
+    }
+  );
+
   return (
     <div>
       <PageHeader
@@ -168,19 +174,19 @@ export function DisputesManagementPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <SelectField
           value={status}
-          onChange={setStatus}
+          onChange={(e) => setStatus(e.target.value)}
           options={DISPUTE_STATUSES}
           label="Status"
         />
         <SelectField
           value={priority}
-          onChange={setPriority}
+          onChange={(e) => setPriority(e.target.value)}
           options={DISPUTE_PRIORITIES}
           label="Priority"
         />
         <SelectField
           value={type}
-          onChange={setType}
+          onChange={(e) => setType(e.target.value)}
           options={DISPUTE_TYPES}
           label="Type"
         />
@@ -192,7 +198,7 @@ export function DisputesManagementPage() {
         <>
           <DataTable<any>
             columns={columns}
-            rows={data?.items ?? []}
+            rows={visibleItems}
             rowKey={(row) => row.id}
             loading={loading}
             emptyTitle={t('No disputes')}

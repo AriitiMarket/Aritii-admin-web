@@ -48,7 +48,7 @@ export function AdminNewPage() {
         title: t('Success'),
         message: t('Admin created successfully') || 'Admin created successfully',
       });
-      navigate('/admins');
+      navigate('/users?tab=admins');
     } catch (err) {
       showToast({
         type: 'error',
@@ -64,7 +64,9 @@ export function AdminNewPage() {
     <div>
       <PageHeader
         title={t('New Admin')}
-        description={t('Invite a new administrator to the Ariiti platform')}
+        description={t(
+          'Admin provisioning is not available yet — grant an existing account the ADMIN role instead'
+        )}
       />
 
       <form onSubmit={onSubmit} noValidate className="grid max-w-2xl grid-cols-1 gap-4">

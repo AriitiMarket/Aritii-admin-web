@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { RoleRoute } from '@/routes/RoleRoute';
 import { PageLoader } from '@/components/common/PageLoader';
 import type { AdminRole } from '@/types/auth';
+import { USERS_TAB_ROLES } from '@/pages/users/usersTabs';
 
 // Auth
 import { LoginPage } from '@/pages/LoginPage';
@@ -28,11 +29,6 @@ const UsersPage = lazy(() =>
 const UserDetailPage = lazy(() =>
   import('@/pages/users/UserDetailPage').then((m) => ({
     default: m.UserDetailPage,
-  }))
-);
-const SellersPage = lazy(() =>
-  import('@/pages/sellers/SellersPage').then((m) => ({
-    default: m.SellersManagementPage,
   }))
 );
 const SellerDetailPage = lazy(() =>
@@ -63,22 +59,9 @@ const StoreDetailPage = lazy(() =>
     default: m.StoreDetailPage,
   }))
 );
-const RidersPage = lazy(() =>
-  import('@/pages/riders/RidersPage').then((m) => ({ default: m.RidersManagementPage }))
-);
-const RidersPendingPage = lazy(() =>
-  import('@/pages/riders/RidersPendingPage').then((m) => ({
-    default: m.RidersPendingPage,
-  }))
-);
 const RiderDetailPage = lazy(() =>
   import('@/pages/riders/RiderDetailPage').then((m) => ({
     default: m.RiderDetailPage,
-  }))
-);
-const CustomersPage = lazy(() =>
-  import('@/pages/customers/CustomersPage').then((m) => ({
-    default: m.CustomersManagementPage,
   }))
 );
 const CustomerDetailPage = lazy(() =>
@@ -91,8 +74,11 @@ const DisputesPage = lazy(() =>
     default: m.DisputesManagementPage,
   }))
 );
-const AdminsPage = lazy(() =>
-  import('@/pages/admins/AdminsPage').then((m) => ({ default: m.AdminsManagementPage }))
+// Request Management — buyer → seller negotiation pipeline
+const RequestsPage = lazy(() =>
+  import('@/pages/requests/RequestsPage').then((m) => ({
+    default: m.RequestsManagementPage,
+  }))
 );
 const AdminNewPage = lazy(() =>
   import('@/pages/admins/AdminNewPage').then((m) => ({
@@ -114,11 +100,6 @@ const CategoriesPage = lazy(() =>
     default: m.CategoriesPage,
   }))
 );
-const SectorsPage = lazy(() =>
-  import('@/pages/catalog/SectorsPage').then((m) => ({
-    default: m.SectorsPage,
-  }))
-);
 const PendingReviewsPage = lazy(() =>
   import('@/pages/catalog/PendingReviewsPage').then((m) => ({
     default: m.PendingReviewsPage,
@@ -128,15 +109,9 @@ const OrdersPage = lazy(() =>
   import('@/pages/orders/OrdersPage').then((m) => ({ default: m.OrdersMonitoringPage }))
 );
 
-// Platform Admin Control Center — explorer, live operations, hierarchy growth
-const PlatformExplorerPage = lazy(() =>
-  import('@/pages/explorer/PlatformExplorerPage').then((m) => ({ default: m.PlatformExplorerPage }))
-);
+// Platform Admin Control Center — live operations
 const OperationsPage = lazy(() =>
   import('@/pages/operations/OperationsPage').then((m) => ({ default: m.OperationsPage }))
-);
-const GrowthByHierarchyPage = lazy(() =>
-  import('@/pages/analytics/GrowthByHierarchyPage').then((m) => ({ default: m.GrowthByHierarchyPage }))
 );
 const OrderDetailPage = lazy(() =>
   import('@/pages/orders/OrderDetailPage').then((m) => ({
@@ -183,36 +158,6 @@ const SystemSettingsPage = lazy(() =>
     default: m.SystemSettingsPage,
   }))
 );
-const LocationsPage = lazy(() =>
-  import('@/pages/locations/LocationsPage').then((m) => ({
-    default: m.LocationsManagementPage,
-  }))
-);
-const LocationDetailPage = lazy(() =>
-  import('@/pages/locations/LocationDetailPage').then((m) => ({
-    default: m.LocationDetailPage,
-  }))
-);
-const LocationCreatePage = lazy(() =>
-  import('@/pages/locations/LocationCreatePage').then((m) => ({
-    default: m.LocationCreatePage,
-  }))
-);
-const LocationHierarchyPage = lazy(() =>
-  import('@/pages/locations/LocationHierarchyPage').then((m) => ({
-    default: m.LocationHierarchyPage,
-  }))
-);
-const LocationDeliveryZonesPage = lazy(() =>
-  import('@/pages/locations/LocationDeliveryZonesPage').then((m) => ({
-    default: m.LocationDeliveryZonesPage,
-  }))
-);
-const LocationBulkImportPage = lazy(() =>
-  import('@/pages/locations/LocationBulkImportPage').then((m) => ({
-    default: m.LocationBulkImportPage,
-  }))
-);
 const ShopsAnalyticsPage = lazy(() =>
   import('@/pages/stores/ShopsAnalyticsPage').then((m) => ({
     default: m.ShopsAnalyticsPage,
@@ -225,6 +170,11 @@ const AuditLogsPage = lazy(() =>
 );
 
 // Delivery Module
+const DeliveryLogisticsPage = lazy(() =>
+  import('@/pages/delivery/DeliveryLogisticsPage').then((m) => ({
+    default: m.DeliveryLogisticsPage,
+  }))
+);
 const DeliveryOverviewPage = lazy(() =>
   import('@/pages/delivery/DeliveryOverviewPage').then((m) => ({
     default: m.DeliveryDashboardPage,
@@ -235,17 +185,46 @@ const DeliveryAssignmentsPage = lazy(() =>
     default: m.DeliveryAssignmentsPage,
   }))
 );
-const DeliveryZonesPage = lazy(() =>
-  import('@/pages/delivery/DeliveryZonesPage').then((m) => ({
-    default: m.DeliveryZonesPage,
+const DeliveryAssignmentDetailPage = lazy(() =>
+  import('@/pages/delivery/DeliveryAssignmentDetailPage').then((m) => ({
+    default: m.DeliveryAssignmentDetailPage,
   }))
 );
 
+// Location Management
+const LocationsPage = lazy(() =>
+  import('@/pages/locations/LocationsPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const LocationsExpansionPage = lazy(() =>
+  import('@/pages/locations/LocationsExpansionPage').then((m) => ({
+    default: m.LocationsExpansionPage,
+  }))
+);
+const ProvidersPage = lazy(() =>
+  import('@/pages/providers/ProvidersPage').then((m) => ({
+    default: m.ProvidersPage,
+  }))
+);
+const LocationDetailPage = lazy(() =>
+  import('@/pages/locations/LocationDetailPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const RouteDetailPage = lazy(() =>
+  import('@/pages/locations/RouteDetailPage').then((m) => ({
+    default: m.default,
+  }))
+);
 // Role constants
 const SUPER: AdminRole[] = ['SUPER_ADMIN'];
 const SELLER: AdminRole[] = ['SUPER_ADMIN', 'SELLER_ADMIN'];
 const RIDER: AdminRole[] = ['SUPER_ADMIN', 'RIDER_ADMIN'];
 const CUSTOMER: AdminRole[] = ['SUPER_ADMIN', 'CUSTOMER_ADMIN'];
+// Every role that may reach at least one user type — the union of the Users
+// page tabs (see src/pages/users/usersTabs.ts).
+const USERS: AdminRole[] = USERS_TAB_ROLES;
 
 function Suspend({ children, roles }: { children: React.ReactElement; roles: AdminRole[] }) {
   return (
@@ -276,41 +255,38 @@ export function AppRoutes() {
         { index: true, element: <Navigate to="/home" replace /> },
         { path: 'home', element: <Suspend roles={SUPER}><HomePage /></Suspend> },
         // Platform Admin Control Center
-        { path: 'explorer', element: <Suspend roles={SUPER}><PlatformExplorerPage /></Suspend> },
         { path: 'operations', element: <Suspend roles={SUPER}><OperationsPage /></Suspend> },
-        { path: 'users', element: <Suspend roles={CUSTOMER}><UsersPage /></Suspend> },
+        { path: 'users', element: <Suspend roles={USERS}><UsersPage /></Suspend> },
         { path: 'users/:userId', element: <Suspend roles={CUSTOMER}><UserDetailPage /></Suspend> },
-        { path: 'sellers', element: <Suspend roles={SELLER}><SellersPage /></Suspend> },
+        // Legacy list paths redirect to Users tabs; detail routes stay unchanged.
+        { path: 'sellers', element: <Navigate to="/users?tab=sellers" replace /> },
         { path: 'sellers/:sellerId', element: <Suspend roles={SELLER}><SellerDetailPage /></Suspend> },
         { path: 'businesses', element: <Suspend roles={SELLER}><BusinessesPage /></Suspend> },
         { path: 'businesses/:businessId', element: <Suspend roles={SELLER}><BusinessDetailPage /></Suspend> },
         { path: 'stores', element: <Suspend roles={SELLER}><StoresPage /></Suspend> },
         { path: 'stores/pending', element: <Suspend roles={SELLER}><StoresPendingPage /></Suspend> },
         { path: 'stores/:storeId', element: <Suspend roles={SELLER}><StoreDetailPage /></Suspend> },
-        { path: 'locations', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
-        { path: 'locations/create', element: <Suspend roles={SUPER}><LocationCreatePage /></Suspend> },
-        { path: 'locations/hierarchy', element: <Suspend roles={SUPER}><LocationHierarchyPage /></Suspend> },
-        { path: 'locations/:locationId', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
-        { path: 'locations/:locationId/zones', element: <Suspend roles={SUPER}><LocationDeliveryZonesPage /></Suspend> },
-        { path: 'locations/bulk/import', element: <Suspend roles={SUPER}><LocationBulkImportPage /></Suspend> },
         { path: 'stores/analytics', element: <Suspend roles={SELLER}><ShopsAnalyticsPage /></Suspend> },
-        { path: 'riders', element: <Suspend roles={RIDER}><RidersPage /></Suspend> },
-        { path: 'riders/pending', element: <Suspend roles={RIDER}><RidersPendingPage /></Suspend> },
+        // Delivery Providers — one workspace for riders, businesses and
+        // logistics partners. The old /riders URLs redirect here so existing
+        // links and bookmarks keep working.
+        { path: 'delivery/providers', element: <Suspend roles={RIDER}><ProvidersPage /></Suspend> },
+        { path: 'riders', element: <Navigate to="/delivery/providers" replace /> },
+        { path: 'riders/pending', element: <Navigate to="/delivery/providers?status=pending" replace /> },
         { path: 'riders/:riderId', element: <Suspend roles={RIDER}><RiderDetailPage /></Suspend> },
-        { path: 'customers', element: <Suspend roles={CUSTOMER}><CustomersPage /></Suspend> },
+        { path: 'customers', element: <Navigate to="/users?tab=customers" replace /> },
         { path: 'customers/:customerId', element: <Suspend roles={CUSTOMER}><CustomerDetailPage /></Suspend> },
         { path: 'disputes', element: <Suspend roles={CUSTOMER}><DisputesPage /></Suspend> },
-        { path: 'admins', element: <Suspend roles={SUPER}><AdminsPage /></Suspend> },
+        { path: 'requests', element: <Suspend roles={CUSTOMER}><RequestsPage /></Suspend> },
+        { path: 'admins', element: <Navigate to="/users?tab=admins" replace /> },
         { path: 'admins/new', element: <Suspend roles={SUPER}><AdminNewPage /></Suspend> },
         { path: 'admins/:adminId', element: <Suspend roles={SUPER}><AdminDetailPage /></Suspend> },
         { path: 'admin-roles', element: <Suspend roles={SUPER}><AdminRolesPage /></Suspend> },
         { path: 'categories', element: <Suspend roles={SELLER}><CategoriesPage /></Suspend> },
-        { path: 'sectors', element: <Suspend roles={SUPER}><SectorsPage /></Suspend> },
         { path: 'reviews/pending', element: <Suspend roles={SELLER}><PendingReviewsPage /></Suspend> },
         { path: 'orders', element: <Suspend roles={SUPER}><OrdersPage /></Suspend> },
         { path: 'orders/:orderId', element: <Suspend roles={SUPER}><OrderDetailPage /></Suspend> },
         { path: 'analytics', element: <Suspend roles={CUSTOMER}><AnalyticsPage /></Suspend> },
-        { path: 'analytics/growth', element: <Suspend roles={SUPER}><GrowthByHierarchyPage /></Suspend> },
         { path: 'audit-logs', element: <Suspend roles={SUPER}><AuditLogsPage /></Suspend> },
         { path: 'settings/platform', element: <Suspend roles={SUPER}><PlatformSettingsPage /></Suspend> },
         { path: 'settings/notifications', element: <Suspend roles={SUPER}><NotificationsSettingsPage /></Suspend> },
@@ -321,9 +297,19 @@ export function AppRoutes() {
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
         
         // Delivery Module Routes
-        { path: 'delivery', element: <Suspend roles={RIDER}><DeliveryOverviewPage /></Suspend> },
+        { path: 'delivery', element: <Suspend roles={RIDER}><DeliveryLogisticsPage /></Suspend> },
+        { path: 'delivery/overview', element: <Suspend roles={RIDER}><DeliveryOverviewPage /></Suspend> },
         { path: 'delivery/assignments', element: <Suspend roles={RIDER}><DeliveryAssignmentsPage /></Suspend> },
-        { path: 'delivery/zones', element: <Suspend roles={RIDER}><DeliveryZonesPage /></Suspend> },
+        { path: 'delivery/assignments/:assignmentId', element: <Suspend roles={RIDER}><DeliveryAssignmentDetailPage /></Suspend> },
+        // Locations & Expansion is ONE workspace with tabs. The standalone
+        // zone/route list pages redirect into the matching tab so old links and
+        // bookmarks keep working without creating duplicate dashboards.
+        { path: 'locations', element: <Suspend roles={SUPER}><LocationsExpansionPage /></Suspend> },
+        { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
+        { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
+        { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },
+        { path: 'delivery/routes', element: <Navigate to="/locations?tab=routes" replace /> },
+        { path: 'delivery/routes/:id', element: <Suspend roles={SUPER}><RouteDetailPage /></Suspend> },
       ],
     },
     { path: '/forbidden', element: <ForbiddenPage /> },

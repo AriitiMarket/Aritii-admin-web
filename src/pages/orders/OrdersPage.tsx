@@ -1,110 +1,141 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ordersService } from '@/services/orders.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
+import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Pagination } from '@/components/common/Pagination';
+import { SelectField } from '@/components/forms/SelectField';
 import { Button } from '@/components/common/Button';
+import { Card } from '@/components/common/Card';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { formatDate } from '@/utils/format';
-import { adminApi } from '@/api/admin';
-import type { Order, OrderStatus } from '@/types';
+import { commerceService } from '@/services/commerce.service';
+import type { AdminOrderRow } from '@/services/commerce.service';
+import type { OrderStatus } from '@/types';
 
 const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
   { value: '', label: 'All Statuses' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'ACCEPTED', label: 'Accepted' },
-  { value: 'ASSIGNED', label: 'Assigned' },
-  { value: 'PICKED', label: 'Picked' },
-  { value: 'ARRIVED', label: 'Arrived' },
-  { value: 'DELIVERED', label: 'Delivered' },
-  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'Processing', label: 'Processing' },
+  { value: 'Confirmed', label: 'Confirmed' },
+  { value: 'Shipped', label: 'Shipped' },
+  { value: 'In Transit', label: 'In Transit' },
+  { value: 'Delivered', label: 'Delivered' },
+  { value: 'Cancelled', label: 'Cancelled' },
+  { value: 'Refund Requested', label: 'Refund Requested' },
+  { value: 'Refund Approved', label: 'Refund Approved' },
+  { value: 'Refund Success', label: 'Refund Success' },
+  { value: 'Refund Rejected', label: 'Refund Rejected' },
 ];
-
-// Hierarchy levels for filtering
-interface HierarchyLevel {
-  id: string;
-  name: string;
-  type: 'region' | 'city' | 'area' | 'sector';
-}
 
 export function OrdersMonitoringPage() {
   const { t } = useLocalization();
   const navigate = useNavigate();
+
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<OrderStatus | ''>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Hierarchy filtering
-  const [hierarchyFilter, setHierarchyFilter] = useState<HierarchyLevel | null>(null);
-  const [hierarchyBreadcrumb, setHierarchyBreadcrumb] = useState<HierarchyLevel[]>([]);
 
   const { data, loading, error, refetch } = useAsync(
     useCallback(
       () =>
-        ordersService.list({
+        commerceService.listOrders({
           page,
-          limit: 10,
+          limit: 20,
           status: status === '' ? undefined : status,
           startDate: startDate || undefined,
           endDate: endDate || undefined,
-          location: hierarchyFilter?.id || undefined,
         }),
-      [page, status, startDate, endDate, hierarchyFilter?.id]
+      [page, status, startDate, endDate]
     ),
-    [page, status, startDate, endDate, hierarchyFilter?.id]
+    [page, status, startDate, endDate]
   );
 
   const handleResetFilters = () => {
     setStatus('');
     setStartDate('');
     setEndDate('');
-    setHierarchyFilter(null);
-    setHierarchyBreadcrumb([]);
+    setSearch('');
     setPage(1);
   };
 
-  const handleHierarchyFilterClick = (level: HierarchyLevel) => {
-    setHierarchyFilter(level);
-    // Update breadcrumb
-    const index = hierarchyBreadcrumb.findIndex(b => b.id === level.id);
-    if (index >= 0) {
-      setHierarchyBreadcrumb(hierarchyBreadcrumb.slice(0, index + 1));
-    } else {
-      setHierarchyBreadcrumb([...hierarchyBreadcrumb, level]);
-    }
-    setPage(1);
-  };
+  const hasActiveFilters = status !== '' || startDate !== '' || endDate !== '' || search !== '';
 
-  const handleClearHierarchyFilter = () => {
-    setHierarchyFilter(null);
-    setHierarchyBreadcrumb([]);
-    setPage(1);
-  };
-
-  const hasActiveFilters = status !== '' || startDate !== '' || endDate !== '' || hierarchyFilter !== null;
-
-  const columns: Column<Order>[] = [
-    { key: 'orderId', header: t('Order ID'), accessor: (row) => row.orderId },
+  const columns: Column<AdminOrderRow>[] = [
     {
-      key: 'payer',
+      key: 'orderId',
+      header: t('Order ID'),
+      render: (row) => (
+        <span className="font-mono text-sm">#{(row.id || '').slice(-8)}</span>
+      ),
+    },
+    {
+      key: 'customer',
       header: t('Customer'),
-      accessor: (row) => row.payer || '—',
+      render: (row) => (
+        <div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">{row.customerRef || '—'}</div>
+          {row.customerId && (
+            <div className="text-xs text-gray-500">ID: {row.customerId.slice(-6)}</div>
+          )}
+        </div>
+      ),
     },
     {
-      key: 'orderAmount',
+      key: 'items',
+      header: t('Items'),
+      accessor: (row) => row.items ?? '—',
+    },
+    {
+      key: 'totalPrice',
       header: t('Total'),
-      accessor: (row) => `${row.orderAmount ?? 0}`,
+      render: (row) => (
+        <span className="font-medium">{(row.totalPrice || 0).toLocaleString()} ETB</span>
+      ),
     },
     {
-      key: 'orderStatus',
-      header: t('Status'),
-      render: (row) => <StatusBadge label={row.orderStatus} />,
+      key: 'status',
+      header: t('Order Status'),
+      render: (row) => <StatusBadge label={row.status || 'Processing'} />,
+    },
+    {
+      key: 'paymentStatus',
+      header: t('Payment'),
+      render: (row) => (
+        <StatusBadge
+          label={row.paymentStatus || 'PENDING'}
+          className={
+            row.paymentStatus === 'FAILED'
+              ? 'bg-red-50 text-red-700'
+              : row.paymentStatus === 'CONFIRMED'
+                ? 'bg-green-50 text-green-700'
+                : ''
+          }
+        />
+      ),
+    },
+    {
+      key: 'stage',
+      header: t('Stage'),
+      render: (row) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.stageLabel || row.stage || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'delivery',
+      header: t('Delivery'),
+      render: (row) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.deliveryStatus || '—'}
+        </span>
+      ),
     },
     {
       key: 'createdAt',
@@ -113,7 +144,7 @@ export function OrdersMonitoringPage() {
     },
     {
       key: 'actions',
-      header: t('Actions'),
+      header: t(''),
       render: (row) => (
         <Button
           onClick={() => navigate(`/orders/${row.id}`)}
@@ -121,7 +152,7 @@ export function OrdersMonitoringPage() {
           size="sm"
           className="text-primary-dark hover:text-primary-dark/80 dark:text-primary-color"
         >
-          {t('View')}
+          {t('View')} →
         </Button>
       ),
     },
@@ -130,107 +161,61 @@ export function OrdersMonitoringPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <PageHeader
-            title={t('Orders')}
-            description={t('Track and manage marketplace orders')}
+        <PageHeader
+          title={t('Orders')}
+          description={t('Track and manage marketplace orders')}
+        />
+        <div className="flex items-center gap-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t('Search orders')}
+            aria-label={t('Search orders')}
           />
-          {hierarchyBreadcrumb.length > 0 && (
-            <div className="mt-2 flex items-center gap-2 text-sm">
-              <span className="font-medium text-gray-600 dark:text-gray-400">Filtered by:</span>
-              <div className="flex items-center gap-1">
-                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs font-medium">
-                  {hierarchyFilter?.type.toUpperCase()} • {hierarchyFilter?.name}
-                </span>
-                <button
-                  onClick={handleClearHierarchyFilter}
-                  className="ml-1 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                >
-                  ✕ Clear
-                </button>
-              </div>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-gray-200 dark:hover:bg-dark-800"
+          >
+            {showFilters ? '✕ ' : '⊕ '}{t('Filters')}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowFilters(!showFilters)}
-          className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-gray-200 dark:hover:bg-dark-800"
-        >
-          {showFilters ? '✕ ' : '⊕ '}
-          {t('Filters')}
-        </button>
       </div>
 
       {showFilters && (
-        <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-950">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {/* Status Filter */}
+        <Card>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+            <SelectField
+              value={status}
+              options={STATUS_OPTIONS}
+              onChange={(e) => {
+                setStatus(e.target.value as OrderStatus | '');
+                setPage(1);
+              }}
+              label={t('Status')}
+            />
             <div>
-              <label
-                htmlFor="status-filter"
-                className="block text-xs font-medium text-gray-600 dark:text-gray-400"
-              >
-                {t('Status')}
-              </label>
-              <select
-                id="status-filter"
-                value={status}
-                onChange={(e) => {
-                  setStatus(e.target.value as OrderStatus | '');
-                  setPage(1);
-                }}
-                className="mt-1 h-9 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white"
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Start Date Filter */}
-            <div>
-              <label
-                htmlFor="start-date-filter"
-                className="block text-xs font-medium text-gray-600 dark:text-gray-400"
-              >
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                 {t('From Date')}
               </label>
               <input
-                id="start-date-filter"
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
                 className="mt-1 h-9 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white"
               />
             </div>
-
-            {/* End Date Filter */}
             <div>
-              <label
-                htmlFor="end-date-filter"
-                className="block text-xs font-medium text-gray-600 dark:text-gray-400"
-              >
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                 {t('To Date')}
               </label>
               <input
-                id="end-date-filter"
                 type="date"
                 value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
                 className="mt-1 h-9 w-full rounded border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white"
               />
             </div>
-
-            {/* Reset Button */}
             {hasActiveFilters && (
               <div className="flex items-end">
                 <button
@@ -243,14 +228,14 @@ export function OrdersMonitoringPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {error ? (
         <ErrorState message={error} onRetry={refetch} />
       ) : (
         <>
-          <DataTable<Order>
+          <DataTable<AdminOrderRow>
             columns={columns}
             rows={data?.items ?? []}
             rowKey={(row) => row.id}

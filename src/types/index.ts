@@ -5,7 +5,6 @@ export * from '@/types/user';
 export * from '@/types/customer';
 export * from '@/types/seller';
 export * from '@/types/store';
-export * from '@/types/location';
 export * from '@/types/rider';
 export * from '@/types/admin';
 export * from '@/types/order';

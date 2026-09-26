@@ -11,6 +11,7 @@
  */
 import { assertGatewayConfigured, http } from '@/services/client/httpClient';
 import { createPkcePair } from '@/utils/pkce';
+import { ADMIN_ROLES } from '@/utils/auth-roles';
 import {
   getRefreshToken,
   setAuthTokens,
@@ -34,7 +35,15 @@ interface BackendUser {
   role: string;
   avatar?: { public_id?: string | null; url?: string | null };
   status?: string;
+  /** Data scope (which locations/services this admin may act on). Identity-owned. */
   adminScope?: Record<string, unknown>;
+  /**
+   * Effective admin roles resolved by the Identity Service from the RBAC tables
+   * (SUPER_ADMIN / SELLER_ADMIN / RIDER_ADMIN / CUSTOMER_ADMIN). Identity-owned.
+   */
+  adminRoles?: string[];
+  /** Effective permission keys resolved by the Identity Service. Identity-owned. */
+  permissions?: string[];
 }
 
 interface BackendCodeResponse {
@@ -73,9 +82,19 @@ const ROLE_MAP: Record<string, AdminRole> = {
   STAFF: 'SUPER_ADMIN',
 };
 
+/**
+ * The Identity Service is the single source of truth for who an admin is.
+ *
+ * `adminRoles` (RBAC) and `permissions` both come from `/user/getuser`, which
+ * resolves them from the RBAC tables. The `role`→AdminRole map below is only a
+ * FALLBACK for accounts that have no explicit RBAC assignment — the coarse
+ * `users.role` value ('ADMIN') cannot express the four console roles on its own.
+ *
+ * `adminScope` describes *which data* an admin may act on; it is NOT a
+ * permission list and must never be used as one.
+ */
 const toAdminUser = (raw: BackendUser): AdminUser => {
-  const role = ROLE_MAP[raw.role] ?? 'SUPER_ADMIN';
-  const scopeKeys = Object.keys(raw.adminScope ?? {});
+  const role = resolveAdminRole(raw);
   return {
     userId: raw.id,
     email: raw.email,
@@ -87,11 +106,24 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
       : role.includes('RIDER')
         ? 'RESTAURANT'
         : 'ADMIN',
-    permissions: scopeKeys.length ? scopeKeys : ['*'],
+    // Identity already returns the wildcard for an unrestricted admin, so an
+    // absent list means "older backend" rather than "no permissions".
+    permissions: Array.isArray(raw.permissions)
+      ? raw.permissions
+      : (role === 'SUPER_ADMIN' ? ['*'] : []),
     sectors: [],
     isActive: raw.status === 'active',
   };
 };
+
+/** Prefers the RBAC role from Identity; falls back to mapping the coarse role. */
+function resolveAdminRole(raw: BackendUser): AdminRole {
+  const fromRbac = (raw.adminRoles || []).find((name) =>
+    ADMIN_ROLES.includes(name as AdminRole)
+  );
+  if (fromRbac) return fromRbac as AdminRole;
+  return ROLE_MAP[raw.role] ?? 'SUPER_ADMIN';
+}
 
 function toAuthTokens(res: BackendTokenResponse): AuthTokens {
   return {

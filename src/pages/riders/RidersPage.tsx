@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ridersService } from '@/services/riders.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Avatar } from '@/components/common/Avatar';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { Pagination } from '@/components/common/Pagination';
 import { SelectField } from '@/components/forms/SelectField';
 import { Button } from '@/components/common/Button';
@@ -22,11 +20,19 @@ const RIDER_STATUSES = [
   { value: 'available', label: 'Available' },
   { value: 'busy', label: 'Busy' },
   { value: 'offline', label: 'Offline' },
+  { value: 'pending', label: 'Pending' },
   { value: 'suspended', label: 'Suspended' },
 ];
 
+const STATUS_COLORS: Record<string, string> = {
+  available: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  busy: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  offline: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  suspended: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+};
+
 export function RidersManagementPage() {
-  const { t } = useLocalization();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -62,7 +68,6 @@ export function RidersManagementPage() {
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedRiders.size === 0) return;
-
     setBulkLoading(true);
     try {
       for (const riderId of selectedRiders) {
@@ -70,6 +75,8 @@ export function RidersManagementPage() {
           await ridersService.updateStatus(riderId, 'available');
         } else if (bulkAction === 'deactivate') {
           await ridersService.updateStatus(riderId, 'suspended');
+        } else if (bulkAction === 'set-busy') {
+          await ridersService.updateStatus(riderId, 'busy');
         }
       }
       setSelectedRiders(new Set());
@@ -81,6 +88,13 @@ export function RidersManagementPage() {
       setBulkLoading(false);
     }
   };
+
+  const getStatusColor = (s: string) => {
+    return STATUS_COLORS[s] || 'bg-gray-100 text-gray-800';
+  };
+
+  const isActiveActor = (status: string) =>
+    status === 'available' || status === 'busy' || status === 'offline';
 
   const columns: Column<Rider>[] = [
     {
@@ -99,25 +113,22 @@ export function RidersManagementPage() {
           checked={selectedRiders.has(row.id)}
           onChange={() => handleSelectRider(row.id)}
           className="rounded border-gray-300"
+          onClick={(e) => e.stopPropagation()}
         />
       ),
     },
     {
       key: 'name',
-      header: t('Name'),
+      header: 'Rider',
       render: (row) => (
         <div className="flex items-center gap-3">
           <Avatar name={row.name} size="sm" />
-          <span className="font-medium text-gray-800 dark:text-gray-100">
-            {row.name}
-          </span>
+          <div>
+            <p className="font-medium text-gray-800 dark:text-gray-100">{row.name}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{row.phone || '—'}</p>
+          </div>
         </div>
       ),
-    },
-    {
-      key: 'phone',
-      header: t('Phone'),
-      accessor: (row) => row.phone,
     },
     {
       key: 'vehicle',
@@ -126,15 +137,46 @@ export function RidersManagementPage() {
     },
     {
       key: 'status',
-      header: t('Status'),
-      render: (row) => <StatusBadge label={row.status} />,
+      header: 'Status',
+      render: (row) => (
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(row.status || '')}`}>
+          {(row.status || '—').charAt(0).toUpperCase() + (row.status || '').slice(1)}
+        </span>
+      ),
+    },
+    {
+      key: 'isActive',
+      header: 'Active',
+      render: (row) => (
+        <span className={`text-sm ${isActiveActor(row.status) ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+          {isActiveActor(row.status) ? 'Yes' : 'No'}
+        </span>
+      ),
+    },
+    {
+      key: 'sector',
+      header: 'Coverage',
+      render: (row) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.sector || 'All'}
+        </span>
+      ),
+    },
+    {
+      key: 'activeDeliveries',
+      header: 'Active',
+      render: (row) => (
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.activeDeliveries ?? 0} active
+        </span>
+      ),
     },
     {
       key: 'totalDeliveries',
-      header: 'Deliveries',
+      header: 'Total',
       render: (row) => (
-        <span className="text-gray-800 dark:text-gray-100">
-          {row.totalDeliveries || 0}
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          {row.totalDeliveries ?? 0}
         </span>
       ),
     },
@@ -148,19 +190,19 @@ export function RidersManagementPage() {
   return (
     <div>
       <PageHeader
-        title={t('Riders')}
-        description={t('Manage delivery riders and actors')}
+        title="Riders / Delivery Actors"
+        description="Manage delivery riders, availability, and assignments"
         actions={
           <div className="flex gap-2">
             <SearchInput
               value={search}
               onChange={setSearch}
-              placeholder={t('Search riders')}
-              aria-label={t('Search')}
+              placeholder="Search riders"
+              aria-label="Search"
             />
             <SelectField
               value={status}
-              onChange={setStatus}
+              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               options={RIDER_STATUSES}
               className="w-48"
             />
@@ -168,7 +210,6 @@ export function RidersManagementPage() {
         }
       />
 
-      {/* Bulk Actions Bar */}
       {selectedRiders.size > 0 && (
         <Card className="mb-4 flex items-center justify-between gap-4 p-4">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -177,10 +218,11 @@ export function RidersManagementPage() {
           <div className="flex gap-2">
             <SelectField
               value={bulkAction}
-              onChange={setBulkAction}
+              onChange={(e) => setBulkAction(e.target.value)}
               options={[
                 { value: '', label: 'Select Action' },
-                { value: 'activate', label: 'Activate' },
+                { value: 'activate', label: 'Set Available' },
+                { value: 'set-busy', label: 'Set Busy' },
                 { value: 'deactivate', label: 'Suspend' },
               ]}
               className="w-40"
@@ -191,7 +233,7 @@ export function RidersManagementPage() {
               loading={bulkLoading}
               size="sm"
             >
-              {t('Apply')}
+              Apply
             </Button>
           </div>
         </Card>
@@ -206,7 +248,7 @@ export function RidersManagementPage() {
             rows={data?.items ?? []}
             rowKey={(row) => row.id}
             loading={loading}
-            emptyTitle={t('No riders')}
+            emptyTitle="No riders found"
             onRowClick={(row) => navigate(`/riders/${row.id}`)}
           />
           <Pagination

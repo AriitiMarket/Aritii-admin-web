@@ -5,6 +5,7 @@
  */
 import { useAuth } from '@/hooks/useAuth';
 import type { AdminRole } from '@/types/auth';
+import { USERS_TAB_ROLES } from '@/pages/users/usersTabs';
 
 export interface NavigationItem {
   labelKey: string;
@@ -31,38 +32,19 @@ export const NAV_GROUPS: NavigationGroup[] = [
     items: [
       { labelKey: 'Home', path: '/home', roles: ALL_ADMINS },
       { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Platform Explorer', path: '/explorer', roles: ['SUPER_ADMIN'] },
     ],
   },
   
-  // Users Management
+  // Users Management — ONE entry. The user types (All Users, Buyers, Sellers,
+  // Customers, Admins) are tabs of the Users page, not separate pages; the tab
+  // registry supplies the roles so the entry cannot drift from the tabs.
   {
     labelKey: 'Users',
     items: [
       {
-        labelKey: 'All Users',
+        labelKey: 'Users',
         path: '/users',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
-      },
-      {
-        labelKey: 'Buyers',
-        path: '/users?type=buyer',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
-      },
-      {
-        labelKey: 'Sellers',
-        path: '/sellers',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
-      },
-      {
-        labelKey: 'Customers',
-        path: '/customers',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
-      },
-      {
-        labelKey: 'Admins',
-        path: '/admins',
-        roles: ['SUPER_ADMIN'],
+        roles: USERS_TAB_ROLES,
       },
     ],
   },
@@ -81,37 +63,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
         path: '/stores',
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
-    ],
-  },
-
-  // Locations & Expansion
-  {
-    labelKey: 'Locations & Expansion',
-    items: [
       {
-        labelKey: 'Regions',
-        path: '/locations?type=region',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        labelKey: 'Cities / Areas',
-        path: '/locations?type=city',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        labelKey: 'Sectors',
-        path: '/sectors',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        labelKey: 'Delivery Zones',
-        path: '/delivery/zones',
-        roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
-      },
-      {
-        labelKey: 'Coverage',
-        path: '/locations/hierarchy',
-        roles: ['SUPER_ADMIN'],
+        // Shop onboarding approval queue (route: /stores/pending). Previously
+        // had no sidebar entry, so pending shops were unreachable except by URL.
+        labelKey: 'Pending Shops',
+        path: '/stores/pending',
+        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
     ],
   },
@@ -136,9 +93,22 @@ export const NAV_GROUPS: NavigationGroup[] = [
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
       {
+        // Product review moderation queue (route: /reviews/pending). Previously
+        // had no sidebar entry, so the queue was unreachable except by URL.
+        labelKey: 'Reviews',
+        path: '/reviews/pending',
+        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+      },
+      {
         labelKey: 'Orders',
         path: '/orders',
         roles: ['SUPER_ADMIN'],
+      },
+      {
+        // Buyer ↔ seller negotiation pipeline (create → negotiate → convert).
+        labelKey: 'Requests',
+        path: '/requests',
+        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
       },
       {
         labelKey: 'Transactions / Payments',
@@ -153,18 +123,18 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery
+  // Delivery & Logistics
   {
-    labelKey: 'Delivery',
+    labelKey: 'Delivery & Logistics',
     items: [
       {
-        labelKey: 'Overview',
+        labelKey: 'Delivery & Logistics',
         path: '/delivery',
         roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
       },
       {
-        labelKey: 'Riders / Delivery Actors',
-        path: '/riders',
+        labelKey: 'Delivery Providers',
+        path: '/delivery/providers',
         roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
       },
       {
@@ -172,10 +142,24 @@ export const NAV_GROUPS: NavigationGroup[] = [
         path: '/delivery/assignments',
         roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
       },
+    ],
+  },
+
+  // Locations & Expansion — one workspace. The sub-views are TABS inside
+  // /locations, not separate dashboards, so the sidebar lists a single entry
+  // (plus the tree view, which is a genuinely different hierarchical view).
+  {
+    labelKey: 'Locations & Expansion',
+    items: [
       {
-        labelKey: 'Active Deliveries',
-        path: '/delivery/assignments?status=in_transit',
-        roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
+        labelKey: 'Locations',
+        path: '/locations',
+        roles: ['SUPER_ADMIN'],
+      },
+      {
+        labelKey: 'Location Tree',
+        path: '/locations/tree',
+        roles: ['SUPER_ADMIN'],
       },
     ],
   },
@@ -215,11 +199,6 @@ export const NAV_GROUPS: NavigationGroup[] = [
         labelKey: 'Analytics',
         path: '/analytics',
         roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
-      },
-      {
-        labelKey: 'Growth & Analytics',
-        path: '/analytics/growth',
-        roles: ['SUPER_ADMIN'],
       },
       {
         labelKey: 'Shop Analytics',
@@ -270,11 +249,6 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Roles & Permissions',
         path: '/admin-roles',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        labelKey: 'Admin Users',
-        path: '/admins',
         roles: ['SUPER_ADMIN'],
       },
     ],

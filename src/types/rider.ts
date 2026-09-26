@@ -1,20 +1,50 @@
-/** Rider (delivery) accounts. */
+/** Rider (delivery actor) types — aligned with Delivery Service Partner model. */
+export type RiderStatus = 'pending' | 'available' | 'busy' | 'offline' | 'suspended';
+export type ActorType = 'rider' | 'driver' | 'courier' | 'pickup_agent';
+
 export interface Rider {
   id: string;
   name: string;
   username?: string;
   email?: string;
   phone?: string;
-  status: 'ACTIVE' | 'BLOCKED' | 'PENDING';
+  status: RiderStatus;
   isActive: boolean;
+  actorType?: ActorType;
   vehicleType?: string;
-  sector: string;
+  plateNumber?: string;
+  sector?: string;
+  sectorId?: string;
   totalDeliveries?: number;
+  activeDeliveries?: number;
+  completedDeliveries?: number;
+  /** Max concurrent active assignments this rider may hold (dispatch capacity). */
+  maxActiveAssignments?: number;
+  rating?: number;
+  zone?: { id?: string; name?: string; _id?: string };
+  zoneId?: string;
+  zoneIds?: string[];
+  locationSnapshot?: {
+    regionName?: string;
+    cityName?: string;
+    sectorName?: string;
+    fullAddress?: string;
+  };
   createdAt?: string;
 }
 
 export interface RiderDetail extends Rider {
-  zone?: { id?: string; name?: string };
   earnings?: number;
   address?: string;
+  identityUserId?: string;
+  zone?: { id?: string; name?: string; _id?: string };
+  availability?: {
+    isOnline?: boolean;
+    lastSeenAt?: string;
+  };
+  statusHistory?: Array<{
+    status: RiderStatus;
+    changedAt: string;
+    note?: string;
+  }>;
 }

@@ -3,14 +3,21 @@ import type { Sector } from '@/types/sector';
 
 export type { Sector };
 
+export type CategoryType = 'product' | 'business' | 'shop' | 'event';
+export type CategoryStatus = 'active' | 'inactive';
+
 export interface Category {
   id: string;
+  _id?: string;
   title: string;
-  image?: string;
-  sector: string;
-  isActive: boolean;
+  slug?: string;
+  description?: string;
+  type: CategoryType;
+  status: CategoryStatus;
+  sortOrder?: number;
+  /** Document count for this category, added by the backend aggregation. */
+  productCount?: number;
   createdAt?: string;
-  subCategories?: number;
 }
 
 export interface Review {
@@ -23,6 +30,10 @@ export interface Review {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   isPublished: boolean;
+  /** Product the review belongs to (product reviews live on the product). */
+  productId?: string;
+  /** Display name of the reviewer. */
+  reviewerName?: string;
 }
 
 /** Feedback / dispute records. */

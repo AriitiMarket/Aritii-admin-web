@@ -5,35 +5,12 @@
  * endpoints. It owns the response envelopes, so pages never touch raw shapes.
  *
  * Endpoints used (verified against the live gateway):
- *   GET  /admin/platform/stats | /pending | /hierarchy
+ *   GET  /admin/platform/stats | /pending
  *   GET  /admin/businesses | /businesses/:id ; POST /businesses/:id/approve|reject
  *   GET  /admin/shops | /admin/orders | /admin/orders/:id/pickup-delivery
  *   GET  /admin/operations | /admin/operations/:stage
- *   GET  /admin/growth-analytics
- *   GET/PUT/DELETE /delivery/sector-availability/location/:id[/:sectorId]
  */
 import { http } from '@/services/client/httpClient';
-
-export interface HierarchyNode {
-  id: string;
-  name: string;
-  type: string;
-  code: string | null;
-  isActive: boolean;
-  parentId: string | null;
-  direct: { shops: number; orders: number; businesses: number };
-  metrics: { shops: number; orders: number; businesses: number; children: number; activeChildren: number };
-  children: HierarchyNode[];
-}
-
-export interface PlatformHierarchy {
-  platform: { name: string; totals: Record<string, number> };
-  regions: HierarchyNode[];
-  levels?: string[];
-  degraded?: boolean;
-  error?: string;
-  generatedAt?: string;
-}
 
 export interface PendingAction {
   id: string;
@@ -138,6 +115,14 @@ export interface PagedOrders {
   totalPages: number;
   stageCounts: Record<string, number>;
   stageDefinitions: { stage: string; label: string }[];
+  /**
+   * How the backend produced `stageCounts`: 'status' = aggregated from order
+   * status across the whole scoped set; 'scan' = derived from a full lifecycle
+   * scan (order + delivery). Absent on payloads that predate the labels.
+   */
+  stageCountsScope?: 'status' | 'scan';
+  /** True when a stage scan hit its cap, so the totals may be incomplete. */
+  stageScanCapped?: boolean;
 }
 
 export interface OrderLifecycle {
@@ -165,56 +150,20 @@ export interface OrderLifecycle {
   deliveryUnavailable: boolean;
 }
 
-export interface GrowthAnalytics {
-  granularity: string;
-  window: { start: string; end: string; days?: number };
-  comparison: { previousStart: string; previousEnd: string; basis: string; note?: string };
-  series: {
-    bucket: string;
-    period: 'current' | 'previous';
-    orders: number;
-    revenue: number;
-    delivered: number;
-    cancelled: number;
-    businesses: number;
-    businessesApproved: number;
-    shops: number;
-    shopsActive: number;
-  }[];
-  summary: {
-    orders: number;
-    revenue: number;
-    previousOrders: number;
-    previousRevenue: number;
-    ordersChangePercent: number | null;
-    revenueChangePercent: number | null;
-  };
-  note?: string;
-}
-
-export interface SectorAvailability {
-  sectorId: string;
-  sectorName: string;
-  isActive: boolean;
-  deliveryAvailable: boolean;
-  pickupAvailable: boolean;
-  notes: string;
-  updatedBy: string | null;
-  updatedAt: string;
-}
-
-export interface SectorAvailabilityResponse {
-  location: { id: string; name: string; type: string; isActive: boolean; parentId: string | null };
-  sectors: SectorAvailability[];
-  summary: { total: number; active: number; inactive: number; deliveryAvailable: number; pickupAvailable: number };
-}
-
 export interface PagedResult<T> {
   items: T[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+/** Payload of GET /admin/platform/pending — the admin action queue. */
+export interface PendingActions {
+  items: PendingAction[];
+  counts: Record<string, number>;
+  total: number;
+  unavailable: string[];
 }
 
 // --- Service --------------------------------------------------------------
@@ -226,23 +175,10 @@ export const platformAdminService = {
       .then((res) => res.stats);
   },
 
-  getPendingActions(): Promise<{
-    items: PendingAction[];
-    counts: Record<string, number>;
-    total: number;
-    unavailable: string[];
-  }> {
+  getPendingActions(): Promise<PendingActions> {
     return http
-      .get<{ success: boolean; pending: any }>('/admin/platform/pending')
+      .get<{ success: boolean; pending: PendingActions }>('/admin/platform/pending')
       .then((res) => res.pending);
-  },
-
-  getHierarchy(params: { includeInactive?: boolean } = {}): Promise<PlatformHierarchy> {
-    return http
-      .get<{ success: boolean; hierarchy: PlatformHierarchy }>('/admin/platform/hierarchy', {
-        params: params as Record<string, string | number | boolean>,
-      })
-      .then((res) => res.hierarchy);
   },
 
   listBusinesses(
@@ -293,24 +229,7 @@ export const platformAdminService = {
       .then((res) => res.business);
   },
 
-  listShops(params: Record<string, string | number | undefined>): Promise<PagedResult<Record<string, unknown>>> {
-    return http
-      .get<{
-        success: boolean;
-        shops: Record<string, unknown>[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      }>('/admin/shops', { params: params as never })
-      .then((res) => ({
-        items: res.shops || [],
-        total: res.total || 0,
-        page: res.page || 1,
-        limit: res.limit || 50,
-        totalPages: res.totalPages || 0,
-      }));
-  },
+  /** Paged shop list lives on `adminApi.getShopsPaged` (/admin/shops). */
 
   listOrders(params: Record<string, string | number | undefined>): Promise<PagedOrders> {
     return http
@@ -351,208 +270,36 @@ export const platformAdminService = {
     stage: string,
     params: Record<string, string | number | undefined> = {}
   ): Promise<PagedOrders & { stage: string }> {
-    return http
-      .get<{ success: boolean; operations: PagedOrders & { stage: string } }>(`/admin/operations/${stage}`, {
-        params: params as never,
-      })
-      .then((res) => res.operations);
-  },
-
-  getGrowthAnalytics(params: Record<string, string | number | undefined>): Promise<GrowthAnalytics> {
-    return http
-      .get<{ success: boolean; analytics: GrowthAnalytics }>('/admin/growth-analytics', {
-        params: params as never,
-      })
-      .then((res) => res.analytics);
-  },
-
-  getSectorAvailability(locationId: string): Promise<SectorAvailabilityResponse> {
+    // The endpoint answers with `operations: { stage, orders, ... }`. It used to be
+    // returned as-is while the type claimed `items`, so the drill-down list read
+    // `data.items` and rendered empty.
     return http
       .get<{
         success: boolean;
-        location: SectorAvailabilityResponse['location'];
-        sectors: SectorAvailability[];
-        summary: SectorAvailabilityResponse['summary'];
-      }>(`/delivery/sector-availability/location/${locationId}`)
-      .then((res) => ({ location: res.location, sectors: res.sectors || [], summary: res.summary }));
-  },
-
-  setSectorAvailability(
-    locationId: string,
-    sectorId: string,
-    payload: {
-      isActive?: boolean;
-      deliveryAvailable?: boolean;
-      pickupAvailable?: boolean;
-      sectorName?: string;
-      notes?: string;
-    }
-  ): Promise<SectorAvailability> {
-    return http
-      .put<{ success: boolean; availability: SectorAvailability }>(
-        `/delivery/sector-availability/location/${locationId}/${sectorId}`,
-        payload
-      )
-      .then((res) => res.availability);
-  },
-
-  removeSectorAvailability(locationId: string, sectorId: string): Promise<SectorAvailability> {
-    return http
-      .delete<{ success: boolean; removed: SectorAvailability }>(
-        `/delivery/sector-availability/location/${locationId}/${sectorId}`
-      )
-      .then((res) => res.removed);
-  },
-
-  /**
-   * Hierarchy-aware API methods for unified context filtering.
-   * These endpoints apply server-side filtering based on geographic/organizational hierarchy.
-   */
-
-  /**
-   * List businesses by hierarchy context (region, city, area, or sector).
-   */
-  listBusinessesByHierarchy(
-    parentId: string,
-    level: 'region' | 'city' | 'area' | 'sector',
-    params: Record<string, string | number | undefined> = {}
-  ): Promise<PagedResult<Record<string, unknown>>> {
-    return http
-      .get<{
-        success: boolean;
-        businesses: Record<string, unknown>[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      }>('/admin/businesses', {
-        params: {
-          ...params,
-          [`${level}Id`]: parentId,
-        } as never,
-      })
+        operations: {
+          stage: string;
+          orders?: AdminOrder[];
+          total?: number;
+          page?: number;
+          limit?: number;
+          totalPages?: number;
+          stageCounts?: Record<string, number>;
+          stageDefinitions?: { stage: string; label: string }[];
+          stageCountsScope?: 'status' | 'scan';
+          stageScanCapped?: boolean;
+        };
+      }>(`/admin/operations/${stage}`, { params: params as never })
       .then((res) => ({
-        items: res.businesses || [],
-        total: res.total || 0,
-        page: res.page || 1,
-        limit: res.limit || 50,
-        totalPages: res.totalPages || 0,
+        stage: res.operations.stage,
+        items: res.operations.orders || [],
+        total: res.operations.total || 0,
+        page: res.operations.page || 1,
+        limit: res.operations.limit || 50,
+        totalPages: res.operations.totalPages || 0,
+        stageCounts: res.operations.stageCounts || {},
+        stageDefinitions: res.operations.stageDefinitions || [],
+        stageCountsScope: res.operations.stageCountsScope,
+        stageScanCapped: res.operations.stageScanCapped,
       }));
-  },
-
-  /**
-   * List shops by hierarchy context (sector, business, or location).
-   */
-  listShopsByHierarchy(
-    parentId: string,
-    level: 'sector' | 'business' | 'region' | 'city' | 'area',
-    params: Record<string, string | number | undefined> = {}
-  ): Promise<PagedResult<Record<string, unknown>>> {
-    return http
-      .get<{
-        success: boolean;
-        shops: Record<string, unknown>[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
-      }>('/admin/shops', {
-        params: {
-          ...params,
-          [`${level}Id`]: parentId,
-        } as never,
-      })
-      .then((res) => ({
-        items: res.shops || [],
-        total: res.total || 0,
-        page: res.page || 1,
-        limit: res.limit || 50,
-        totalPages: res.totalPages || 0,
-      }));
-  },
-
-  /**
-   * List orders by hierarchy context.
-   * Filters orders within the specified geographic/organizational scope.
-   */
-  listOrdersByHierarchy(
-    hierarchyContext: {
-      regionId?: string;
-      cityId?: string;
-      areaId?: string;
-      sectorId?: string;
-      businessId?: string;
-      shopId?: string;
-    },
-    params: Record<string, string | number | undefined> = {}
-  ): Promise<PagedResult<AdminOrder>> {
-    const filterParams = Object.fromEntries(
-      Object.entries(hierarchyContext).filter(([_, v]) => v !== undefined)
-    );
-
-    return http
-      .get<{ success: boolean; operations: PagedOrders }>('/admin/operations/orders', {
-        params: {
-          ...params,
-          ...filterParams,
-        } as never,
-      })
-      .then((res) => ({
-        items: res.operations?.items || [],
-        total: res.operations?.total || 0,
-        page: res.operations?.page || 1,
-        limit: res.operations?.limit || 50,
-        totalPages: res.operations?.totalPages || 0,
-      }));
-  },
-
-  /**
-   * Get dashboard stats filtered by hierarchy context.
-   */
-  getStatsByHierarchy(hierarchyContext: {
-    regionId?: string;
-    cityId?: string;
-    areaId?: string;
-    sectorId?: string;
-    businessId?: string;
-    shopId?: string;
-  }): Promise<PlatformStats> {
-    const params = Object.fromEntries(
-      Object.entries(hierarchyContext).filter(([_, v]) => v !== undefined)
-    );
-
-    return http
-      .get<{ success: boolean; stats: PlatformStats }>('/admin/platform/stats', {
-        params: params as never,
-      })
-      .then((res) => res.stats);
-  },
-
-  /**
-   * Get growth analytics filtered by hierarchy context.
-   */
-  getGrowthAnalyticsByHierarchy(
-    hierarchyContext: {
-      regionId?: string;
-      cityId?: string;
-      areaId?: string;
-      sectorId?: string;
-      businessId?: string;
-      shopId?: string;
-    },
-    params: Record<string, string | number | undefined> = {}
-  ): Promise<GrowthAnalytics> {
-    const filterParams = Object.fromEntries(
-      Object.entries(hierarchyContext).filter(([_, v]) => v !== undefined)
-    );
-
-    return http
-      .get<{ success: boolean; analytics: GrowthAnalytics }>('/admin/growth-analytics', {
-        params: {
-          ...params,
-          ...filterParams,
-        } as never,
-      })
-      .then((res) => res.analytics);
   },
 };

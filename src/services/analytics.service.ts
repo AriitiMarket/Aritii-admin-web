@@ -14,39 +14,101 @@ import type {
 } from '@/types';
 import { analyticsAdmin, reportsAdmin } from '@/api/admin';
 
+/**
+ * One row of the dashboard's "recent activity" feed. The API returns order
+ * summaries; only these fields are read by the dashboard.
+ */
+export interface RecentOrderSummary {
+  id?: string;
+  orderId?: string;
+  totalPrice?: number;
+  status?: string;
+  createdAt?: string;
+}
+
+interface QueryParams {
+  startDate?: string;
+  endDate?: string;
+}
+
 export const analyticsService = {
-  async getStats(startDate?: string, endDate?: string): Promise<DashboardStats> {
-    return reportsAdmin.getStats(startDate, endDate);
+  async getStats(params?: string | QueryParams, endDate?: string): Promise<DashboardStats> {
+    // Handle both old (startDate, endDate) and new (params object) signatures
+    if (typeof params === 'string') {
+      return reportsAdmin.getStats(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getStats(p.startDate, p.endDate);
   },
-  async getUsersGrowth(startDate?: string, endDate?: string): Promise<UsersGrowthSeries> {
-    return reportsAdmin.getGrowth(startDate, endDate);
+  async getUsersGrowth(params?: string | QueryParams, endDate?: string): Promise<UsersGrowthSeries> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getGrowth(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getGrowth(p.startDate, p.endDate);
   },
-  async getOrdersByType(startDate?: string, endDate?: string): Promise<DistributionSlice[]> {
-    return reportsAdmin.getOrdersByType(startDate, endDate);
+  async getOrdersByType(params?: string | QueryParams, endDate?: string): Promise<DistributionSlice[]> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getOrdersByType(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getOrdersByType(p.startDate, p.endDate);
   },
-  async getSalesByType(startDate?: string, endDate?: string): Promise<SalesByType> {
-    return reportsAdmin.getSalesByType(startDate, endDate);
+  async getSalesByType(params?: string | QueryParams, endDate?: string): Promise<SalesByType> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getSalesByType(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getSalesByType(p.startDate, p.endDate);
   },
-  async getSalesOverTime(startDate?: string, endDate?: string): Promise<SalesOverTimePoint[]> {
-    return reportsAdmin.getSalesOverTime(startDate, endDate);
+  async getSalesOverTime(params?: string | QueryParams, endDate?: string): Promise<SalesOverTimePoint[]> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getSalesOverTime(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getSalesOverTime(p.startDate, p.endDate);
   },
-  async getOrdersByStatus(startDate?: string, endDate?: string): Promise<DistributionSlice[]> {
-    return reportsAdmin.getOrdersByStatus(startDate, endDate);
+  async getOrdersByStatus(params?: string | QueryParams, endDate?: string): Promise<DistributionSlice[]> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getOrdersByStatus(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getOrdersByStatus(p.startDate, p.endDate);
   },
-  async getCategoryActivity(startDate?: string, endDate?: string): Promise<CategoryActivity[]> {
-    return reportsAdmin.getCategoryActivity(startDate, endDate);
+  async getCategoryActivity(params?: string | QueryParams, endDate?: string): Promise<CategoryActivity[]> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getCategoryActivity(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getCategoryActivity(p.startDate, p.endDate);
   },
-  async getProductStats(startDate?: string, endDate?: string): Promise<ProductStats> {
-    return reportsAdmin.getProductStats(startDate, endDate);
+  async getProductStats(params?: string | QueryParams, endDate?: string): Promise<ProductStats> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getProductStats(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getProductStats(p.startDate, p.endDate);
   },
-  async getDisputeStats(startDate?: string, endDate?: string): Promise<DisputeStats> {
-    return reportsAdmin.getDisputeStats(startDate, endDate);
+  async getDisputeStats(params?: string | QueryParams, endDate?: string): Promise<DisputeStats> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getDisputeStats(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getDisputeStats(p.startDate, p.endDate);
   },
-  async getDeliveryStats(startDate?: string, endDate?: string): Promise<DeliveryStatsData> {
-    return reportsAdmin.getDeliveryStats(startDate, endDate);
+  async getDeliveryStats(params?: string | QueryParams, endDate?: string): Promise<DeliveryStatsData> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getDeliveryStats(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getDeliveryStats(p.startDate, p.endDate);
   },
-  async getRiderPerformance(startDate?: string, endDate?: string): Promise<RiderPerformanceItem[]> {
-    return reportsAdmin.getRiderPerformance(startDate, endDate);
+  async getRiderPerformance(params?: string | QueryParams, endDate?: string): Promise<RiderPerformanceItem[]> {
+    if (typeof params === 'string') {
+      return reportsAdmin.getRiderPerformance(params, endDate);
+    }
+    const p = params || {};
+    return reportsAdmin.getRiderPerformance(p.startDate, p.endDate);
   },
   async getShopStats(startDate?: string, endDate?: string): Promise<ShopStats> {
     return reportsAdmin.getShopStats(startDate, endDate);
@@ -57,7 +119,7 @@ export const analyticsService = {
   async getPendingApprovals(): Promise<{ pendingStores: number; pendingRiders: number; pendingSellers: number; total: number }> {
     return analyticsAdmin.getPendingApprovals();
   },
-  async getRecentActivity(): Promise<{ recentOrders: any[] }> {
+  async getRecentActivity(): Promise<{ recentOrders: RecentOrderSummary[] }> {
     return analyticsAdmin.getRecentActivity();
   },
 };

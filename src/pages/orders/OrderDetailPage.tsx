@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ordersService } from '@/services/orders.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { Card } from '@/components/common/Card';
@@ -8,18 +7,16 @@ import { PageLoader } from '@/components/common/PageLoader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
 import { formatDate } from '@/utils/format';
-import type { OrderDetail } from '@/types';
+import { commerceService } from '@/services/commerce.service';
 
-const ORDER_TIMELINE: Array<{
-  status: string;
-  label: string;
-}> = [
-  { status: 'PENDING', label: 'Order Placed' },
-  { status: 'ACCEPTED', label: 'Accepted' },
-  { status: 'ASSIGNED', label: 'Assigned' },
-  { status: 'PICKED', label: 'Picked Up' },
-  { status: 'ARRIVED', label: 'Arrived' },
-  { status: 'DELIVERED', label: 'Delivered' },
+const OPERATIONAL_TIMELINE: Array<{ stage: string; label: string }> = [
+  { stage: 'new', label: 'Order Created' },
+  { stage: 'accepted', label: 'Accepted' },
+  { stage: 'ready_for_pickup', label: 'Ready for Pickup' },
+  { stage: 'pickup_assigned', label: 'Pickup Assigned' },
+  { stage: 'picked_up', label: 'Picked Up' },
+  { stage: 'in_transit', label: 'In Transit' },
+  { stage: 'delivered', label: 'Delivered' },
 ];
 
 export function OrderDetailPage() {
@@ -27,24 +24,48 @@ export function OrderDetailPage() {
   const navigate = useNavigate();
   const { t } = useLocalization();
 
-  const { data, loading, error, refetch } = useAsync(
+  const { data: lifecycle, loading, error, refetch } = useAsync(
     async () => {
       if (!orderId) throw new Error('Missing order id');
-      return ordersService.get(orderId);
+      return commerceService.getOrderLifecycle(orderId);
     },
     [orderId]
   );
 
   if (loading) return <PageLoader />;
   if (error) return <ErrorState message={error} onRetry={refetch} />;
-  if (!data) return null;
+  if (!lifecycle) return null;
 
-  const order = data as OrderDetail;
+  const order = lifecycle.order || {};
+  const pickup = lifecycle.pickup || {};
+  const dropOff = lifecycle.dropOff || {};
+  const timeline = lifecycle.timeline || [];
+  const sellerShipments = order.sellerShipments || [];
 
-  // Get the current status index
-  const currentStatusIndex = ORDER_TIMELINE.findIndex(
-    (item) => item.status === order.orderStatus
+  const reached = new Map(
+    timeline.map((entry: any) => [entry.stage, entry])
   );
+
+  const renderAddress = (addr: any) => {
+    if (!addr) return <p className="text-sm text-gray-500">—</p>;
+    if (typeof addr === 'string') return <p className="text-sm text-gray-700 dark:text-gray-300">{addr}</p>;
+    return (
+      <div className="text-sm space-y-1">
+        {addr.regionId && <p><span className="text-gray-500">Region:</span> {addr.regionId}</p>}
+        {addr.cityId && <p><span className="text-gray-500">City:</span> {addr.cityId}</p>}
+        {addr.areaId && <p><span className="text-gray-500">Area:</span> {addr.areaId}</p>}
+        {addr.sectorId && <p><span className="text-gray-500">Sector:</span> {addr.sectorId}</p>}
+        {addr.fullAddress && <p><span className="text-gray-500">Address:</span> {addr.fullAddress}</p>}
+        {addr.landmark && <p><span className="text-gray-500">Landmark:</span> {addr.landmark}</p>}
+        {addr.building && <p><span className="text-gray-500">Building:</span> {addr.building}</p>}
+        {addr.phone && <p><span className="text-gray-500">Phone:</span> {addr.phone}</p>}
+        {addr.additionalInstructions && <p><span className="text-gray-500">Instructions:</span> {addr.additionalInstructions}</p>}
+        {addr.coordinates && (
+          <p><span className="text-gray-500">GPS:</span> {addr.coordinates.lat}, {addr.coordinates.lng}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -53,179 +74,222 @@ export function OrderDetailPage() {
         onClick={() => navigate(-1)}
         className="text-sm text-primary-dark hover:underline dark:text-primary-color"
       >
-        {t('← Back')}
+        {t('← Back to Orders')}
       </button>
 
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <h1 className="heading-4 dark:text-white">
-          {t('Order')} #{order.orderId}
-        </h1>
-        <StatusBadge label={order.orderStatus} />
+        <div>
+          <h1 className="heading-4 dark:text-white">
+            {t('Order')} #{(order.id || orderId || '').slice(-8)}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {t('Created')} {formatDate(order.createdAt)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge label={order.status || 'Processing'} />
+          {order.paymentStatus && (
+            <StatusBadge
+              label={`Payment: ${order.paymentStatus}`}
+              className={
+                order.paymentStatus === 'FAILED'
+                  ? 'bg-red-50 text-red-700'
+                  : order.paymentStatus === 'CONFIRMED'
+                    ? 'bg-green-50 text-green-700'
+                    : ''
+              }
+            />
+          )}
+        </div>
       </div>
 
       {/* Timeline */}
       <Card>
         <h2 className="card-h2 mb-6 dark:text-white">{t('Order Timeline')}</h2>
-        <div className="flex items-center justify-between">
-          {ORDER_TIMELINE.map((item, index) => (
-            <div key={item.status} className="flex flex-col items-center">
-              {/* Circle */}
-              <div
-                className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
-                  index <= currentStatusIndex
-                    ? 'border-green-500 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                    : 'border-gray-300 bg-gray-100 text-gray-500 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-400'
-                }`}
-              >
-                {index <= currentStatusIndex ? '✓' : index + 1}
-              </div>
-              {/* Label */}
-              <span
-                className={`text-center text-xs font-medium ${
-                  index <= currentStatusIndex
-                    ? 'text-gray-700 dark:text-gray-200'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {item.label}
-              </span>
-              {/* Connector Line */}
-              {index < ORDER_TIMELINE.length - 1 && (
+        <div className="flex items-center justify-between overflow-x-auto pb-2">
+          {OPERATIONAL_TIMELINE.map((item, index) => {
+            const entry = reached.get(item.stage);
+            const isDone = Boolean(entry);
+            return (
+              <div key={item.stage} className="flex flex-col items-center min-w-[80px]">
                 <div
-                  className={`mt-3 h-8 w-0.5 ${
-                    index < currentStatusIndex
-                      ? 'bg-green-500'
-                      : 'bg-gray-300 dark:bg-dark-600'
+                  className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors ${
+                    isDone
+                      ? 'border-green-500 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                      : 'border-gray-300 bg-gray-100 text-gray-500 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-400'
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {isDone ? '✓' : index + 1}
+                </div>
+                <span
+                  className={`text-center text-xs font-medium ${
+                    isDone
+                      ? 'text-gray-700 dark:text-gray-200'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}
+                >
+                  {item.label}
+                </span>
+                <span className="mt-1 text-center text-[10px] text-gray-400 dark:text-gray-500">
+                  {(entry as any)?.timestamp ? formatDate((entry as any).timestamp) : '—'}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Order Info */}
         <Card>
-          <h2 className="card-h2 mb-3 dark:text-white">{t('Order Info')}</h2>
+          <h2 className="card-h2 mb-3 dark:text-white">{t('Order Information')}</h2>
           <dl className="space-y-2 text-sm">
-            <Detail label={t('Order ID')} value={order.orderId} />
-            <Detail label={t('Amount')} value={`${order.orderAmount ?? 0}`} />
-            <Detail label={t('Type')} value={order.orderType} />
-            <Detail label={t('Payer')} value={order.payer} />
-            <Detail label={t('Date')} value={formatDate(order.createdAt)} />
+            <Detail label={t('Order ID')} value={`#${(order.id || '').slice(-8)}`} />
+            <Detail label={t('Amount')} value={`${(order.totalPrice || 0).toLocaleString()} ETB`} />
+            <Detail label={t('Status')} value={order.status || '—'} />
+            <Detail label={t('Payment Status')} value={order.paymentStatus || '—'} />
+            {lifecycle.stageLabel && (
+              <Detail label={t('Operational Stage')} value={lifecycle.stageLabel} />
+            )}
             {order.updatedAt && (
               <Detail label={t('Updated')} value={formatDate(order.updatedAt)} />
             )}
-            {order.sector && (
-              <Detail label={t('Sector')} value={order.sector} />
-            )}
           </dl>
         </Card>
 
-        {/* Payment Info */}
+        {/* Customer Destination */}
         <Card>
-          <h2 className="card-h2 mb-3 dark:text-white">{t('Payment Details')}</h2>
-          <dl className="space-y-2 text-sm">
-            <Detail
-              label={t('Payment Method')}
-              value={order.paymentMethod ?? '—'}
-            />
-            <Detail label={t('Subtotal')} value={`${order.orderAmount ?? 0}`} />
-            {order.deliveryCharges !== undefined && (
-              <Detail
-                label={t('Delivery Charges')}
-                value={`${order.deliveryCharges}`}
-              />
-            )}
-            {order.tax !== undefined && (
-              <Detail label={t('Tax')} value={`${order.tax}`} />
-            )}
-            {order.deliveryCharges !== undefined && order.tax !== undefined && (
-              <Detail
-                label={t('Total')}
-                value={`${(order.orderAmount ?? 0) + order.deliveryCharges + order.tax}`}
-                isBold
-              />
-            )}
-          </dl>
+          <h2 className="card-h2 mb-3 dark:text-white">{t('Customer Destination')}</h2>
+          {renderAddress(order.destination || dropOff?.address)}
+          {order.customerId && (
+            <p className="text-xs text-gray-500 mt-2">Customer ID: {order.customerId}</p>
+          )}
         </Card>
 
-        {/* Parties Info */}
+        {/* Delivery Info */}
         <Card>
-          <h2 className="card-h2 mb-3 dark:text-white">{t('Parties')}</h2>
+          <h2 className="card-h2 mb-3 dark:text-white">{t('Delivery Information')}</h2>
           <dl className="space-y-2 text-sm">
-            {order.customer && (
-              <Detail label={t('Customer')} value={order.customer.name ?? '—'} />
+            <Detail label={t('Delivery Status')} value={lifecycle.stageLabel || order.status || '—'} />
+            {pickup.actorId && (
+              <Detail label={t('Assigned Rider')} value={pickup.actorId} />
             )}
-            {order.store && (
-              <Detail label={t('Store/Shop')} value={order.store.name ?? '—'} />
+            {pickup.readyAt && (
+              <Detail label={t('Ready for Pickup')} value={formatDate(pickup.readyAt)} />
             )}
-            {order.rider && (
-              <Detail label={t('Rider')} value={order.rider.name ?? '—'} />
+            {pickup.pickedUpAt && (
+              <Detail label={t('Picked Up At')} value={formatDate(pickup.pickedUpAt)} />
             )}
-            {order.notes && <Detail label={t('Notes')} value={order.notes} />}
+            {dropOff?.deliveredAt && (
+              <Detail label={t('Delivered At')} value={formatDate(dropOff.deliveredAt)} />
+            )}
+            {dropOff?.failureReason && (
+              <Detail label={t('Failure Reason')} value={dropOff.failureReason} />
+            )}
           </dl>
         </Card>
 
-        {/* Delivery Address */}
-        {order.deliveryAddress && (
+        {/* Timeline */}
+        {timeline.length > 0 && (
           <Card>
-            <h2 className="card-h2 mb-3 dark:text-white">{t('Delivery Address')}</h2>
-            <p className="text-sm text-gray-700 dark:text-gray-200">
-              {order.deliveryAddress}
-            </p>
-          </Card>
-        )}
-
-        {/* Items Table */}
-        {order.items && order.items.length > 0 && (
-          <Card className="md:col-span-2">
-            <h2 className="card-h2 mb-4 dark:text-white">{t('Order Items')}</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-dark-600">
-                    <th className="py-2 text-left font-semibold text-gray-700 dark:text-gray-200">
-                      {t('Item')}
-                    </th>
-                    <th className="py-2 text-center font-semibold text-gray-700 dark:text-gray-200">
-                      {t('Qty')}
-                    </th>
-                    <th className="py-2 text-right font-semibold text-gray-700 dark:text-gray-200">
-                      {t('Price')}
-                    </th>
-                    <th className="py-2 text-right font-semibold text-gray-700 dark:text-gray-200">
-                      {t('Total')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item, idx) => (
-                    <tr
-                      key={item.id ?? idx}
-                      className="border-b border-gray-100 dark:border-dark-700"
-                    >
-                      <td className="py-3 text-gray-700 dark:text-gray-200">
-                        {item.title ?? `Item ${idx + 1}`}
-                      </td>
-                      <td className="py-3 text-center text-gray-700 dark:text-gray-200">
-                        {item.quantity ?? 1}
-                      </td>
-                      <td className="py-3 text-right text-gray-700 dark:text-gray-200">
-                        {item.price ?? 0}
-                      </td>
-                      <td className="py-3 text-right font-medium text-gray-900 dark:text-gray-100">
-                        {((item.quantity ?? 1) * (item.price ?? 0)).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <h2 className="card-h2 mb-3 dark:text-white">{t('Timeline')}</h2>
+            <div className="space-y-3">
+              {timeline.map((entry: any, idx: number) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="mt-1 h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{entry.label}</p>
+                    <p className="text-xs text-gray-500">{entry.timestamp ? formatDate(entry.timestamp) : '—'}</p>
+                    {entry.source && (
+                      <p className="text-xs text-gray-400">Source: {entry.source}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         )}
       </div>
+
+      {/* Seller Shipments */}
+      {sellerShipments.length > 0 && (
+        <Card>
+          <h2 className="card-h2 mb-4 dark:text-white">{t('Seller Shipments')}</h2>
+          <div className="space-y-4">
+            {sellerShipments.map((shipment: any, idx: number) => (
+              <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">
+                  {t('Shipment')} {idx + 1}
+                  {shipment.shopId && <span className="text-gray-500 ml-2">Shop: {shipment.shopId}</span>}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">{t('Origin (Pickup)')}</h4>
+                    {renderAddress(shipment.origin)}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">{t('Items')}</h4>
+                    {shipment.items && shipment.items.length > 0 ? (
+                      <ul className="text-sm space-y-1">
+                        {shipment.items.map((item: any, itemIdx: number) => (
+                          <li key={itemIdx} className="flex justify-between">
+                            <span>{item.name || item.productId || `Item ${itemIdx + 1}`}</span>
+                            <span className="text-gray-500">x{item.quantity ?? item.qty ?? 1}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">—</p>
+                    )}
+                    {shipment.subtotal && (
+                      <p className="text-sm font-medium mt-2">
+                        {t('Subtotal')}: {shipment.subtotal.toLocaleString()} ETB
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Items Table */}
+      {order.items && order.items.length > 0 && (
+        <Card>
+          <h2 className="card-h2 mb-4 dark:text-white">{t('Order Items')}</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-dark-600">
+                  <th className="py-2 text-left font-semibold text-gray-700 dark:text-gray-200">{t('Item')}</th>
+                  <th className="py-2 text-center font-semibold text-gray-700 dark:text-gray-200">{t('Qty')}</th>
+                  <th className="py-2 text-right font-semibold text-gray-700 dark:text-gray-200">{t('Price')}</th>
+                  <th className="py-2 text-right font-semibold text-gray-700 dark:text-gray-200">{t('Total')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map((item: any, idx: number) => (
+                  <tr key={item.productId || idx} className="border-b border-gray-100 dark:border-dark-700">
+                    <td className="py-3 text-gray-700 dark:text-gray-200">
+                      {item.title || item.name || item.productName || `Item ${idx + 1}`}
+                    </td>
+                    <td className="py-3 text-center text-gray-700 dark:text-gray-200">
+                      {item.quantity ?? item.qty ?? 1}
+                    </td>
+                    <td className="py-3 text-right text-gray-700 dark:text-gray-200">
+                      {(item.price || 0).toLocaleString()}
+                    </td>
+                    <td className="py-3 text-right font-medium text-gray-900 dark:text-gray-100">
+                      {((item.quantity ?? item.qty ?? 1) * (item.price || 0)).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-2 pt-4">

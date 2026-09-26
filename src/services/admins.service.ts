@@ -1,5 +1,6 @@
 /** Admins service facade — uses identity admin + roles APIs. */
 import type { AdminAccount, AdminRoleItem, AdminPermission, UserRolesResponse, UserRoleAssignment } from '@/types/admin';
+import { ApiError } from '@/types/api';
 import { identityAdmin, adminRolesApi } from '@/api/admin';
 
 export const adminsService = {
@@ -10,11 +11,28 @@ export const adminsService = {
 
   async get(id: string): Promise<AdminAccount | null> {
     const user = await identityAdmin.getUser(id);
-    return (user as any) || null;
+    // getUser returns the identity user profile, which is wider than the console's
+    // AdminAccount view model; the caller reads it as an AdminAccount.
+    return (user as unknown as AdminAccount | null) || null;
   },
 
-  async create(input: Omit<AdminAccount, 'id' | 'createdAt'>): Promise<AdminAccount> {
-    return Promise.resolve(input as AdminAccount);
+  /**
+   * Admin provisioning is NOT implemented by the backend.
+   *
+   * `POST /auth/register` creates CUSTOMER accounts only (identity
+   * `authService.registerCustomer`) and there is no admin-create endpoint, so
+   * this must not report a fake success. To give a person admin access today,
+   * create/normalise the account and then grant the role through
+   * `PUT /admin/users/:id/role`.
+   *
+   * Replace this body with the real call once an endpoint exists.
+   */
+  async create(_input: Omit<AdminAccount, 'id' | 'createdAt'>): Promise<AdminAccount> {
+    throw new ApiError(
+      501,
+      'Creating admins is not supported by the API yet. Add the account, then grant it the ADMIN role.',
+      'NOT_IMPLEMENTED'
+    );
   },
 
   // ── Roles ──

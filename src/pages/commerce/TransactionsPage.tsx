@@ -1,145 +1,28 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
-import { SearchInput } from '@/components/common/SearchInput';
-import { ErrorState } from '@/components/common/ErrorState';
+import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { Pagination } from '@/components/common/Pagination';
-import { SelectField } from '@/components/forms/SelectField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
+import { commerceService, type PaymentRecord, type PaymentMethodRecord, type SellerPaymentAccount, type ReconciliationRow } from '@/services/commerce.service';
 import { formatDate } from '@/utils/format';
-import { http } from '@/services/client/httpClient';
+import { PaymentMethodForm } from '@/pages/commerce/PaymentMethodForm';
 
-interface Transaction {
-  id: string;
-  transactionId?: string;
-  orderId: string;
-  amount: number;
-  paymentMethod?: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
-  currency?: string;
-  createdAt?: string;
-}
-
-interface TransactionsResponse {
-  items: Transaction[];
-  total: number;
-  totalPages: number;
-}
-
-export function TransactionsPage() {
-  const { t } = useLocalization();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('all');
-  const debouncedSearch = useDebounce(search, 300);
-
-  const { data, loading, error, refetch } = useAsync(
-    async () => {
-      try {
-        const params = new URLSearchParams({
-          page: String(page),
-          limit: '20',
-          search: debouncedSearch,
-          ...(status !== 'all' && { status }),
-        });
-        const res = await http.get(`/payment/get-all-payments?${params}`);
-        return res as TransactionsResponse;
-      } catch (err) {
-        throw new Error('Failed to load transactions');
-      }
-    },
-    [page, debouncedSearch, status]
-  );
-
-  const columns: Column<Transaction>[] = [
-    { key: 'id', header: t('Transaction ID'), accessor: (row) => row.id?.substring(0, 8) + '...' || '-' },
-    { key: 'orderId', header: t('Order ID'), accessor: (row) => row.orderId?.substring(0, 8) + '...' || '-' },
-    {
-      key: 'amount',
-      header: t('Amount'),
-      render: (row) => `${row.amount?.toLocaleString() || 0} ${row.currency || 'ETB'}`,
-    },
-    {
-      key: 'paymentMethod',
-      header: t('Payment Method'),
-      accessor: (row) => row.paymentMethod || '-',
-    },
-    {
-      key: 'status',
-      header: t('Status'),
-      render: (row) => (
-        <StatusBadge
-          label={row.status}
-          className={
-            row.status === 'FAILED'
-              ? 'bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-100'
-              : row.status === 'REFUNDED'
-                ? 'bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-100'
-                : ''
-          }
-        />
-      ),
-    },
-    { key: 'createdAt', header: t('Date'), accessor: (row) => formatDate(row.createdAt) },
-  ];
-
-  return (
-    <div>
-      <PageHeader
-        title={t('Transactions & Payments')}
-        description={t('Monitor all payment transactions and payment status')}
-        actions={
-          <div className="flex items-center gap-2">
-            <SelectField
-              value={status}
-              options={[
-                { value: 'all', label: t('All Transactions') },
-                { value: 'COMPLETED', label: t('Completed') },
-                { value: 'PENDING', label: t('Pending') },
-                { value: 'FAILED', label: t('Failed') },
-                { value: 'REFUNDED', label: t('Refunded') },
-              ]}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                setPage(1);
-              }}
-              className="w-48"
-            />
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder={t('Search by transaction/order ID')}
-              aria-label={t('Search')}
-            />
-          </div>
-        }
-      />
-
-      {error ? (
-        <ErrorState message={error} onRetry={refetch} />
-      ) : (
-        <>
-          <DataTable<Transaction>
-            columns={columns}
-            rows={data?.items ?? []}
-            rowKey={(row) => row.id}
-            loading={loading}
-            emptyTitle={t('No transactions found')}
-          />
-          {(data?.totalPages ?? 0) > 1 && (
-            <Pagination
-              className="mt-4"
-              page={page}
-              totalPages={data?.totalPages ?? 0}
-              total={data?.total}
-              onPageChange={setPage}
-            />
-          )}
-        </>
-      )}
-    </div>
-  );
+type Tab = 'overview'|'methods'|'accounts'|'transactions'|'refunds'|'reconciliation';
+const TABS: Array<{id:Tab,label:string}> = [{id:'overview',label:'Overview'},{id:'methods',label:'Payment Methods'},{id:'accounts',label:'Seller Accounts'},{id:'transactions',label:'Transactions'},{id:'refunds',label:'Refunds'},{id:'reconciliation',label:'Reconciliation'}];
+const money=(v:number,c='ETB')=>`${Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2})} ${c}`;
+const methodName=(v?:string)=>v==='COD'?'Cash on Delivery':v==='BANK_TRANSFER'?'Bank Transfer':v||'—';
+export function TransactionsPage(){
+ const [tab,setTab]=useState<Tab>('overview'); const [status,setStatus]=useState('all'); const [method,setMethod]=useState(''); const [search,setSearch]=useState('');
+ const [methodEditorOpen, setMethodEditorOpen] = useState(false);
+ const [editingMethod, setEditingMethod] = useState<PaymentMethodRecord | null>(null);
+ const payments=useAsync(()=>commerceService.listPayments({limit:100,status,paymentMethod:method||undefined,search:search||undefined}),[status,method,search]);
+ const methods=useAsync(()=>commerceService.listPaymentMethods(),[]); const accounts=useAsync(()=>commerceService.listSellerPaymentAccounts(),[]); const recon=useAsync(()=>commerceService.getReconciliation(),[]);
+ const rows=payments.data?.items||[]; const summary=useMemo(()=>({total:rows.length,success:rows.filter(r=>r.status==='COMPLETED').length,pending:rows.filter(r=>r.status==='PENDING').length,failed:rows.filter(r=>r.status==='FAILED').length,refunded:rows.filter(r=>r.status==='REFUNDED').reduce((n,r)=>n+r.amount,0),revenue:rows.filter(r=>r.status==='COMPLETED').reduce((n,r)=>n+r.amount,0),payable:rows.filter(r=>r.status==='COMPLETED').reduce((n,r)=>n+r.amount,0)}),[rows]);
+ const paymentColumns:Column<PaymentRecord>[]=[{key:'transactionId',header:'Transaction',accessor:r=>r.transactionId||r.id},{key:'orderId',header:'Order',accessor:r=>r.orderId},{key:'buyer',header:'Buyer',accessor:r=>r.buyerName||r.userId||'—'},{key:'seller',header:'Seller',accessor:r=>r.sellerName||r.sellerId||'—'},{key:'paymentMethod',header:'Method',accessor:r=>methodName(r.paymentMethod)},{key:'amount',header:'Amount',render:r=>money(r.amount,r.currency)},{key:'status',header:'Status',render:r=><StatusBadge label={r.status}/>},{key:'createdAt',header:'Date',accessor:r=>formatDate(r.createdAt)},{key:'actions',header:'Actions',render:()=> <Button size="sm" variant="ghost">View</Button>}];
+ const methodColumns:Column<PaymentMethodRecord>[]=[{key:'name',header:'Payment Method',accessor:r=>r.name},{key:'type',header:'Type',accessor:r=>r.type},{key:'availableFor',header:'Available For',accessor:r=>r.availableFor?.join(', ')||'—'},{key:'currency',header:'Currency',accessor:r=>r.currency},{key:'status',header:'Status',render:r=><StatusBadge label={r.status}/>},{key:'configured',header:'Configuration',render:r=>r.configured?'Configured':'Not configured'},{key:'actions',header:'Actions',render:r=><Button size="sm" variant="outline" onClick={()=>void commerceService.savePaymentMethod({id:r.id,status:r.status==='ACTIVE'?'INACTIVE':'ACTIVE',configured:r.configured}).then(()=>methods.refetch())}>{r.status==='ACTIVE'?'Deactivate':'Activate'}</Button>}];
+ const accountColumns:Column<SellerPaymentAccount>[]=[{key:'sellerId',header:'Seller',accessor:r=>r.sellerName||r.sellerId},{key:'methodName',header:'Account Type',accessor:r=>r.methodName},{key:'provider',header:'Provider',accessor:r=>r.provider||'—'},{key:'accountHint',header:'Account',accessor:r=>`${r.accountLabel||''} ${r.accountHint||''}`},{key:'status',header:'Verification',render:r=><StatusBadge label={r.status}/>},{key:'actions',header:'Actions',render:()=> <Button size="sm" variant="ghost">View</Button>}];
+ const reconColumns:Column<ReconciliationRow>[]=[{key:'orderId',header:'Order',accessor:r=>r.orderId},{key:'expectedAmount',header:'Expected',render:r=>money(r.expectedAmount)},{key:'paidAmount',header:'Paid',render:r=>money(r.paidAmount)},{key:'outstandingAmount',header:'Outstanding',render:r=>money(r.outstandingAmount)},{key:'refunds',header:'Refunds',render:r=>money(r.refunds)},{key:'reconciliationStatus',header:'Status',render:r=><StatusBadge label={r.reconciliationStatus}/>}];
+ return <div><PaymentMethodForm open={methodEditorOpen} initial={editingMethod} onClose={()=>setMethodEditorOpen(false)} onSaved={()=>methods.refetch()}/><PageHeader title="Payments & Transactions" description="Control payment methods, seller accounts, transactions, refunds, and reconciliation."/><div className="mb-6 flex flex-wrap gap-1 border-b border-gray-200 dark:border-dark-700" role="tablist">{TABS.map(x=><button key={x.id} role="tab" aria-selected={tab===x.id} onClick={()=>setTab(x.id)} className={`border-b-2 px-4 py-3 text-sm font-medium ${tab===x.id?'border-primary-dark text-primary-dark':'border-transparent text-gray-500'}`}>{x.label}</button>)}</div>{tab!=='overview'&&tab!=='methods'&&tab!=='accounts'&&<Card className="mb-4 flex flex-wrap gap-3"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search transaction or order" className="rounded-md border px-3 py-2"/><select value={status} onChange={e=>setStatus(e.target.value)} className="rounded-md border px-3 py-2"><option value="all">All statuses</option><option value="PENDING">Pending</option><option value="COMPLETED">Successful</option><option value="FAILED">Failed</option><option value="REFUNDED">Refunded</option></select><select value={method} onChange={e=>setMethod(e.target.value)} className="rounded-md border px-3 py-2"><option value="">All methods</option><option value="COD">Cash on Delivery</option><option value="BANK_TRANSFER">Bank Transfer</option><option value="CARD">Card</option></select></Card>}{tab==='overview'&&<><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Total transactions',summary.total],['Successful payments',summary.success],['Pending payments',summary.pending],['Failed payments',summary.failed],['Refunded amount',money(summary.refunded)],['Platform revenue',money(summary.revenue)],['Seller payable amount',money(summary.payable)]].map(([l,v])=><Card key={String(l)} className="p-5"><p className="text-sm text-gray-500">{l}</p><p className="mt-2 text-2xl font-semibold">{v}</p></Card>)}</div><Card className="mt-5"><DataTable columns={paymentColumns} rows={rows.slice(0,8)} rowKey={r=>r.id} loading={payments.loading} emptyTitle="No payment records"/></Card></>}{tab==='methods'&&<Card><div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold text-gray-900">Payment Methods</h2><p className="text-sm text-gray-500">Control which methods buyers and sellers can use.</p></div><Button size="sm" onClick={()=>{setEditingMethod(null);setMethodEditorOpen(true)}}>Add Method</Button></div><DataTable columns={methodColumns} rows={methods.data||[]} rowKey={r=>r.id} loading={methods.loading} emptyTitle="No payment methods configured"/></Card>}{tab==='accounts'&&<Card><DataTable columns={accountColumns} rows={accounts.data||[]} rowKey={r=>r.id} loading={accounts.loading} emptyTitle="No seller payment accounts"/></Card>}{tab==='transactions'&&<Card><DataTable columns={paymentColumns} rows={rows} rowKey={r=>r.id} loading={payments.loading} emptyTitle="No transactions found"/></Card>}{tab==='refunds'&&<Card><DataTable columns={paymentColumns} rows={rows.filter(r=>r.status==='REFUNDED')} rowKey={r=>r.id} loading={payments.loading} emptyTitle="No refunded transactions"/></Card>}{tab==='reconciliation'&&<Card><DataTable columns={reconColumns} rows={recon.data||[]} rowKey={r=>r.paymentId} loading={recon.loading} emptyTitle="No reconciliation records"/></Card>}</div>;
 }

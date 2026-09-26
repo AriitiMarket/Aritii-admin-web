@@ -8,12 +8,23 @@ import type {
   SystemSettings,
 } from '@/types';
 
+/**
+ * Strips the response envelope (`success`) from a settings payload.
+ *
+ * The API answers with `{ success: true, ...settings }`. Destructuring keeps the
+ * payload typed; the previous `as any` erased it and defeated the very
+ * `PlatformSettings` / `NotificationsSettings` / `SystemSettings` contracts this
+ * module exists to enforce.
+ */
+function toSettings<T extends object>(payload: { success: boolean } & T): T {
+  const { success: _success, ...settings } = payload;
+  return settings as T;
+}
+
 export async function realGetPlatformSettings(): Promise<PlatformSettings> {
   assertGatewayConfigured();
   const response = await http.get<{ success: boolean } & PlatformSettings>('/settings/platform');
-  // The API returns settings as top-level fields alongside success
-  const { success, ...settings } = response as any;
-  return settings as PlatformSettings;
+  return toSettings<PlatformSettings>(response);
 }
 
 export async function realUpdatePlatformSettings(
@@ -21,15 +32,13 @@ export async function realUpdatePlatformSettings(
 ): Promise<PlatformSettings> {
   assertGatewayConfigured();
   const response = await http.put<{ success: boolean } & PlatformSettings>('/settings/platform', patch);
-  const { success, ...settings } = response as any;
-  return settings as PlatformSettings;
+  return toSettings<PlatformSettings>(response);
 }
 
 export async function realGetNotificationSettings(): Promise<NotificationsSettings> {
   assertGatewayConfigured();
   const response = await http.get<{ success: boolean } & NotificationsSettings>('/settings/notifications');
-  const { success, ...settings } = response as any;
-  return settings as NotificationsSettings;
+  return toSettings<NotificationsSettings>(response);
 }
 
 export async function realUpdateNotificationSettings(
@@ -37,15 +46,13 @@ export async function realUpdateNotificationSettings(
 ): Promise<NotificationsSettings> {
   assertGatewayConfigured();
   const response = await http.put<{ success: boolean } & NotificationsSettings>('/settings/notifications', patch);
-  const { success, ...settings } = response as any;
-  return settings as NotificationsSettings;
+  return toSettings<NotificationsSettings>(response);
 }
 
 export async function realGetSystemSettings(): Promise<SystemSettings> {
   assertGatewayConfigured();
   const response = await http.get<{ success: boolean } & SystemSettings>('/settings/system');
-  const { success, ...settings } = response as any;
-  return settings as SystemSettings;
+  return toSettings<SystemSettings>(response);
 }
 
 export async function realUpdateSystemSettings(
@@ -53,6 +60,5 @@ export async function realUpdateSystemSettings(
 ): Promise<SystemSettings> {
   assertGatewayConfigured();
   const response = await http.put<{ success: boolean } & SystemSettings>('/settings/system', patch);
-  const { success, ...settings } = response as any;
-  return settings as SystemSettings;
+  return toSettings<SystemSettings>(response);
 }

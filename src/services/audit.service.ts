@@ -28,4 +28,32 @@ export const auditService = {
   async getStats(): Promise<AuditLogStats> {
     return auditAdmin.getStats();
   },
+
+  /** How many logs a given purge scope would remove. */
+  async previewPurge(params: {
+    action?: string;
+    module?: string;
+    level?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<{ total: number }> {
+    return auditAdmin.previewPurge(params);
+  },
+
+  /**
+   * Permanently clear audit logs (destructive).
+   * The backend requires the `audit.manage` permission, a reason, and the
+   * literal confirmation phrase — see AUDIT_CONFIRM_PHRASE.
+   */
+  async clearLogs(payload: {
+    reason: string;
+    confirm: string;
+    action?: string;
+    module?: string;
+    level?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ deleted: number; total: number; byLevel: Record<string, number> }> {
+    return auditAdmin.clearLogs(payload);
+  },
 };
