@@ -55,6 +55,19 @@ const ICONS: Record<string, IconDefinition> = {
   'Active Deliveries': faClock,
   'Delivery & Logistics': faTruck,
   'Locations & Expansion': faMap,
+  'Overview': faChartLine,
+  'Zones': faLayerGroup,
+  'Hubs': faBuilding,
+  'Delivery Services': faTruck,
+  'Partners & Providers': faMotorcycle,
+  'Delivery Requests': faListCheck,
+  'Deliveries': faTruck,
+  'Assignments': faListCheck,
+  'Dispatch / Batches': faBoxesStacked,
+  'Operations': faCog,
+  'Shipments': faTruck,
+  'Consolidation': faBoxesStacked,
+  'Tracking': faMap,
 };
 
 export function NavList({

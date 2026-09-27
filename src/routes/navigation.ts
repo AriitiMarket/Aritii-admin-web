@@ -31,7 +31,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     labelKey: 'Dashboard',
     items: [
       { labelKey: 'Home', path: '/home', roles: ALL_ADMINS },
-      { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN'] },
+
     ],
   },
   
@@ -127,42 +127,25 @@ export const NAV_GROUPS: NavigationGroup[] = [
   {
     labelKey: 'Delivery & Logistics',
     items: [
-      {
-        labelKey: 'Delivery & Logistics',
-        path: '/delivery',
-        roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
-      },
-      {
-        labelKey: 'Delivery Providers',
-        path: '/delivery/providers',
-        roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
-      },
-      {
-        labelKey: 'Assignments',
-        path: '/delivery/assignments',
-        roles: ['SUPER_ADMIN', 'RIDER_ADMIN'],
-      },
+      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Locations & Expansion', path: '/locations', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Zones', path: '/delivery/zones', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Hubs', path: '/delivery/hubs', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Routes', path: '/delivery/routes', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Delivery Services', path: '/delivery/services', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Partners & Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Delivery Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Assignments', path: '/delivery/assignments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Dispatch / Batches', path: '/delivery/dispatch', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Shipments', path: '/delivery/shipments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Consolidation', path: '/delivery/consolidation', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Tracking', path: '/delivery/tracking', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
     ],
   },
 
-  // Locations & Expansion — one workspace. The sub-views are TABS inside
-  // /locations, not separate dashboards, so the sidebar lists a single entry
-  // (plus the tree view, which is a genuinely different hierarchical view).
-  {
-    labelKey: 'Locations & Expansion',
-    items: [
-      {
-        labelKey: 'Locations',
-        path: '/locations',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        labelKey: 'Location Tree',
-        path: '/locations/tree',
-        roles: ['SUPER_ADMIN'],
-      },
-    ],
-  },
+
 
   // Disputes
   {

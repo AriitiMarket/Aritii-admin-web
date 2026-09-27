@@ -234,6 +234,14 @@ function Suspend({ children, roles }: { children: React.ReactElement; roles: Adm
   );
 }
 
+const DeliveryServicesPage = lazy(() => import('@/pages/delivery/DeliveryServicesPage').then(m => ({ default: m.default })));
+const DeliveryRequestsPage = lazy(() => import('@/pages/delivery/DeliveryRequestsPage').then(m => ({ default: m.default })));
+const DeliveriesPage = lazy(() => import('@/pages/delivery/DeliveriesPage').then(m => ({ default: m.default })));
+const DispatchBatchesPage = lazy(() => import('@/pages/delivery/DispatchBatchesPage').then(m => ({ default: m.default })));
+const ShipmentsPage = lazy(() => import('@/pages/delivery/ShipmentsPage').then(m => ({ default: m.default })));
+const ConsolidationPage = lazy(() => import('@/pages/delivery/ConsolidationPage').then(m => ({ default: m.default })));
+const TrackingPage = lazy(() => import('@/pages/delivery/TrackingPage').then(m => ({ default: m.default })));
+
 export function AppRoutes() {
   const router = createBrowserRouter([
     {
@@ -300,21 +308,43 @@ export function AppRoutes() {
         { path: 'delivery', element: <Suspend roles={RIDER}><DeliveryLogisticsPage /></Suspend> },
         { path: 'delivery/overview', element: <Suspend roles={RIDER}><DeliveryOverviewPage /></Suspend> },
         { path: 'delivery/assignments', element: <Suspend roles={RIDER}><DeliveryAssignmentsPage /></Suspend> },
+        { path: 'delivery/services', element: <Suspend roles={RIDER}><DeliveryServicesPage /></Suspend> },
+        { path: 'delivery/requests', element: <Suspend roles={RIDER}><DeliveryRequestsPage /></Suspend> },
+        { path: 'delivery/deliveries', element: <Suspend roles={RIDER}><DeliveriesPage /></Suspend> },
+        { path: 'delivery/dispatch', element: <Suspend roles={RIDER}><DispatchBatchesPage /></Suspend> },
+        { path: 'delivery/shipments', element: <Suspend roles={RIDER}><ShipmentsPage /></Suspend> },
+        { path: 'delivery/consolidation', element: <Suspend roles={RIDER}><ConsolidationPage /></Suspend> },
+        { path: 'delivery/tracking', element: <Suspend roles={RIDER}><TrackingPage /></Suspend> },
+
         { path: 'delivery/assignments/:assignmentId', element: <Suspend roles={RIDER}><DeliveryAssignmentDetailPage /></Suspend> },
         // Locations & Expansion is ONE workspace with tabs. The standalone
-        // zone/route list pages redirect into the matching tab so old links and
-        // bookmarks keep working without creating duplicate dashboards.
+        // zone/hub/route list pages redirect into the matching tab so old links
+        // and bookmarks (including the sidebar entries) keep working without
+        // creating duplicate dashboards.
         { path: 'locations', element: <Suspend roles={SUPER}><LocationsExpansionPage /></Suspend> },
         { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
         { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
         { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },
+        { path: 'delivery/hubs', element: <Navigate to="/locations?tab=hubs" replace /> },
         { path: 'delivery/routes', element: <Navigate to="/locations?tab=routes" replace /> },
         { path: 'delivery/routes/:id', element: <Suspend roles={SUPER}><RouteDetailPage /></Suspend> },
       ],
     },
     { path: '/forbidden', element: <ForbiddenPage /> },
     { path: '*', element: <NotFoundPage /> },
-  ]);
+  ], {
+    // Opt in to the v7 router behaviours now so the dev console stays free of
+    // React Router future-flag warnings and the v7 upgrade is a no-op.
+    future: {
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+    },
+  });
 
-  return <RouterProvider router={router} />;
+  return (
+    <RouterProvider router={router} future={{ v7_startTransition: true }} />
+  );
 }

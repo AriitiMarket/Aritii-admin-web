@@ -13,14 +13,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ThemeProvider>
       <I18nProvider>
         <ToastProvider>
-          <ConfigurationProvider>
-            <SectorProvider>
-              <AuthProvider>
+          {/* AuthProvider must wrap every provider that talks to the API: it
+              registers the shared 401 -> refresh -> retry handlers, and React
+              runs child effects before parent effects, so an API-calling
+              provider mounted above it would fire its first request with no
+              refresh path and surface a 401. */}
+          <AuthProvider>
+            <ConfigurationProvider>
+              <SectorProvider>
                 {children}
                 <ToastViewport />
-              </AuthProvider>
-            </SectorProvider>
-          </ConfigurationProvider>
+              </SectorProvider>
+            </ConfigurationProvider>
+          </AuthProvider>
         </ToastProvider>
       </I18nProvider>
     </ThemeProvider>

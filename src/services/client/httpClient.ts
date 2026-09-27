@@ -12,7 +12,7 @@
  *  - normalized ApiError for every failure mode
  */
 import { ApiError } from '@/types/api';
-import { getAccessToken } from '@/utils/auth-storage';
+import { getAccessToken, getRefreshToken } from '@/utils/auth-storage';
 import { env } from '@/utils/env';
 
 export interface HttpRequestOptions {
@@ -41,6 +41,8 @@ export interface UnauthorizedHandler {
 let refreshHandler: RefreshHandler | null = null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 let refreshInFlight: Promise<boolean> | null = null;
+/** True while a refresh handler is executing — see `attemptRefresh`. */
+let refreshHandlerRunning = false;
 
 /** Registered by AuthProvider so the client can trigger auth flows. */
 export function registerAuthHandlers(handlers: {
@@ -54,11 +56,57 @@ export function registerAuthHandlers(handlers: {
 async function attemptRefresh(): Promise<boolean> {
   if (!refreshHandler) return false;
   if (!refreshInFlight) {
-    refreshInFlight = refreshHandler().finally(() => {
-      refreshInFlight = null;
-    });
+    refreshHandlerRunning = true;
+    refreshInFlight = refreshHandler()
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null;
+        refreshHandlerRunning = false;
+      });
   }
   return refreshInFlight;
+}
+
+/** Clock-skew tolerance so a token about to expire still triggers a refresh. */
+const EXPIRY_SKEW_MS = 30_000;
+
+/**
+ * True when the stored access token has already expired (or is within the
+ * skew window). Refreshing *before* the request keeps expired-token 401s out
+ * of the network log instead of paying for a failed round trip every time the
+ * short-lived (10 min) access token lapses.
+ */
+function isAccessTokenExpired(): boolean {
+  const token = getAccessToken();
+  if (!token) return false;
+  try {
+    const [, payload] = token.split('.');
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const { exp } = JSON.parse(json) as { exp?: number };
+    if (typeof exp !== 'number') return false;
+    return exp * 1000 <= Date.now() + EXPIRY_SKEW_MS;
+  } catch {
+    // Unreadable token — let the server decide via 401.
+    return false;
+  }
+}
+
+/**
+ * Refresh first when we already know the token is stale. Skipped while a
+ * refresh handler is running: the handler itself makes authenticated calls
+ * (e.g. re-fetching the profile), and awaiting our own in-flight promise
+ * from inside it would deadlock.
+ */
+async function refreshIfExpired(options: HttpRequestOptions): Promise<void> {
+  if (!(options.authenticated ?? true)) return;
+  if (!getAccessToken() || !getRefreshToken()) return;
+  if (refreshHandlerRunning) return;
+  if (!isAccessTokenExpired()) return;
+  try {
+    await attemptRefresh();
+  } catch {
+    // Fall through — the request (and the 401 retry path) still runs.
+  }
 }
 
 const DEFAULT_TIMEOUT_MS = 15000;
@@ -139,6 +187,7 @@ async function doFetch<T>(
 
   try {
     const isForm = body instanceof FormData;
+    if (allowAuthRetry) await refreshIfExpired(options);
     const headers = buildHeaders(options.authenticated ?? true);
     if (!isForm && body !== undefined) {
       headers.set('Content-Type', 'application/json');

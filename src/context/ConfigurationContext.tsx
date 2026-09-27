@@ -8,6 +8,7 @@ import {
 import type { PlatformSettings } from '@/types';
 import { settingsService } from '@/services/settings.service';
 import { useAsync } from '@/hooks/useAsync';
+import { useAuthContext } from '@/context/AuthContext';
 
 interface ConfigurationContextValue {
   configuration: PlatformSettings | null;
@@ -21,14 +22,20 @@ export const ConfigurationContext = createContext<ConfigurationContextValue | un
 );
 
 export function ConfigurationProvider({ children }: { children: ReactNode }) {
-  // Only fetch if user is authenticated
-  const hasToken = typeof window !== 'undefined'
-    ? Boolean(window.localStorage.getItem('token'))
-    : false;
+  // Subscribe to auth instead of reading localStorage once per render: the
+  // one-shot read never flipped after login, so settings were never fetched
+  // until a full page reload.
+  //
+  // Wait for the auth bootstrap too — child effects run before the parent's,
+  // so on the very first mount AuthProvider has not registered its
+  // 401 -> refresh -> retry handlers yet. Firing here would spend the stale
+  // access token on a 401 that nobody can recover from.
+  const { isAuthenticated, loading: authLoading } = useAuthContext();
 
+  const ready = isAuthenticated && !authLoading;
   const { data, loading, error, refetch } = useAsync(
-    () => (hasToken ? settingsService.getPlatform() : Promise.resolve(null)),
-    [hasToken]
+    () => (ready ? settingsService.getPlatform() : Promise.resolve(null)),
+    [ready]
   );
 
   const value = useMemo<ConfigurationContextValue>(
