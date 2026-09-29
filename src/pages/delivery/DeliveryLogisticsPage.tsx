@@ -1,36 +1,36 @@
-// Main Delivery & Logistics Page with Tab Navigation
+// Delivery & Logistics Overview — the module dashboard.
 
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
-import { ErrorState } from '@/components/common/ErrorState';
-import { PageLoader } from '@/components/common/PageLoader';
 import { Button } from '@/components/common/Button';
-import { Tabs, TabContent } from '@/components/common/Tabs';
 import { OverviewTab } from './tabs/OverviewTab';
-import { RidersTab } from './tabs/RidersTab';
-import { AssignmentsTab } from './tabs/AssignmentsTab';
-import { ActiveDeliveriesTab } from './tabs/ActiveDeliveriesTab';
-import { useDeliveryStats } from './hooks/useDeliveryStats';
 
+/**
+ * Delivery & Logistics -> Overview.
+ *
+ * A dashboard only: stats, filters and recent deliveries. The working views
+ * are sidebar entries (Deliveries, Assignments, Partners & Providers), so the
+ * page carries no tabs that would repeat them.
+ *
+ * The dashboard data itself is owned by OverviewTab (one fetch, filters and
+ * refresh included) — this page only drives the Refresh / auto-refresh clock.
+ */
 export function DeliveryLogisticsPage() {
-  const [activeTab, setActiveTab] = useState('overview');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const { stats, loading: statsLoading, error: statsError, refetch: refetchOverview } = useDeliveryStats();
-
-  // Auto-refresh functionality
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
-      refetchOverview();
+      setRefreshKey((k) => k + 1);
       setLastUpdated(new Date().toLocaleTimeString());
     }, 5 * 60 * 1000); // Refresh every 5 minutes
     return () => clearInterval(interval);
-  }, [autoRefresh, refetchOverview]);
+  }, [autoRefresh]);
 
   const handleRefresh = () => {
-    refetchOverview();
+    setRefreshKey((k) => k + 1);
     setLastUpdated(new Date().toLocaleTimeString());
   };
 
@@ -38,12 +38,6 @@ export function DeliveryLogisticsPage() {
     setAutoRefresh(!autoRefresh);
     setLastUpdated(new Date().toLocaleTimeString());
   };
-
-  const handleNavigateToAssignments = () => {
-    setActiveTab('assignments');
-  };
-
-  if (statsLoading && !stats) return <PageLoader label="Loading" />;
 
   return (
     <div>
@@ -66,35 +60,13 @@ export function DeliveryLogisticsPage() {
         }
       />
 
-      {statsError ? (
-        <ErrorState message={statsError} onRetry={refetchOverview} />
-      ) : (
-        <>
-          {lastUpdated && (
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Last updated: {lastUpdated}
-            </p>
-          )}
-
-          <Tabs
-            activeTab={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { value: 'overview', label: 'Overview' },
-              { value: 'riders', label: 'Riders & Actors' },
-              { value: 'assignments', label: 'Assignments' },
-              { value: 'active', label: 'Active Deliveries' },
-            ]}
-          />
-
-          <TabContent>
-            {activeTab === 'overview' && <OverviewTab onNavigateToAssignments={handleNavigateToAssignments} />}
-            {activeTab === 'riders' && <RidersTab />}
-            {activeTab === 'assignments' && <AssignmentsTab />}
-            {activeTab === 'active' && <ActiveDeliveriesTab />}
-          </TabContent>
-        </>
+      {lastUpdated && (
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Last updated: {lastUpdated}
+        </p>
       )}
+
+      <OverviewTab refreshKey={refreshKey} />
     </div>
   );
 }

@@ -8,7 +8,7 @@ export function Logo() {
         A
       </span>
       <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
-        Ariiti<span className="text-primary-dark"> Market</span>
+        Aritii<span className="text-primary-dark"> Market</span>
       </span>
     </div>
   );

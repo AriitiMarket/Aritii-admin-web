@@ -19,8 +19,8 @@ export const adminsService = {
   /**
    * Admin provisioning is NOT implemented by the backend.
    *
-   * `POST /auth/register` creates CUSTOMER accounts only (identity
-   * `authService.registerCustomer`) and there is no admin-create endpoint, so
+   * `POST /auth/register` creates BUYER accounts only (identity
+   * `authService.registerBuyer`) and there is no admin-create endpoint, so
    * this must not report a fake success. To give a person admin access today,
    * create/normalise the account and then grant the role through
    * `PUT /admin/users/:id/role`.

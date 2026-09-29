@@ -4,7 +4,7 @@
  * NOTE (Phase 6): expected to be aligned with `aritii-shared-types`.
  */
 
-/** Ariiti admin roles used for route/UI authorization (frontend only — the backend stays the source of truth). */
+/** Aritii admin roles used for route/UI authorization (frontend only — the backend stays the source of truth). */
 export type AdminRole =
   | 'SUPER_ADMIN'
   | 'RIDER_ADMIN'

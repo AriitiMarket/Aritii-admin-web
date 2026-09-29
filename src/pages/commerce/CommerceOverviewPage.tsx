@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
+import { useUserDirectory } from '@/hooks/useUserDirectory';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -39,6 +40,11 @@ export function CommerceDashboardPage() {
     []
   );
 
+  // Hook must run before the early returns below; ids are '' while loading.
+  const { nameFor: buyerNameFor } = useUserDirectory(
+    (recentOrders ?? []).map((row) => row.buyerId)
+  );
+
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
@@ -52,7 +58,11 @@ export function CommerceDashboardPage() {
 
   const orderColumns: Column<AdminOrderRow>[] = [
     { key: 'orderId', header: t('Order'), accessor: (row) => `#${(row.id || '').slice(-6)}` },
-    { key: 'customerId', header: t('Customer'), accessor: (row) => row.customerRef || '—' },
+    {
+      key: 'buyerId',
+      header: t('Customer'),
+      render: (row) => <span>{buyerNameFor(row.buyerId) || row.customerRef || '—'}</span>,
+    },
     {
       key: 'totalPrice',
       header: t('Amount'),

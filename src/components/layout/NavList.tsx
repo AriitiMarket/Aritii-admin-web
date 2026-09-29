@@ -21,7 +21,6 @@ import {
   faExchangeAlt,
   faTruck,
   faClock,
-  faRoute,
   type IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -51,19 +50,15 @@ const ICONS: Record<string, IconDefinition> = {
   Expansion: faMap,
   Commerce: faShoppingCart,
   'Delivery Zones': faLayerGroup,
-  Routes: faRoute,
   'Active Deliveries': faClock,
   'Delivery & Logistics': faTruck,
   'Locations & Expansion': faMap,
   'Overview': faChartLine,
-  'Zones': faLayerGroup,
-  'Hubs': faBuilding,
   'Delivery Services': faTruck,
   'Partners & Providers': faMotorcycle,
   'Delivery Requests': faListCheck,
   'Deliveries': faTruck,
   'Assignments': faListCheck,
-  'Dispatch / Batches': faBoxesStacked,
   'Operations': faCog,
   'Shipments': faTruck,
   'Consolidation': faBoxesStacked,
@@ -92,7 +87,10 @@ export function NavList({
               <li key={item.path}>
                 <NavLink
                   to={item.path}
-                  end={item.path === '/home'}
+                  // Exact match where the path is only a parent of other
+                  // entries: /home and /delivery must not stay highlighted
+                  // while a sibling page (e.g. /delivery/shipments) is open.
+                  end={item.path === '/home' || item.path === '/delivery'}
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     twMerge(

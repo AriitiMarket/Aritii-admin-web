@@ -26,7 +26,7 @@ export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
   };
 
   return (
-    <header className="layout-top-container flex items-center justify-between gap-3 bg-white px-4 dark:bg-dark-900 dark:text-white lg:px-6">
+    <header className="layout-top-container flex items-center justify-between gap-3 border-b border-gray-200/60 bg-white/90 px-4 shadow-sm backdrop-blur-sm dark:border-dark-600/60 dark:bg-dark-900/80 dark:text-white lg:px-6">
       <div className="flex items-center gap-2">
         <button
           type="button"

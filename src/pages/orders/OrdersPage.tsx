@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
+import { useUserDirectory } from '@/hooks/useUserDirectory';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -56,6 +57,12 @@ export function OrdersMonitoringPage() {
     [page, status, startDate, endDate]
   );
 
+  // The customer column shows the buyer's NAME (the id only as a fallback
+  // while the directory lookup is still in flight).
+  const { nameFor: buyerNameFor, emailFor: buyerEmailFor } = useUserDirectory(
+    (data?.items ?? []).map((row) => row.buyerId)
+  );
+
   const handleResetFilters = () => {
     setStatus('');
     setStartDate('');
@@ -77,14 +84,18 @@ export function OrdersMonitoringPage() {
     {
       key: 'customer',
       header: t('Customer'),
-      render: (row) => (
-        <div>
-          <div className="text-sm text-gray-700 dark:text-gray-300">{row.customerRef || '—'}</div>
-          {row.customerId && (
-            <div className="text-xs text-gray-500">ID: {row.customerId.slice(-6)}</div>
-          )}
-        </div>
-      ),
+      render: (row) => {
+        const name = buyerNameFor(row.buyerId);
+        const email = buyerEmailFor(row.buyerId);
+        return (
+          <div>
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              {name || row.customerRef || '—'}
+            </div>
+            {name && email && <div className="text-xs text-gray-500">{email}</div>}
+          </div>
+        );
+      },
     },
     {
       key: 'items',

@@ -5,10 +5,10 @@
  * filter, CSV export, bulk suspend/ban, pagination, detail navigation), extracted
  * so the single Users page can reuse it instead of duplicating it.
  *
- * `role` pins the list to one role — the Buyers tab passes `CUSTOMER`. When it is
- * omitted (the All Users tab) the role dropdown stays available, which is how an
- * operator can still narrow the list to `AGENT`: a real role that has no tab of
- * its own.
+ * `role` pins the list to one role — the Customers tab passes `BUYER` (the
+ * canonical role behind the "Customer" label). When it is omitted (the All
+ * Users tab) the role dropdown stays available, which is how an operator can
+ * still narrow the list to `AGENT`: a real role that has no tab of its own.
  */
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +32,8 @@ import { formatDate, formatNumber } from '@/utils/format';
 import type { User } from '@/types';
 
 const USER_ROLES: Record<string, string> = {
-  CUSTOMER: 'Buyer',
+  // Display copy: BUYER is the role, "Customer" is what the console calls it.
+  BUYER: 'Customer',
   SELLER: 'Seller',
   AGENT: 'Agent',
   ADMIN: 'Admin',
@@ -40,14 +41,14 @@ const USER_ROLES: Record<string, string> = {
 
 const USER_ROLE_FILTERS = [
   { value: '', label: 'All' },
-  { value: 'CUSTOMER', label: 'Buyers' },
+  { value: 'BUYER', label: 'Customers' },
   { value: 'SELLER', label: 'Sellers' },
   { value: 'AGENT', label: 'Agents' },
   { value: 'ADMIN', label: 'Admins' },
 ];
 
 /** Identity roles the list can be pinned to. */
-export type UsersRoleFilter = '' | 'CUSTOMER' | 'SELLER' | 'AGENT' | 'ADMIN';
+export type UsersRoleFilter = '' | 'BUYER' | 'SELLER' | 'AGENT' | 'ADMIN';
 
 const exportUsersToCSV = (users: User[]) => {
   const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'Verified', 'Joined'];
@@ -82,7 +83,7 @@ export function UsersListPanel({ role: pinnedRole }: { role?: UsersRoleFilter })
   const [roleFilter, setRoleFilter] = useState<UsersRoleFilter>(pinnedRole ?? '');
   const debouncedSearch = useDebounce(search, 300);
 
-  // A pinned role wins over the dropdown, so the Buyers tab can never drift.
+  // A pinned role wins over the dropdown, so the Customers tab can never drift.
   const effectiveRole = pinnedRole ?? roleFilter;
 
   const { data, loading, error, refetch } = useAsync(

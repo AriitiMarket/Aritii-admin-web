@@ -12,7 +12,6 @@ export { AssignRiderPanel } from './dispatch/AssignRiderPanel';
 export { OverviewTab } from './tabs/OverviewTab';
 export { RidersTab } from './tabs/RidersTab';
 export { AssignmentsTab } from './tabs/AssignmentsTab';
-export { ActiveDeliveriesTab } from './tabs/ActiveDeliveriesTab';
 
 // Types
 export type {
@@ -20,14 +19,13 @@ export type {
   RecentDelivery,
   Delivery,
   RiderDelivery,
-  ActorStats,
   PaginatedData,
   DeliveryStatus,
   RiderStatus,
 } from './types';
 
 // Hooks
-export { useDeliveryStats, useActorStats } from './hooks/useDeliveryStats';
+export { useDeliveryStats } from './hooks/useDeliveryStats';
 export { useRecentDeliveries } from './hooks/useRecentDeliveries';
 export { useAssignments } from './hooks/useAssignments';
 

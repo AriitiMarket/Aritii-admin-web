@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storesService } from '@/services/stores.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -26,7 +26,17 @@ export function StoresManagementPage() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('all');
+  // Status lives in `?status=` so the approval queue is deep-linkable
+  // (`/stores?status=PENDING_APPROVAL`) — the sidebar's pending-shops entry
+  // was removed in favour of this filter.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? 'all');
+  const setStatusParam = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value && value !== 'all') next.set('status', value);
+    else next.delete('status');
+    setSearchParams(next, { replace: true });
+  };
   const [sector, setSector] = useState('all');
   const [businessId, setBusinessId] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -329,7 +339,7 @@ export function StoresManagementPage() {
           <SelectField
             value={status}
             options={statusOptions}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            onChange={(e) => { setStatus(e.target.value); setStatusParam(e.target.value); setPage(1); }}
             label={t('Status')}
           />
           <SelectField

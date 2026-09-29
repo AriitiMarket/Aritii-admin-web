@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-// Ariiti Admin Web — Vite configuration.
-// The frontend only ever talks to the Ariiti API Gateway (see src/services).
+// Aritii Admin Web — Vite configuration.
+// The frontend only ever talks to the Aritii API Gateway (see src/services).
 export default defineConfig({
   plugins: [react()],
   resolve: {

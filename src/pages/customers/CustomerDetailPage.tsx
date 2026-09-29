@@ -12,11 +12,11 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { formatCurrency, formatNumber } from '@/utils/format';
 
 export function CustomerDetailPage() {
-  const { customerId } = useParams<{ customerId: string }>();
+  const { buyerId } = useParams<{ buyerId: string }>();
   const { t } = useLocalization();
   const { data: customer, loading, error, refetch } = useAsync(
-    () => customersService.get(customerId ?? ''),
-    [customerId]
+    () => customersService.get(buyerId ?? ''),
+    [buyerId]
   );
 
   if (loading) return <PageLoader label={t('Loading')} />;

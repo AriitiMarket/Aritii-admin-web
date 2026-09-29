@@ -14,6 +14,7 @@ import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { commerceService } from '@/services/commerce.service';
+import { storesService } from '@/services/stores.service';
 import type { CommerceProduct } from '@/services/commerce.service';
 import { resolveImageUrl } from '@/utils/image';
 
@@ -41,6 +42,18 @@ export function ProductsPage() {
     async () => commerceService.listCategories('product'),
     []
   );
+
+  // The shop filter picks a shop by NAME (the value stays the id, which is
+  // what ?shopId= and the products query speak).
+  const { data: shops } = useAsync(() => storesService.list({ page: 1, limit: 200 }), []);
+  const shopOptions = [
+    { value: '', label: t('All Shops') },
+    ...(shops?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name || shop.email || shop.id })),
+  ];
+  // A deep link can name a shop outside the first page — never silently drop it.
+  if (shopId && !shopOptions.some((option) => option.value === shopId)) {
+    shopOptions.push({ value: shopId, label: `#${shopId.slice(-6)}` });
+  }
 
   const { data, loading, error, refetch } = useAsync(
     async () => {
@@ -273,16 +286,12 @@ export function ProductsPage() {
               onChange={(e) => { setCategory(e.target.value); setPage(1); }}
               label={t('Category')}
             />
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Shop ID')}</label>
-              <input
-                type="text"
-                value={shopId}
-                onChange={(e) => { setShopId(e.target.value); setPage(1); }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-dark-800 dark:text-white text-sm"
-                placeholder={t('Filter by shop id')}
-              />
-            </div>
+            <SelectField
+              value={shopId}
+              options={shopOptions}
+              onChange={(e) => { setShopId(e.target.value); setPage(1); }}
+              label={t('Shop')}
+            />
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Min Price')}</label>
               <input

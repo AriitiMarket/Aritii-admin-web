@@ -19,29 +19,45 @@ export interface FilterDef {
   key: string;
   label: string;
   value: string;
-  options: SelectOption[];
+  /** Choices for a select filter — omitted for `type: 'date'`. */
+  options?: SelectOption[];
+  /** `select` (default) or `date` for date-range pickers. */
+  type?: 'select' | 'date';
   onChange: (value: string) => void;
 }
 
-/** Compact inline labelled select used inside the filter row. */
-function InlineFilter({ label, value, options, onChange }: FilterDef) {
+const INLINE_CONTROL_CLASS =
+  'h-9 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-800 focus:border-primary-dark focus:outline-none focus:ring-1 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white';
+
+/** Compact inline labelled control used inside the filter row. */
+function InlineFilter({ label, value, options = [], type = 'select', onChange }: FilterDef) {
   return (
     <label className="flex shrink-0 items-center gap-1.5">
       <span className="whitespace-nowrap text-xs font-medium text-gray-600 dark:text-gray-300">
         {label}
       </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        className="h-9 rounded-md border border-gray-300 bg-white px-2 pr-7 text-xs text-gray-800 focus:border-primary-dark focus:outline-none focus:ring-1 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      {type === 'date' ? (
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          className={INLINE_CONTROL_CLASS}
+        />
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          className={`${INLINE_CONTROL_CLASS} pr-7`}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      )}
     </label>
   );
 }

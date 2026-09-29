@@ -96,7 +96,7 @@ export function DeliveryAssignmentDetailPage() {
     <div>
       <PageHeader
         title={assignment.reference}
-        description={`Rider: ${assignment.partnerName || '—'} • ${assignment.deliveries.length} order(s)`}
+        description={`Rider: ${assignment.providerName || assignment.partnerName || '—'} • ${assignment.deliveries.length} order(s)`}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={() => navigate('/delivery/assignments')}>
@@ -105,8 +105,8 @@ export function DeliveryAssignmentDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/riders/${assignment.partnerId}`)}
-              disabled={!assignment.partnerId}
+              onClick={() => navigate(`/riders/${assignment.providerId}`)}
+              disabled={!assignment.providerId}
             >
               Track Rider
             </Button>
@@ -141,7 +141,7 @@ export function DeliveryAssignmentDetailPage() {
         </Card>
         <Card className="p-4">
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Rider</h3>
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{assignment.partnerName || '—'}</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{assignment.providerName || assignment.partnerName || '—'}</p>
         </Card>
         <Card className="p-4">
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Assigned</h3>

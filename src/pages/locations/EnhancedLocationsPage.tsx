@@ -204,7 +204,7 @@ export function EnhancedLocationsPage() {
     <div>
       <PageHeader
         title="Locations"
-        description="Manage cities, towns, areas, hubs and serviceable locations used throughout Ariiti Market"
+        description="Manage cities, towns, areas, hubs and serviceable locations used throughout Aritii Market"
         actions={
           <div className="flex gap-2">
             <Button

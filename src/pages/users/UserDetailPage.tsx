@@ -14,7 +14,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { formatDate } from '@/utils/format';
 
 const USER_ROLES: Record<string, string> = {
-  CUSTOMER: 'Buyer',
+  BUYER: 'Buyer',
   SELLER: 'Seller',
   AGENT: 'Agent',
   ADMIN: 'Admin',

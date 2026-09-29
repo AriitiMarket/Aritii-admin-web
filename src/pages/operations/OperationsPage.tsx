@@ -8,7 +8,7 @@
  * Refreshes in place (no full-page reload) on an interval, so the view behaves
  * like a live operations board without requiring new realtime infrastructure.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   platformAdminService,
@@ -46,9 +46,6 @@ export function OperationsPage() {
   const [to, setTo] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const stageRef = useRef(stage);
-  stageRef.current = stage;
-
   const loadOverview = useCallback(async () => {
     try {
       const data = await platformAdminService.getOperations();
@@ -62,8 +59,10 @@ export function OperationsPage() {
     }
   }, []);
 
+  // `stage` is a real dependency: selecting a stage must refetch the list
+  // immediately (the old stageRef hack never triggered this effect).
   const loadOrders = useCallback(async () => {
-    if (!stageRef.current) {
+    if (!stage) {
       setOrders([]);
       setTotal(0);
       setTotalPages(0);
@@ -71,7 +70,7 @@ export function OperationsPage() {
     }
     setListLoading(true);
     try {
-      const data = await platformAdminService.getOrdersByStage(stageRef.current, {
+      const data = await platformAdminService.getOrdersByStage(stage, {
         page,
         limit: 20,
         paymentStatus: paymentStatus || undefined,
@@ -87,7 +86,7 @@ export function OperationsPage() {
     } finally {
       setListLoading(false);
     }
-  }, [page, paymentStatus, from, to]);
+  }, [stage, page, paymentStatus, from, to]);
 
   useEffect(() => {
     void loadOverview();

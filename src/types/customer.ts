@@ -35,7 +35,8 @@ export interface CustomerDetail extends Customer {
 }
 
 export const toCustomer = (user: User): Customer | null => {
-  if (user.role !== 'CUSTOMER') return null;
+  // BUYER is the canonical buy-side role; legacy rows read back as BUYER too.
+  if (user.role !== 'BUYER') return null;
   return {
     id: user.id,
     name: user.name,

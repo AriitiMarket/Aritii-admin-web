@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -23,10 +24,11 @@ export function AssignmentListPanel() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, loading, error, refetch } = useAsync(
-    () => dispatchService.list({ page, limit: 15, status, search }),
-    [page, status, search]
+    () => dispatchService.list({ page, limit: 15, status, search: debouncedSearch }),
+    [page, status, debouncedSearch]
   );
 
   const assignments = data?.assignments ?? [];
@@ -86,7 +88,7 @@ export function AssignmentListPanel() {
                     return (
                       <tr key={a._id} className="border-b border-gray-100 dark:border-dark-600/50">
                         <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{a.reference}</td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{a.partnerName || '—'}</td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{a.providerName || a.partnerName || '—'}</td>
                         <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{a.deliveries.length}</td>
                         <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{progress.label}</td>
                         <td className="px-4 py-3">

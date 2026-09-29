@@ -1,12 +1,12 @@
 /**
- * Generic API contracts used across the Ariiti API Gateway client.
+ * Generic API contracts used across the Aritii API Gateway client.
  *
  * NOTE (Phase 6): these envelope/pagination types are expected to be
  * provided by `aritii-shared-types`. They are duplicated here only as a
  * local boundary until that package is integrated.
  */
 
-/** Standard Ariiti API Gateway envelope. */
+/** Standard Aritii API Gateway envelope. */
 export interface ApiEnvelope<T> {
   data: T;
   message?: string;

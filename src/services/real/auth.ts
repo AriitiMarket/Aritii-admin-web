@@ -77,6 +77,9 @@ const ROLE_MAP: Record<string, AdminRole> = {
   SELLER_ADMIN: 'SELLER_ADMIN',
   RIDER: 'RIDER_ADMIN',
   RIDER_ADMIN: 'RIDER_ADMIN',
+  // Buy-side role: canonical `BUYER`, plus the legacy `CUSTOMER` spelling that
+  // older rows/payloads still carry (both resolve to the same console role).
+  BUYER: 'CUSTOMER_ADMIN',
   CUSTOMER: 'CUSTOMER_ADMIN',
   CUSTOMER_ADMIN: 'CUSTOMER_ADMIN',
   STAFF: 'SUPER_ADMIN',

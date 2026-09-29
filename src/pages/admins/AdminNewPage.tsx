@@ -104,7 +104,7 @@ export function AdminNewPage() {
         />
 
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Integration boundary: the Ariiti identity service does not expose a
+          Integration boundary: the Aritii identity service does not expose a
           documented POST /admins endpoint yet — in mock mode this stores the
           record in the demo generator only.
         </p>

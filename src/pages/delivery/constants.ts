@@ -10,6 +10,7 @@ export const DELIVERY_STATUSES = [
   { value: 'delivered', label: 'Delivered' },
   { value: 'failed', label: 'Failed' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'reassigned', label: 'Reassigned' },
 ];
 
 export const RIDER_STATUSES = [
@@ -58,6 +59,7 @@ export const DELIVERY_STATUS_COLORS: Record<string, string> = {
   delivered: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
   cancelled: 'bg-gray-300 text-gray-900',
+  reassigned: 'bg-amber-100 text-amber-800',
 };
 
 export const BULK_ACTIONS = [

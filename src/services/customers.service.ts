@@ -3,13 +3,12 @@ import type { Customer, CustomerDetail, PaginatedResult, UsersFilter } from '@/t
 import { identityAdmin } from '@/api/admin';
 
 /**
- * Customers are identity users with the `CUSTOMER` role — that is the only value
- * the users table stores (see identity `src/models/Role.js`) and `/admin/users`
- * matches it exactly. This facade used to send `'BUYER'`, which matched no row,
- * so the Customers list was always empty; the Users page's Customers tab reads
- * real data because of this fix.
+ * Customers are identity users with the BUYER role — the canonical spelling of
+ * the buy-side actor (the legacy `CUSTOMER` spelling is a read-time alias that
+ * Identity folds into BUYER, and a `role=BUYER` filter matches both old and new
+ * rows). Sending both values would be redundant, so this facade sends one.
  */
-const CUSTOMER_ROLE = 'CUSTOMER';
+const BUYER_ROLE = 'BUYER';
 
 export const customersService = {
   async list(filter: UsersFilter): Promise<PaginatedResult<Customer>> {
@@ -17,7 +16,7 @@ export const customersService = {
       filter.page,
       filter.limit,
       filter.search,
-      CUSTOMER_ROLE
+      BUYER_ROLE
     );
     return {
       items: result.items as Customer[],

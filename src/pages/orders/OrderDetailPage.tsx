@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
+import { useUserDirectory } from '@/hooks/useUserDirectory';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { Card } from '@/components/common/Card';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -31,6 +32,12 @@ export function OrderDetailPage() {
     },
     [orderId]
   );
+
+  // Resolve the buyer's name for the destination card (and the assigned
+  // rider's, when that id belongs to an identity account) — the console shows
+  // people by name, never by uuid.
+  const directoryId = lifecycle?.order?.buyerId || lifecycle?.pickup?.actorId || '';
+  const { nameFor } = useUserDirectory(directoryId ? [directoryId] : []);
 
   if (loading) return <PageLoader />;
   if (error) return <ErrorState message={error} onRetry={refetch} />;
@@ -161,8 +168,10 @@ export function OrderDetailPage() {
         <Card>
           <h2 className="card-h2 mb-3 dark:text-white">{t('Customer Destination')}</h2>
           {renderAddress(order.destination || dropOff?.address)}
-          {order.customerId && (
-            <p className="text-xs text-gray-500 mt-2">Customer ID: {order.customerId}</p>
+          {order.buyerId && (
+            <p className="text-xs text-gray-500 mt-2">
+              {t('Customer')}: {nameFor(order.buyerId) || order.buyerId}
+            </p>
           )}
         </Card>
 
@@ -172,7 +181,7 @@ export function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <Detail label={t('Delivery Status')} value={lifecycle.stageLabel || order.status || '—'} />
             {pickup.actorId && (
-              <Detail label={t('Assigned Rider')} value={pickup.actorId} />
+              <Detail label={t('Assigned Rider')} value={nameFor(pickup.actorId) || pickup.actorId} />
             )}
             {pickup.readyAt && (
               <Detail label={t('Ready for Pickup')} value={formatDate(pickup.readyAt)} />

@@ -99,7 +99,7 @@ export function RidersTab() {
       await ridersService.updateStatus(rider.id, newStatus);
       await refetch();
       if (selectedRiderForDetail?.id === rider.id) {
-        setSelectedRiderForDetail({ ...rider, status: newStatus as any });
+        setSelectedRiderForDetail({ ...rider, status: newStatus as Rider['status'] });
       }
     } catch (err) {
       console.error('Failed to update status:', err);

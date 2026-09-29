@@ -2,22 +2,27 @@
  * Users module tabs — the single source of truth for the user-type navigation.
  *
  * The console used to show one sidebar entry per user type (All Users, Buyers,
- * Sellers, Customers, Admins). They are now tabs of ONE Users page, so this
- * registry drives all three consumers:
+ * Sellers, Customers, Admins), and then merged them into tabs of ONE Users
+ * page. This registry drives all three consumers:
  *   * the sidebar entry        (src/routes/navigation.ts)
  *   * the `/users` route guard (src/routes/AppRoutes.tsx)
  *   * the tab bar and panels   (src/pages/users/UsersPage.tsx)
  *
- * Each tab keeps the EXACT role set of the page it replaces, so merging the pages
- * cannot widen anyone's access:
- *   /users (+ the old /users?type=buyer) -> All Users, Buyers
+ * Buyer and customer are the SAME actor (the platform's canonical role is
+ * BUYER, "Customer" is its display name), so they are ONE tab — a "Buyers"
+ * tab next to a "Customers" tab showed the identical list twice and read as a
+ * contradiction. The legacy spellings still resolve through TAB_ALIASES.
+ *
+ * Each tab keeps the EXACT role set of the page it replaces, so merging the
+ * pages cannot widen anyone's access:
+ *   /users (+ the old /users?type=buyer) -> All Users, Customers
  *   /sellers                             -> Sellers
  *   /customers                           -> Customers
  *   /admins                              -> Admins
  */
 import type { AdminRole } from '@/types/auth';
 
-export type UsersTabId = 'all' | 'buyers' | 'sellers' | 'customers' | 'admins';
+export type UsersTabId = 'all' | 'sellers' | 'customers' | 'admins';
 
 export interface UsersTabDefinition {
   id: UsersTabId;
@@ -29,9 +34,8 @@ export interface UsersTabDefinition {
 
 export const USERS_TABS: UsersTabDefinition[] = [
   { id: 'all', labelKey: 'All Users', roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'] },
-  { id: 'buyers', labelKey: 'Buyers', roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'] },
-  { id: 'sellers', labelKey: 'Sellers', roles: ['SUPER_ADMIN', 'SELLER_ADMIN'] },
   { id: 'customers', labelKey: 'Customers', roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'] },
+  { id: 'sellers', labelKey: 'Sellers', roles: ['SUPER_ADMIN', 'SELLER_ADMIN'] },
   { id: 'admins', labelKey: 'Admins', roles: ['SUPER_ADMIN'] },
 ];
 
@@ -54,8 +58,9 @@ export function visibleUsersTabs(role?: AdminRole): UsersTabDefinition[] {
 const TAB_ALIASES: Record<string, UsersTabId> = {
   all: 'all',
   users: 'all',
-  buyer: 'buyers',
-  buyers: 'buyers',
+  // "Buyer" was the old tab spelling of the same actor as "customer".
+  buyer: 'customers',
+  buyers: 'customers',
   seller: 'sellers',
   sellers: 'sellers',
   customer: 'customers',

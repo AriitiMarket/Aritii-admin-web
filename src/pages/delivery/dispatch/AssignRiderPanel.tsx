@@ -4,9 +4,19 @@ import { Button } from '@/components/common/Button';
 import { SelectField } from '@/components/forms/SelectField';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ridersService } from '@/services/riders.service';
+import { assignmentsService } from '@/services/assignments.service';
 import { dispatchService, type ReadyOrder } from '@/services/dispatch.service';
 import { ApiError } from '@/types/api';
-import type { Rider as RiderType } from '@/types';
+
+/** Minimal shape both rider sources (available riders + eligible partners) satisfy. */
+interface PickableRider {
+  id: string;
+  name: string;
+  status?: string;
+  vehicleType?: string;
+  activeDeliveries?: number;
+  maxActiveAssignments?: number;
+}
 
 /**
  * "Assign to Rider" step of the workflow.
@@ -27,22 +37,41 @@ export function AssignRiderPanel({
   onClose: () => void;
   onAssigned: (reference: string) => void;
 }) {
-  const [riders, setRiders] = useState<RiderType[]>([]);
+  const [riders, setRiders] = useState<PickableRider[]>([]);
   const [ridersLoading, setRidersLoading] = useState(false);
-  const [partnerId, setPartnerId] = useState('');
+  const [providerId, setProviderId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setPartnerId('');
+    setProviderId('');
     setError(null);
     setRidersLoading(true);
-    ridersService
-      .list({ page: 1, limit: 100, status: 'available' })
-      .then((result) => setRiders(result.items))
+    // Single-zone batches get the backend's eligibility list (§8); mixed-zone
+    // batches fall back to every available rider — the server re-validates.
+    const zoneIds = [...new Set(orders.map((o) => o.zoneId).filter(Boolean))] as string[];
+    const loader =
+      zoneIds.length === 1
+        ? assignmentsService
+            .eligiblePartners({ zoneId: zoneIds[0] })
+            .then((list) =>
+              list.map((p) => ({
+                id: p._id,
+                name: p.name,
+                status: p.status,
+                activeDeliveries: p.activeDeliveries,
+                maxActiveAssignments: p.maxActiveAssignments ?? undefined,
+              }))
+            )
+        : ridersService
+            .list({ page: 1, limit: 100, status: 'available' })
+            .then((result) => result.items);
+    loader
+      .then(setRiders)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load riders'))
       .finally(() => setRidersLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   /** Zones covered by the selected orders, de-duplicated for display. */
@@ -54,16 +83,16 @@ export function AssignRiderPanel({
     return [...names.values()];
   }, [orders]);
 
-  const selectedRider = riders.find((r) => r.id === partnerId);
+  const selectedRider = riders.find((r) => r.id === providerId);
 
   const handleConfirm = async () => {
-    if (!partnerId) return;
+    if (!providerId) return;
     setSubmitting(true);
     setError(null);
     try {
       const assignment = await dispatchService.assign({
         deliveryIds: orders.map((o) => o.id),
-        partnerId,
+        providerId,
       });
       onAssigned(assignment.reference);
     } catch (err) {
@@ -102,8 +131,8 @@ export function AssignRiderPanel({
         <section>
           <SelectField
             label="Select Rider"
-            value={partnerId}
-            onChange={(e) => setPartnerId(e.target.value)}
+            value={providerId}
+            onChange={(e) => setProviderId(e.target.value)}
             placeholder={ridersLoading ? 'Loading riders…' : 'Select a rider'}
             disabled={ridersLoading}
             options={riders.map((r) => ({
@@ -148,7 +177,7 @@ export function AssignRiderPanel({
             variant="primary"
             onClick={handleConfirm}
             loading={submitting}
-            disabled={!partnerId || ridersLoading || orders.length === 0}
+            disabled={!providerId || ridersLoading || orders.length === 0}
           >
             {submitting ? 'Assigning…' : 'Assign Orders'}
           </Button>

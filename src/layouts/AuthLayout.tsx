@@ -14,7 +14,7 @@ export function AuthLayout() {
         <Outlet />
       </div>
       <p className="mt-6 text-xs text-gray-400">
-        © {new Date().getFullYear()} Ariiti Market
+        © {new Date().getFullYear()} Aritii Market
       </p>
     </div>
   );

@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   phoneNumber?: string;
-  role: 'CUSTOMER' | 'SELLER' | 'AGENT' | 'ADMIN';
+  role: 'BUYER' | 'SELLER' | 'AGENT' | 'ADMIN';
   avatar?: {
     public_id: string | null;
     url: string | null;

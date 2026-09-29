@@ -63,13 +63,9 @@ export const NAV_GROUPS: NavigationGroup[] = [
         path: '/stores',
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
-      {
-        // Shop onboarding approval queue (route: /stores/pending). Previously
-        // had no sidebar entry, so pending shops were unreachable except by URL.
-        labelKey: 'Pending Shops',
-        path: '/stores/pending',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
-      },
+      // The pending-shops queue is the Shops page filtered by status
+      // (`/stores?status=PENDING_APPROVAL`), so a separate sidebar entry
+      // only duplicated the group.
     ],
   },
 
@@ -123,22 +119,21 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery & Logistics
+  // Delivery & Logistics — ONE entry per destination. Zones, Hubs and Routes
+  // are tabs of Locations & Expansion (their old URLs redirect there), and the
+  // dispatch/batch panels live as tabs of Assignments, so neither is repeated
+  // as a separate sidebar entry.
   {
     labelKey: 'Delivery & Logistics',
     items: [
       { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Locations & Expansion', path: '/locations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Zones', path: '/delivery/zones', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Hubs', path: '/delivery/hubs', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Routes', path: '/delivery/routes', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Delivery Services', path: '/delivery/services', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Delivery Services', path: '/delivery/services', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Partners & Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Delivery Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Delivery Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Assignments', path: '/delivery/assignments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Dispatch / Batches', path: '/delivery/dispatch', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN'] },
       { labelKey: 'Shipments', path: '/delivery/shipments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Consolidation', path: '/delivery/consolidation', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Tracking', path: '/delivery/tracking', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },

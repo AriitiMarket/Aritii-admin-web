@@ -1,5 +1,5 @@
 /**
- * Ariiti API Gateway HTTP client.
+ * Aritii API Gateway HTTP client.
  *
  * The admin web NEVER talks to microservices directly — every request flows
  * through the single configured gateway URL (VITE_API_GATEWAY_URL).
@@ -290,7 +290,7 @@ export function assertGatewayConfigured(): void {
   if (!env.apiGatewayUrl) {
     throw new ApiError(
       503,
-      'Ariiti API Gateway is not configured. Set VITE_API_GATEWAY_URL in your .env file.'
+      'Aritii API Gateway is not configured. Set VITE_API_GATEWAY_URL in your .env file.'
     );
   }
 }

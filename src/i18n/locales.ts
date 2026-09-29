@@ -1,6 +1,6 @@
 /**
  * Locale registry — preserves the existing translation keys/JSON files from
- * the previous next-intl implementation. Only the Ariiti locales are bundled.
+ * the previous next-intl implementation. Only the Aritii locales are bundled.
  */
 import en from '../../locales/en.json';
 import om from '../../locales/om.json';

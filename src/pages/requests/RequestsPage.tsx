@@ -1,5 +1,7 @@
 import { useState, type MouseEvent } from 'react';
 import { useAsync } from '@/hooks/useAsync';
+import { useUserDirectory } from '@/hooks/useUserDirectory';
+import { UserPicker } from '@/components/forms/UserPicker';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -73,8 +75,19 @@ function money(value: number | null | undefined): string {
   return value == null ? '—' : `ETB ${value.toLocaleString()}`;
 }
 
-function buyerLabel(row: AdminRequestRow): string {
-  return row.buyer?.name || row.buyer?.email || row.customerId || '—';
+function buyerLabel(
+  row: AdminRequestRow,
+  nameFor: (id?: string | null) => string = () => ''
+): string {
+  return row.buyer?.name || row.buyer?.email || nameFor(row.buyerId) || '—';
+}
+
+/**
+ * Did a BUYER write this offer? `createdByRole` is canonical `BUYER`; older
+ * stored offers still carry the legacy `CUSTOMER` spelling.
+ */
+function isBuyerOffer(role?: string | null): boolean {
+  return role === 'BUYER' || role === 'CUSTOMER';
 }
 
 function attachmentUrl(attachment: { url?: string } | string): string {
@@ -188,6 +201,12 @@ export function RequestsManagementPage() {
     () => (detail ? requestsAdmin.getMessages(detail.id) : Promise.resolve([])),
     [detail?.id]
   );
+
+  // Buyers shown by NAME across the list and the open detail drawer.
+  const { nameFor } = useUserDirectory([
+    ...(list.data?.items ?? []).map((row) => row.buyerId),
+    detail?.buyerId,
+  ]);
 
   const resetPageAnd = (apply: () => void) => {
     setPage(1);
@@ -317,8 +336,8 @@ export function RequestsManagementPage() {
   const openRestrict = (row: AdminRequestRow, event?: MouseEvent<HTMLElement>) => {
     event?.stopPropagation();
     setRestrictForm({
-      userId: row.customerId || row.sellerId || '',
-      scope: row.customerId ? 'BUYER' : 'SELLER',
+      userId: row.buyerId || row.sellerId || '',
+      scope: row.buyerId ? 'BUYER' : 'SELLER',
       kind: 'TEMPORARY',
       until: '',
       reason: '',
@@ -328,7 +347,7 @@ export function RequestsManagementPage() {
 
   const confirmRestrict = async () => {
     if (!restrictTarget || !restrictForm.userId.trim()) {
-      showToast({ type: 'error', message: t('A user id is required') });
+      showToast({ type: 'error', message: t('Select a user first') });
       return;
     }
     setRestricting(true);
@@ -406,7 +425,7 @@ export function RequestsManagementPage() {
       header: t('Buyer'),
       render: (row) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {buyerLabel(row)}
+          {buyerLabel(row, nameFor)}
         </span>
       ),
     },
@@ -690,7 +709,7 @@ export function RequestsManagementPage() {
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <dt className="text-xs uppercase tracking-wide text-gray-400">{t('Buyer')}</dt>
-                <dd className="text-sm text-gray-700 dark:text-gray-200">{buyerLabel(detail)}</dd>
+                <dd className="text-sm text-gray-700 dark:text-gray-200">{buyerLabel(detail, nameFor)}</dd>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-gray-400">{t('Seller')}</dt>
@@ -806,7 +825,7 @@ export function RequestsManagementPage() {
                           {offer.unitPrice.toLocaleString()} = ETB{' '}
                           {offer.totalPrice.toLocaleString()}
                           <span className="ml-2 text-xs text-gray-400">
-                            {offer.createdByRole === 'CUSTOMER' ? t('Buyer') : t('Seller')}
+                            {isBuyerOffer(offer.createdByRole) ? t('Buyer') : t('Seller')}
                           </span>
                         </span>
                         <StatusBadge label={offer.status} variant={STATUS_VARIANTS[offer.status] || 'neutral'} />
@@ -882,7 +901,7 @@ export function RequestsManagementPage() {
                     >
                       <span className="text-xs text-gray-400">
                         {formatDateTime(message.createdAt)} ·{' '}
-                        {String(message.sender) === detail.customerId
+                        {String(message.sender) === detail.buyerId
                           ? t('Buyer')
                           : t('Seller')}
                         {message.type && message.type !== 'text' && (
@@ -1129,13 +1148,18 @@ export function RequestsManagementPage() {
           size="sm"
         >
           <div className="space-y-3">
-            <TextField
-              label={t('User id')}
+            <UserPicker
+              label={t('User')}
               value={restrictForm.userId}
-              onChange={(event) =>
-                setRestrictForm((current) => ({ ...current, userId: event.target.value }))
+              onChange={(userId) => setRestrictForm((current) => ({ ...current, userId }))}
+              role={
+                restrictForm.scope === 'SELLER'
+                  ? 'SELLER'
+                  : restrictForm.scope === 'BUYER'
+                    ? 'BUYER'
+                    : undefined
               }
-              placeholder={t('Customer or seller id')}
+              placeholder={t('Search a customer or seller by name')}
             />
             <SelectField
               label={t('Scope')}

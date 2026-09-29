@@ -4,10 +4,12 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { SearchInput } from '@/components/common/SearchInput';
+import { SelectField } from '@/components/forms/SelectField';
 import { Pagination } from '@/components/common/Pagination';
 import { ErrorState } from '@/components/common/ErrorState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { dispatchService, type ReadyOrder } from '@/services/dispatch.service';
+import { zonesService } from '@/services/locations.service';
 import { AssignRiderPanel } from './AssignRiderPanel';
 import { ORDER_STATUS_VARIANTS } from './statusLabels';
 
@@ -22,15 +24,27 @@ import { ORDER_STATUS_VARIANTS } from './statusLabels';
 export function ReadyOrdersPanel({ onAssigned }: { onAssigned?: () => void }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [zoneId, setZoneId] = useState('');
+  const [zoneOptions, setZoneOptions] = useState<{ value: string; label: string }[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [panelOpen, setPanelOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
   const limit = 20;
 
   const { data, loading, error, refetch } = useAsync(
-    () => dispatchService.listReadyOrders({ page, limit, search: debouncedSearch }),
-    [page, debouncedSearch]
+    () => dispatchService.listReadyOrders({ page, limit, search: debouncedSearch, zoneId: zoneId || undefined }),
+    [page, debouncedSearch, zoneId]
   );
+
+  // Zone options for the ready-queue filter (server supports ?zoneId).
+  useEffect(() => {
+    zonesService
+      .list({ page: 1, limit: 200 })
+      .then((res) =>
+        setZoneOptions(res.zones.map((z) => ({ value: z._id, label: z.name })))
+      )
+      .catch(() => setZoneOptions([]));
+  }, []);
 
   // Memoised so the row ids (and the selection pruning effect) stay stable
   // across renders instead of producing a new array every time.
@@ -79,12 +93,21 @@ export function ReadyOrdersPanel({ onAssigned }: { onAssigned?: () => void }) {
     <>
       <Card className="mb-4 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Search orders ready for delivery…"
-            aria-label="Search ready orders"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search orders ready for delivery…"
+              aria-label="Search ready orders"
+            />
+            <SelectField
+              value={zoneId}
+              onChange={(e) => { setZoneId(e.target.value); setPage(1); }}
+              options={[{ value: '', label: 'All Zones' }, ...zoneOptions]}
+              className="w-44"
+              aria-label="Filter ready orders by zone"
+            />
+          </div>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
             <input
               type="checkbox"

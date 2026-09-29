@@ -1,5 +1,5 @@
 /**
- * Real settings service — Ariiti API Gateway contract.
+ * Real settings service — Aritii API Gateway contract.
  */
 import { assertGatewayConfigured, http } from '@/services/client/httpClient';
 import type {

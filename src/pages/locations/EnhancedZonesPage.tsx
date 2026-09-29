@@ -203,7 +203,7 @@ export function EnhancedZonesPage() {
     <div>
       <PageHeader
         title="Delivery Zones"
-        description="Define and control the areas served by Ariiti Market delivery operations"
+        description="Define and control the areas served by Aritii Market delivery operations"
         actions={
           <div className="flex gap-2">
             <SearchInput

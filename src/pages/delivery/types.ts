@@ -4,23 +4,30 @@ export interface DeliveryStats {
   activeDeliveries?: number;
   pendingDeliveries?: number;
   assignedDeliveries?: number;
+  pickupDeliveries?: number;
   inTransitDeliveries?: number;
   completedDeliveries?: number;
   failedDeliveries?: number;
   cancelledDeliveries?: number;
   unassignedDeliveries?: number;
+  deliveredToday?: number;
+  pendingAssignments?: number;
   availablePartners?: number;
   busyPartners?: number;
   totalPartners?: number;
+  pendingPartners?: number;
+  suspendedPartners?: number;
   activeZones?: number;
   totalZones?: number;
   activeServices?: number;
   totalServices?: number;
   activeRoutes?: number;
   totalRoutes?: number;
-  actorPending?: number;
-  actorSuspended?: number;
-  actorTotal?: number;
+  activeShipments?: number;
+  waitingForDispatchShipments?: number;
+  inTransitShipments?: number;
+  arrivedShipments?: number;
+  receivingShipments?: number;
 }
 
 export interface RecentDelivery {
@@ -28,6 +35,8 @@ export interface RecentDelivery {
   orderId: string;
   status: string;
   partnerName?: string;
+  /** Display name after the partner -> provider rename. */
+  providerName?: string;
   pickupAddress?: {
     regionName?: string;
     areaName?: string;
@@ -50,8 +59,10 @@ export interface Delivery {
   id: string;
   orderId: string;
   status: string;
-  partnerId?: string;
+  providerId?: string;
   partnerName?: string;
+  /** Display name after the partner -> provider rename. */
+  providerName?: string;
   sellerId?: string;
   sellerName?: string;
   shopName?: string;
@@ -102,12 +113,6 @@ export interface RiderDelivery {
     addressDetail?: string;
   };
   createdAt: string;
-}
-
-export interface ActorStats {
-  pending: number;
-  suspended: number;
-  total: number;
 }
 
 export interface PaginatedData<T> {

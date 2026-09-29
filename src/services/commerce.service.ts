@@ -48,7 +48,8 @@ export interface CategoryCreateInput {
 
 export interface AdminOrderRow {
   id: string;
-  customerId?: string | null;
+  /** Buyer of the order — the buy-side actor on the commerce order. */
+  buyerId?: string | null;
   customerRef?: string | null;
   sellerId?: string | null;
   totalPrice?: number;

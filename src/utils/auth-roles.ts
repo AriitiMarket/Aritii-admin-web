@@ -15,7 +15,7 @@ export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   CUSTOMER_ADMIN: 'Customer Admin',
 };
 
-/** Maps the legacy userType to an Ariiti admin role. */
+/** Maps the legacy userType to an Aritii admin role. */
 export function mapUserTypeToRole(userType: LegacyUserType): AdminRole {
   switch (userType) {
     case 'STAFF':

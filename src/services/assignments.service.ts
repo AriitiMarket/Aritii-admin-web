@@ -4,8 +4,9 @@ import { http } from '@/services/client/httpClient';
 export interface Assignment {
   id: string;
   deliveryId: string;
-  partnerId: string;
+  providerId: string;
   partnerName?: string;
+  providerName?: string;
   serviceId?: string;
   zoneId?: string;
   status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
@@ -27,14 +28,41 @@ export interface AssignmentResult {
 export interface AssignmentCreate {
   [key: string]: unknown;
   deliveryId: string;
-  partnerId: string;
+  providerId: string;
   serviceId?: string;
   zoneId?: string;
   notes?: string;
 }
 
+/** A rider the admin may actually pick: available, online, under capacity and serving the delivery (MVP §8). */
+export interface EligiblePartner {
+  _id: string;
+  name: string;
+  status: string;
+  rating?: number | null;
+  activeDeliveries?: number;
+  maxActiveAssignments?: number | null;
+  zoneId?: string | null;
+  sectorId?: string | null;
+}
+
 export const assignmentsService = {
-  async list(params?: { page?: number; limit?: number; status?: string; partnerId?: string }): Promise<AssignmentResult> {
+  /** Eligible riders for a delivery (or for a zone/service pair). */
+  async eligiblePartners(params: {
+    deliveryId?: string;
+    zoneId?: string;
+    serviceId?: string;
+    sectorId?: string;
+  } = {}): Promise<EligiblePartner[]> {
+    return http
+      .get<{ success: boolean; partners?: EligiblePartner[]; count?: number }>(
+        '/delivery/assignment/eligible-partners',
+        { params: params as never }
+      )
+      .then((res) => res.partners ?? []);
+  },
+
+  async list(params?: { page?: number; limit?: number; status?: string; providerId?: string }): Promise<AssignmentResult> {
     return http
       .get<{ success: boolean; assignments: Assignment[]; total: number; page: number; limit: number; totalPages: number }>(
         '/delivery/assignment',
@@ -61,11 +89,11 @@ export const assignmentsService = {
       .then((res) => res.assignment);
   },
 
-  async reassign(deliveryId: string, newPartnerId: string): Promise<Assignment> {
+  async reassign(deliveryId: string, newProviderId: string): Promise<Assignment> {
     return http
       .post<{ success: boolean; assignment: Assignment }>(
         '/delivery/assignment/reassign',
-        { deliveryId, partnerId: newPartnerId }
+        { deliveryId, providerId: newProviderId }
       )
       .then((res) => res.assignment);
   },

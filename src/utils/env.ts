@@ -11,7 +11,7 @@ export interface AppEnv {
 
 export const env: AppEnv = {
   apiGatewayUrl: (import.meta.env.VITE_API_GATEWAY_URL ?? '').replace(/\/+$/, ''),
-  appName: import.meta.env.VITE_APP_NAME ?? 'Ariiti Admin',
+  appName: import.meta.env.VITE_APP_NAME ?? 'Aritii Admin',
   defaultLocale: import.meta.env.VITE_DEFAULT_LOCALE ?? 'en',
 };
 

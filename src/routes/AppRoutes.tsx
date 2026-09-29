@@ -175,11 +175,7 @@ const DeliveryLogisticsPage = lazy(() =>
     default: m.DeliveryLogisticsPage,
   }))
 );
-const DeliveryOverviewPage = lazy(() =>
-  import('@/pages/delivery/DeliveryOverviewPage').then((m) => ({
-    default: m.DeliveryDashboardPage,
-  }))
-);
+
 const DeliveryAssignmentsPage = lazy(() =>
   import('@/pages/delivery/DeliveryAssignmentsPage').then((m) => ({
     default: m.DeliveryAssignmentsPage,
@@ -234,13 +230,24 @@ function Suspend({ children, roles }: { children: React.ReactElement; roles: Adm
   );
 }
 
-const DeliveryServicesPage = lazy(() => import('@/pages/delivery/DeliveryServicesPage').then(m => ({ default: m.default })));
-const DeliveryRequestsPage = lazy(() => import('@/pages/delivery/DeliveryRequestsPage').then(m => ({ default: m.default })));
-const DeliveriesPage = lazy(() => import('@/pages/delivery/DeliveriesPage').then(m => ({ default: m.default })));
-const DispatchBatchesPage = lazy(() => import('@/pages/delivery/DispatchBatchesPage').then(m => ({ default: m.default })));
-const ShipmentsPage = lazy(() => import('@/pages/delivery/ShipmentsPage').then(m => ({ default: m.default })));
-const ConsolidationPage = lazy(() => import('@/pages/delivery/ConsolidationPage').then(m => ({ default: m.default })));
-const TrackingPage = lazy(() => import('@/pages/delivery/TrackingPage').then(m => ({ default: m.default })));
+const DeliveryServicesPage = lazy(() =>
+  import('@/pages/delivery/DeliveryServicesPage').then((m) => ({ default: m.DeliveryServicesPage }))
+);
+const DeliveryRequestsPage = lazy(() =>
+  import('@/pages/delivery/DeliveryRequestsPage').then((m) => ({ default: m.DeliveryRequestsPage }))
+);
+const DeliveriesPage = lazy(() =>
+  import('@/pages/delivery/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage }))
+);
+const ShipmentsPage = lazy(() =>
+  import('@/pages/delivery/ShipmentsPage').then((m) => ({ default: m.ShipmentsPage }))
+);
+const ConsolidationPage = lazy(() =>
+  import('@/pages/delivery/ConsolidationPage').then((m) => ({ default: m.ConsolidationPage }))
+);
+const TrackingPage = lazy(() =>
+  import('@/pages/delivery/TrackingPage').then((m) => ({ default: m.TrackingPage }))
+);
 
 export function AppRoutes() {
   const router = createBrowserRouter([
@@ -283,7 +290,7 @@ export function AppRoutes() {
         { path: 'riders/pending', element: <Navigate to="/delivery/providers?status=pending" replace /> },
         { path: 'riders/:riderId', element: <Suspend roles={RIDER}><RiderDetailPage /></Suspend> },
         { path: 'customers', element: <Navigate to="/users?tab=customers" replace /> },
-        { path: 'customers/:customerId', element: <Suspend roles={CUSTOMER}><CustomerDetailPage /></Suspend> },
+        { path: 'customers/:buyerId', element: <Suspend roles={CUSTOMER}><CustomerDetailPage /></Suspend> },
         { path: 'disputes', element: <Suspend roles={CUSTOMER}><DisputesPage /></Suspend> },
         { path: 'requests', element: <Suspend roles={CUSTOMER}><RequestsPage /></Suspend> },
         { path: 'admins', element: <Navigate to="/users?tab=admins" replace /> },
@@ -306,12 +313,14 @@ export function AppRoutes() {
         
         // Delivery Module Routes
         { path: 'delivery', element: <Suspend roles={RIDER}><DeliveryLogisticsPage /></Suspend> },
-        { path: 'delivery/overview', element: <Suspend roles={RIDER}><DeliveryOverviewPage /></Suspend> },
+        { path: 'delivery/overview', element: <Navigate to="/delivery" replace /> },
         { path: 'delivery/assignments', element: <Suspend roles={RIDER}><DeliveryAssignmentsPage /></Suspend> },
+        // Dispatch / Batches is now the tabs of Assignments (ready orders →
+        // assign/reassign → batches); old links and bookmarks land there.
+        { path: 'delivery/dispatch', element: <Navigate to="/delivery/assignments" replace /> },
         { path: 'delivery/services', element: <Suspend roles={RIDER}><DeliveryServicesPage /></Suspend> },
         { path: 'delivery/requests', element: <Suspend roles={RIDER}><DeliveryRequestsPage /></Suspend> },
         { path: 'delivery/deliveries', element: <Suspend roles={RIDER}><DeliveriesPage /></Suspend> },
-        { path: 'delivery/dispatch', element: <Suspend roles={RIDER}><DispatchBatchesPage /></Suspend> },
         { path: 'delivery/shipments', element: <Suspend roles={RIDER}><ShipmentsPage /></Suspend> },
         { path: 'delivery/consolidation', element: <Suspend roles={RIDER}><ConsolidationPage /></Suspend> },
         { path: 'delivery/tracking', element: <Suspend roles={RIDER}><TrackingPage /></Suspend> },

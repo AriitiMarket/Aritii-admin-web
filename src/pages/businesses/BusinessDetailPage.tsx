@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { businessesService } from '@/services/businesses.service';
 import { storesService } from '@/services/stores.service';
-import { commerceService } from '@/services/commerce.service';
 import { adminApi } from '@/api/admin';
 import { useAsync } from '@/hooks/useAsync';
 import { useToast } from '@/hooks/useToast';
@@ -60,7 +59,6 @@ export function BusinessDetailPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [expandedShopId, setExpandedShopId] = useState<string | null>(null);
   const [busyShopId, setBusyShopId] = useState<string | null>(null);
 
   const { data: application, loading, error, refetch } = useAsync(
@@ -74,14 +72,6 @@ export function BusinessDetailPage() {
         ? adminApi.getBusinessDetail(businessId)
         : Promise.resolve(null),
     [businessId]
-  );
-
-  const { data: shopProducts, loading: productsLoading, error: productsError } = useAsync(
-    () =>
-      expandedShopId
-        ? commerceService.listProducts({ shopId: expandedShopId, limit: 50, includeInactive: true })
-        : Promise.resolve(null),
-    [expandedShopId]
   );
 
   const refreshAll = () => {
@@ -436,7 +426,6 @@ export function BusinessDetailPage() {
               />
             ) : (
               shops.map((shop) => {
-                const isOpen = expandedShopId === shop.id;
                 const canSuspend = shop.status === 'APPROVED' || shop.status === 'ACTIVE';
                 const canActivate = shop.status === 'SUSPENDED' || shop.status === 'INACTIVE';
                 return (
@@ -467,13 +456,13 @@ export function BusinessDetailPage() {
                           <p className="text-xs text-gray-500">{t('Orders')}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setExpandedShopId(isOpen ? null : shop.id)}
-                          >
-                            {isOpen ? t('Hide products') : t('View products')}
-                          </Button>
+                          {/* Products open on the Products page filtered to this
+                              shop — the same destination the shop's own detail
+                              page uses, so the catalogue is never rendered a
+                              second time as a nested list here. */}
+                          <Link to={`/commerce/products?shopId=${shop.id}`}>
+                            <Button variant="outline" size="sm">{t('View products')}</Button>
+                          </Link>
                           <Link to={`/stores/${shop.id}`}>
                             <Button variant="secondary" size="sm">{t('Manage')}</Button>
                           </Link>
@@ -501,54 +490,6 @@ export function BusinessDetailPage() {
                       </div>
                     </div>
 
-                    {isOpen && (
-                      <div className="mt-4 border-t border-gray-100 pt-4 dark:border-dark-700">
-                        {productsLoading ? (
-                          <p className="text-sm text-gray-500">{t('Loading products…')}</p>
-                        ) : productsError ? (
-                          <p className="text-sm text-red-600">{String(productsError)}</p>
-                        ) : !shopProducts?.items?.length ? (
-                          <p className="text-sm text-gray-500">{t('No products in this shop yet.')}</p>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                              <thead>
-                                <tr className="border-b border-gray-200 text-xs uppercase text-gray-500 dark:border-dark-700">
-                                  <th className="py-2 pr-3">{t('Product')}</th>
-                                  <th className="py-2 pr-3">{t('SKU')}</th>
-                                  <th className="py-2 pr-3">{t('Price')}</th>
-                                  <th className="py-2 pr-3">{t('Stock')}</th>
-                                  <th className="py-2 pr-3">{t('Status')}</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {shopProducts.items.slice(0, 20).map((p: any) => (
-                                  <tr key={p.id || p._id} className="border-b border-gray-100 dark:border-dark-700">
-                                    <td className="py-2 pr-3 text-gray-900 dark:text-white">{p.name || '—'}</td>
-                                    <td className="py-2 pr-3 font-mono text-xs text-gray-500">{p.sku || '—'}</td>
-                                    <td className="py-2 pr-3 text-gray-700 dark:text-gray-300">
-                                      ETB {Number(p.discountPrice || p.price || 0).toLocaleString()}
-                                    </td>
-                                    <td className="py-2 pr-3 text-gray-700 dark:text-gray-300">{p.stock ?? 0}</td>
-                                    <td className="py-2 pr-3">
-                                      <StatusBadge
-                                        label={p.isActive === false ? t('Inactive') : t('Active')}
-                                        variant={p.isActive === false ? 'neutral' : 'success'}
-                                      />
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                            {(shopProducts.total || 0) > 20 && (
-                              <p className="mt-2 text-xs text-gray-500">
-                                {t('Showing')} 20 {t('of')} {shopProducts.total}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </Card>
                 );
               })

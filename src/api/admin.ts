@@ -71,7 +71,7 @@ function toUiReview(review: ReviewDto): Review {
  */
 interface AdminOrderRow {
   id: string;
-  customerId?: string | null;
+  buyerId?: string | null;
   customerRef?: string | null;
   sellerId?: string | null;
   totalPrice?: number;
@@ -95,7 +95,7 @@ interface OrderLifecycleDto {
     paymentStatus?: string;
     totalPrice?: number;
     items?: unknown[];
-    customerId?: string | null;
+    buyerId?: string | null;
     sellerId?: string | null;
     createdAt?: string;
     updatedAt?: string;
@@ -150,7 +150,7 @@ function toUiOrder(row: AdminOrderRow): Order {
     id,
     orderId: id,
     orderAmount: Number(row.totalPrice) || 0,
-    payer: row.customerRef || (row.customerId ? `#${String(row.customerId).slice(-6)}` : '—'),
+    payer: row.customerRef || (row.buyerId ? `#${String(row.buyerId).slice(-6)}` : '—'),
     orderType: 'DELIVERY',
     orderStatus: (row.status as OrderStatus) || 'Processing',
     paymentStatus: row.paymentStatus as PaymentStatus | undefined,
@@ -197,6 +197,24 @@ export const identityAdmin = {
       limit: res.limit || limit,
       totalPages: res.totalPages || 1,
     };
+  },
+
+  /**
+   * Resolves a batch of user ids to their directory entries (name + email).
+   *
+   * Every screen that mentions a user shows the NAME (orders, overview,
+   * transactions, filters) — never a raw uuid — and this is the lookup behind
+   * it. Ids travel as a comma-separated `ids` filter, capped per call so one
+   * wide table cannot build an unbounded query string.
+   */
+  async listUsersByIds(ids: string[]) {
+    const unique = Array.from(new Set(ids.filter(Boolean))).slice(0, 40);
+    if (unique.length === 0) return [] as (Customer | AdminUser)[];
+    const res = await http.get<{ success: boolean; users: (Customer | AdminUser)[] }>(
+      '/admin/users',
+      { params: { page: 1, limit: unique.length, ids: unique.join(',') } }
+    );
+    return res.users || [];
   },
 
   async getUser(id: string) {
@@ -352,7 +370,7 @@ export const commerceAdmin = {
     return {
       ...toUiOrder({
         id: String(order.id ?? id),
-        customerId: order.customerId,
+        buyerId: order.buyerId,
         sellerId: order.sellerId,
         totalPrice: order.totalPrice,
         status: order.status,
@@ -373,7 +391,7 @@ export const commerceAdmin = {
           id: String(order.id ?? id),
           shippingAddress: lifecycle.dropOff?.address,
         }).deliveryAddress || undefined,
-      customer: order.customerId ? { id: order.customerId } : undefined,
+      customer: order.buyerId ? { id: order.buyerId } : undefined,
       store: order.sellerId ? { id: order.sellerId } : undefined,
       rider: lifecycle.pickup?.actorId ? { id: lifecycle.pickup.actorId } : undefined,
       items: Array.isArray(order.items) ? order.items.map(toUiOrderItem) : undefined,
@@ -531,23 +549,31 @@ export const analyticsAdmin = {
 
 // ── Delivery Service Admin APIs ──
 
+/**
+ * Rider/provider record as the delivery service answers it: a free-form document
+ * the console spreads straight into its view models. `provider` is the current
+ * envelope key and `partner` the legacy one, so reads accept either spelling.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RiderRecord = any;
+
 export const deliveryAdmin = {
   async listRiders(page = 1, limit = 10, search = '') {
-    const res = await http.get<{ success: boolean; actors?: any[] }>(
-      '/delivery/partner',
+    const res = await http.get<{ success: boolean; providers?: RiderRecord[]; partners?: RiderRecord[]; actors?: RiderRecord[] }>(
+      '/delivery/provider',
       { params: { page, limit, search } }
     );
-    return (res.actors || []).map(actor => ({
+    return (res.providers || res.partners || res.actors || []).map(actor => ({
       ...actor,
       id: actor._id || actor.id,
     }));
   },
 
   async getRider(id: string) {
-    const res = await http.get<{ success: boolean; partner?: any; actor?: any }>(
-      `/delivery/partner/${id}`
+    const res = await http.get<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord; actor?: RiderRecord }>(
+      `/delivery/provider/${id}`
     );
-    const actor = res.partner || res.actor || {};
+    const actor = res.provider || res.partner || res.actor || {};
     return {
       ...actor,
       id: actor._id || actor.id,
@@ -555,42 +581,42 @@ export const deliveryAdmin = {
   },
 
   async createRider(data: Record<string, unknown>) {
-    const res = await http.post<{ success: boolean; partner?: any; actor?: any }>(
-      '/delivery/partner', data
+    const res = await http.post<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord; actor?: RiderRecord }>(
+      '/delivery/provider', data
     );
-    const actor = res.partner || res.actor || {};
+    const actor = res.provider || res.partner || res.actor || {};
     return { ...actor, id: actor._id || actor.id };
   },
 
   async updateRider(id: string, data: Record<string, unknown>) {
-    const res = await http.put<{ success: boolean; partner?: any; actor?: any }>(
-      `/delivery/partner/${id}`, data
+    const res = await http.put<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord; actor?: RiderRecord }>(
+      `/delivery/provider/${id}`, data
     );
-    const actor = res.partner || res.actor || {};
+    const actor = res.provider || res.partner || res.actor || {};
     return { ...actor, id: actor._id || actor.id };
   },
 
   async approveRider(id: string) {
-    const res = await http.post<{ success: boolean; partner?: any }>(
-      `/delivery/partner/${id}/approve`,
+    const res = await http.post<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord }>(
+      `/delivery/provider/${id}/approve`,
       {}
     );
-    const partner = res.partner || {};
+    const provider = res.provider || res.partner || {};
     return {
-      ...partner,
-      id: partner._id || partner.id,
+      ...provider,
+      id: provider._id || provider.id,
     };
   },
 
   async updateRiderStatus(id: string, status: string) {
-    const res = await http.put<{ success: boolean; partner?: any }>(
-      `/delivery/partner/${id}/status`,
+    const res = await http.put<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord }>(
+      `/delivery/provider/${id}/status`,
       { status }
     );
-    const partner = res.partner || {};
+    const provider = res.provider || res.partner || {};
     return {
-      ...partner,
-      id: partner._id || partner.id,
+      ...provider,
+      id: provider._id || provider.id,
     };
   },
 
@@ -601,18 +627,21 @@ export const deliveryAdmin = {
     
     const res = await http.get<{
       success: boolean;
-      actors?: any[];
+      providers?: RiderRecord[];
+      partners?: RiderRecord[];
+      actors?: RiderRecord[];
       /** Page size — NOT the total. */
       count?: number;
       /** Number of matching actors across all pages. */
       total?: number;
-    }>('/delivery/partner', { params });
+    }>('/delivery/provider', { params });
+    const actors = res.providers || res.partners || res.actors || [];
     return {
-      items: (res.actors || []).map(actor => ({
+      items: actors.map(actor => ({
         ...actor,
         id: actor._id || actor.id,
       })),
-      total: res.total ?? res.count ?? (res.actors || []).length,
+      total: res.total ?? res.count ?? actors.length,
       page,
       limit,
     };
@@ -758,24 +787,24 @@ export const deliveryAdmin = {
     };
   },
 
-  async createAssignment(data: { deliveryId: string; partnerId: string; serviceId?: string; zoneId?: string; notes?: string }) {
+  async createAssignment(data: { deliveryId: string; providerId: string; serviceId?: string; zoneId?: string; notes?: string }) {
     const res = await http.post<{ success: boolean; assignment: any }>(
       '/delivery/assignment', data
     );
     return { ...res.assignment, id: res.assignment._id || res.assignment.id };
   },
 
-  async reassignDelivery(deliveryId: string, newPartnerId: string) {
+  async reassignDelivery(deliveryId: string, newProviderId: string) {
     const res = await http.post<{ success: boolean; assignment: any }>(
-      '/delivery/assignment/reassign', { deliveryId, partnerId: newPartnerId }
+      '/delivery/assignment/reassign', { deliveryId, providerId: newProviderId }
     );
     return { ...res.assignment, id: res.assignment._id || res.assignment.id };
   },
 
-  async listAssignments(page = 1, limit = 10, status = '', partnerId = '') {
+  async listAssignments(page = 1, limit = 10, status = '', providerId = '') {
     const params: Record<string, string | number> = { page, limit };
     if (status) params.status = status;
-    if (partnerId) params.partnerId = partnerId;
+    if (providerId) params.providerId = providerId;
     const res = await http.get<{
       success: boolean; assignments?: any[]; count?: number; total?: number; page?: number; limit?: number; totalPages?: number;
     }>('/delivery/assignment', { params });
@@ -1009,7 +1038,7 @@ export interface AdminRequestRow {
   targetPrice: number | null;
   buyer: { id?: string; name?: string | null; email?: string | null } | null;
   sellerName?: string;
-  customerId: string;
+  buyerId: string;
   sellerId: string | null;
   shopId: string | null;
   productId: string | null;
@@ -1075,7 +1104,6 @@ interface RequestDto {
   targetPrice?: number | string | null;
   buyer?: { id?: string; name?: string | null; email?: string | null } | null;
   seller?: { id?: string; shopId?: string; shopName?: string; name?: string };
-  customerId?: string;
   buyerId?: string;
   sellerId?: string | null;
   shopId?: string | null;
@@ -1136,7 +1164,7 @@ function toUiRequest(raw: RequestDto): AdminRequestRow {
     targetPrice: raw.targetPrice == null ? null : Number(raw.targetPrice),
     buyer: raw.buyer || null,
     sellerName: raw.seller?.shopName || raw.seller?.name || '',
-    customerId: String(raw.customerId || raw.buyerId || ''),
+    buyerId: String(raw.buyerId || ''),
     sellerId: raw.sellerId || null,
     shopId: raw.shopId || null,
     productId: raw.productId || null,

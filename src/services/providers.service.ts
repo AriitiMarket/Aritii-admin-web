@@ -77,7 +77,7 @@ export interface ProviderAssignment {
   _id: string;
   reference: string;
   status: string;
-  partnerId: string;
+  providerId: string;
   deliveries: { orderId: string; status: string }[];
   routeId?: string | null;
   zoneIds?: string[];
@@ -106,7 +106,19 @@ export interface ProviderListResult {
   totalPages: number;
 }
 
-const BASE = '/delivery/partner';
+const BASE = '/delivery/provider';
+
+/**
+ * Response envelope of the provider endpoints.
+ *
+ * The detail route already answers `{ provider }` while the CRUD routes answer
+ * `{ partner }`; accept either key so the read survives the partner→provider
+ * renaming either way.
+ */
+type ProviderEnvelope = { success: boolean; provider?: Provider; partner?: Provider };
+
+const unwrapProvider = (res: ProviderEnvelope): Provider =>
+  (res.provider ?? res.partner) as Provider;
 
 export const providersService = {
   async list(params: {
@@ -121,6 +133,7 @@ export const providersService = {
   }): Promise<ProviderListResult> {
     const res = await http.get<{
       success: boolean;
+      providers?: Provider[];
       partners?: Provider[];
       actors?: Provider[];
       total?: number;
@@ -129,7 +142,7 @@ export const providersService = {
       totalPages?: number;
     }>(BASE, { params: params as never });
 
-    const items = res.partners ?? res.actors ?? [];
+    const items = res.providers ?? res.partners ?? res.actors ?? [];
     return {
       items: items.map((p) => ({ ...p, id: p._id || p.id })),
       total: res.total ?? items.length,
@@ -145,39 +158,39 @@ export const providersService = {
   },
 
   async create(data: Partial<Provider>): Promise<Provider> {
-    const res = await http.post<{ success: boolean; partner: Provider }>(
+    const res = await http.post<ProviderEnvelope>(
       BASE,
       data as unknown as Record<string, unknown>
     );
-    return res.partner;
+    return unwrapProvider(res);
   },
 
   async update(id: string, data: Partial<Provider>): Promise<Provider> {
-    const res = await http.put<{ success: boolean; partner: Provider }>(
+    const res = await http.put<ProviderEnvelope>(
       `${BASE}/${id}`,
       data as unknown as Record<string, unknown>
     );
-    return res.partner;
+    return unwrapProvider(res);
   },
 
   async setStatus(id: string, status: ProviderStatus): Promise<Provider> {
-    const res = await http.put<{ success: boolean; partner: Provider }>(`${BASE}/${id}/status`, { status });
-    return res.partner;
+    const res = await http.put<ProviderEnvelope>(`${BASE}/${id}/status`, { status });
+    return unwrapProvider(res);
   },
 
   async setOnline(id: string, isOnline: boolean): Promise<Provider> {
-    const res = await http.put<{ success: boolean; partner: Provider }>(`${BASE}/${id}/online`, { isOnline });
-    return res.partner;
+    const res = await http.put<ProviderEnvelope>(`${BASE}/${id}/online`, { isOnline });
+    return unwrapProvider(res);
   },
 
   async approve(id: string): Promise<Provider> {
-    const res = await http.post<{ success: boolean; partner: Provider }>(`${BASE}/${id}/approve`, {});
-    return res.partner;
+    const res = await http.post<ProviderEnvelope>(`${BASE}/${id}/approve`, {});
+    return unwrapProvider(res);
   },
 
   async reject(id: string, reason?: string): Promise<Provider> {
-    const res = await http.post<{ success: boolean; partner: Provider }>(`${BASE}/${id}/reject`, { reason });
-    return res.partner;
+    const res = await http.post<ProviderEnvelope>(`${BASE}/${id}/reject`, { reason });
+    return unwrapProvider(res);
   },
 
   /** Replace assigned zones. Backend rejects inactive/non-serviceable zones. */

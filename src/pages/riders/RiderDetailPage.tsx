@@ -51,7 +51,7 @@ export function RiderDetailPage() {
       if (!riderId) return [];
       try {
         const res = await http.get<{ success: boolean; deliveries: RiderDelivery[] }>(
-          `/delivery/delivery?limit=20&partnerId=${riderId}`
+          `/delivery/delivery?limit=20&providerId=${riderId}`
         );
         return (res.deliveries || []).filter((d) => d._id);
       } catch {

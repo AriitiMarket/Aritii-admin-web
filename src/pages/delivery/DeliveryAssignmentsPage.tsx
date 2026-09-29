@@ -1,54 +1,65 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/components/common/PageHeader';
+import { Tabs } from '@/components/common/Tabs';
 import { ReadyOrdersPanel } from './dispatch/ReadyOrdersPanel';
 import { AssignmentListPanel } from './dispatch/AssignmentListPanel';
+import { AssignmentsTab } from './tabs/AssignmentsTab';
 
-type Tab = 'ready' | 'assignments';
+type Tab = 'ready' | 'assign' | 'batches';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'ready', label: 'Ready for Delivery' },
-  { id: 'assignments', label: 'Assignments' },
+  { id: 'assign', label: 'Assign / Reassign' },
+  { id: 'batches', label: 'Batches' },
 ];
 
+function isTab(v: string | null): v is Tab {
+  return !!v && TABS.some((t) => t.id === v);
+}
+
 /**
- * Delivery & Logistics -> Assignments.
+ * Delivery & Logistics -> Assignments — ONE workspace for the whole
+ * assignment workflow (it also absorbs the former Dispatch / Batches page):
  *
- * Two views over the one multi-order dispatch workflow:
- *   "Ready for Delivery"  — pick many eligible orders and assign them to a rider
- *                          in a single batch operation.
- *   "Assignments"         — every assignment created this way, with live
- *                          per-order progress and a link into its detail page.
+ *   Ready for Delivery — pick many eligible orders and hand them to a rider
+ *                        in a single batch operation.
+ *   Assign / Reassign  — every delivery with its rider, plus per-order assign,
+ *                        reassign and status transitions.
+ *   Batches            — the batches created from ready orders: riders,
+ *                        progress, and a link into each detail page.
+ *
+ * The active tab lives in `?tab=` so deep links (including the dashboard's
+ * "View All" and the legacy /delivery/dispatch URL) open the right view.
  */
 export function DeliveryAssignmentsPage() {
-  const [tab, setTab] = useState<Tab>('ready');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const param = searchParams.get('tab');
+  const tab: Tab = isTab(param) ? param : 'ready';
+
+  const selectTab = (id: Tab) => {
+    setSearchParams(id === 'ready' ? {} : { tab: id }, { replace: true });
+  };
 
   return (
     <div>
       <PageHeader
         title="Assignments"
-        description="Select ready orders, assign them to a rider in one operation, and follow each order's own status to delivery."
+        description="Ready orders, per-delivery assign/reassign, and the batches they become."
       />
 
-      <div className="mb-4 flex gap-1 border-b border-gray-200 dark:border-dark-600" role="tablist">
-        {TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={
-              tab === id
-                ? 'border-b-2 border-primary-dark px-4 py-2 text-sm font-medium text-primary-dark'
-                : 'border-b-2 border-transparent px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-            }
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <Tabs
+          activeTab={tab}
+          onChange={(id) => selectTab(id as Tab)}
+          tabs={TABS.map(({ id, label }) => ({ value: id, label }))}
+        />
       </div>
 
-      {tab === 'ready' ? <ReadyOrdersPanel /> : <AssignmentListPanel />}
+      <div role="tabpanel">
+        {tab === 'ready' && <ReadyOrdersPanel />}
+        {tab === 'assign' && <AssignmentsTab />}
+        {tab === 'batches' && <AssignmentListPanel />}
+      </div>
     </div>
   );
 }

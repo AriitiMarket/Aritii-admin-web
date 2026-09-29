@@ -10,16 +10,16 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="heading-3 dark:text-white">{title}</h1>
-        {description && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
-        )}
+    <div className="page-header mb-5">
+      <div className="page-header__content">
+        <div>
+          <h1 className="page-header__title">{title}</h1>
+          {description && (
+            <p className="page-header__description">{description}</p>
+          )}
+        </div>
+        {actions && <div className="page-header__actions">{actions}</div>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
 }

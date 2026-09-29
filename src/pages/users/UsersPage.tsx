@@ -25,7 +25,6 @@ import {
 } from '@/pages/users/usersTabs';
 import { UsersListPanel } from '@/pages/users/UsersListPanel';
 import { SellersListPanel } from '@/pages/users/SellersListPanel';
-import { CustomersListPanel } from '@/pages/users/CustomersListPanel';
 import { AdminsListPanel } from '@/pages/users/AdminsListPanel';
 
 export function UsersManagementPage() {
@@ -73,9 +72,8 @@ export function UsersManagementPage() {
           another.
         */}
         {activeTab === 'all' && <UsersListPanel key="all" />}
-        {activeTab === 'buyers' && <UsersListPanel key="buyers" role="CUSTOMER" />}
+        {activeTab === 'customers' && <UsersListPanel key="customers" role="BUYER" />}
         {activeTab === 'sellers' && <SellersListPanel key="sellers" />}
-        {activeTab === 'customers' && <CustomersListPanel key="customers" />}
         {activeTab === 'admins' && <AdminsListPanel key="admins" />}
       </TabContent>
     </div>

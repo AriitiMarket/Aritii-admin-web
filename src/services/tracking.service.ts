@@ -1,0 +1,69 @@
+/** Tracking admin service (delivery-service route: GET /delivery/tracking).
+
+Backend contract:
+  GET /delivery/tracking/:deliveryId   -> { events, count }
+  GET /delivery/tracking/:deliveryId/latest -> { location: { coordinates?: [lng, lat], accuracy?, speed?, heading?, timestamp? } }
+  GET /delivery/tracking/nearby       -> { events, count }  *(live location query, best effort)*
+
+Tracking events: { status: 'pending'|'assigned'|'pickup'|'in_transit'|'out_for_delivery'|'delivered'|'failed'|'cancelled'|'reassigned',
+                   location?: { type:'Point', coordinates:[lng,lat] }, accuracy?, speed?, heading?, note?, timestamp? }.
+*/
+
+import { http } from '@/services/client/httpClient';
+
+export interface TrackingEvent {
+  status:
+    | 'pending'
+    | 'assigned'
+    | 'pickup'
+    | 'in_transit'
+    | 'out_for_delivery'
+    | 'delivered'
+    | 'failed'
+    | 'cancelled'
+    | 'reassigned';
+  location?: { type?: 'Point'; coordinates?: [number, number] };
+  accuracy?: number;
+  speed?: number;
+  heading?: number;
+  note?: string;
+  timestamp?: string;
+  providerId?: string | null;
+}
+
+export interface TrackingLocation {
+  coordinates?: [number, number];
+  accuracy?: number;
+  speed?: number;
+  heading?: number;
+  timestamp?: string;
+}
+
+export interface TrackingResponse {
+  success: boolean;
+  events?: TrackingEvent[];
+  count?: number;
+  location?: TrackingLocation;
+}
+
+export const trackingService = {
+  /** Event history for a delivery (backend: GET /delivery/tracking/:deliveryId) */
+  async getEvents(deliveryId: string): Promise<TrackingEvent[]> {
+    const res = await http.get<TrackingResponse>(`/delivery/tracking/${deliveryId}`);
+    return res?.events ?? [];
+  },
+
+  /** Latest known location of a delivery (backend: GET /delivery/tracking/:deliveryId/latest) */
+  async getLatestLocation(deliveryId: string): Promise<TrackingLocation | null> {
+    const res = await http.get<{ success: boolean; location?: TrackingLocation }>(`/delivery/tracking/${deliveryId}/latest`);
+    return res?.location ?? null;
+  },
+
+  /** Nearby events for a live location (backend: GET /delivery/tracking/nearby) — best effort. */
+  async getNearby({ longitude, latitude, maxDistance = 5000 }: { longitude: number; latitude: number; maxDistance?: number }): Promise<TrackingEvent[]> {
+    const res = await http.get<TrackingResponse>('/delivery/tracking/nearby', {
+      params: { longitude, latitude, maxDistance },
+    });
+    return res?.events ?? [];
+  },
+};

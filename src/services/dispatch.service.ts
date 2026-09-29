@@ -94,8 +94,9 @@ export interface Rider {
 export interface AssignmentBatch {
   _id: string;
   reference: string;
-  partnerId: string;
+  providerId: string;
   partnerName: string;
+  providerName?: string;
   serviceId: string | null;
   routeId: string | null;
   zoneIds: string[];
@@ -125,7 +126,7 @@ export interface AssignmentListResult {
 
 export interface CreateBatchInput {
   deliveryIds: string[];
-  partnerId: string;
+  providerId: string;
   routeId?: string;
   notes?: string;
 }
@@ -204,12 +205,12 @@ export const dispatchService = {
    * Move this assignment to another rider. The previous assignment is kept in
    * history and linked forward — it is never silently duplicated.
    */
-  async reassign(id: string, partnerId: string, reason?: string): Promise<AssignmentBatch> {
+  async reassign(id: string, providerId: string, reason?: string): Promise<AssignmentBatch> {
     const res = await http.post<{
       success: boolean;
       assignment: AssignmentBatch;
       previous: AssignmentBatch;
-    }>(`/delivery/dispatch/batches/${id}/reassign`, { partnerId, reason });
+    }>(`/delivery/dispatch/batches/${id}/reassign`, { providerId, reason });
     return res.assignment;
   },
 
