@@ -109,7 +109,7 @@ export function ProvidersPage() {
       showToast({
         type: 'success',
         title: 'Provider approved',
-        message: `${provider.name} can now be assigned to deliveries.`,
+        message: `${provider.name} is approved — goes live when they come online.`,
       });
       refetch();
     } catch (err) {

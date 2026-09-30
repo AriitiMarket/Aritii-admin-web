@@ -13,8 +13,9 @@ import { formatDate } from '@/utils/format';
 import { locationsService, type Location } from '@/services/locations.service';
 import { assignmentsService, type EligiblePartner } from '@/services/assignments.service';
 import { deliveryAdmin } from '@/api/admin';
-import { DELIVERY_STATUSES } from '../constants';
-import { getDeliveryStatusColor, getValidTransitions } from '../utils/statusHelpers';
+import { DELIVERY_STATUSES, ASSIGNABLE_STATUSES, REASSIGNABLE_STATUSES } from '../constants';
+import { getDeliveryStatusColor, getManualTransitions } from '../utils/statusHelpers';
+import { StatusChangeDialog } from '../components/StatusChangeDialog';
 import { useAssignments } from '../hooks/useAssignments';
 import type { Delivery } from '../types';
 import { useToast } from '@/hooks/useToast';
@@ -42,6 +43,8 @@ export function AssignmentsTab() {
   const [selectedRiderId, setSelectedRiderId] = useState('');
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [changeReq, setChangeReq] = useState<{ row: Delivery; next: string } | null>(null);
+  const [changeError, setChangeError] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
   const isFiltered = !!(debouncedSearch || status || selectedRegion || selectedCity || selectedSector);
 
@@ -139,17 +142,25 @@ export function AssignmentsTab() {
     }
   };
 
-  const handleStatusChange = async (deliveryId: string, orderId: string, newStatus: string) => {
+  const openStatusChange = (row: Delivery, nextStatus: string) => {
+    setChangeError(null);
+    setChangeReq({ row, next: nextStatus });
+  };
+
+  /** Fire the requested transition with the payload the dialog collected. */
+  const confirmStatusChange = async (extra: Record<string, unknown>) => {
+    if (!changeReq) return;
     setActionLoading(true);
+    setChangeError(null);
     try {
-      await deliveryAdmin.updateDeliveryStatus(deliveryId, newStatus);
-      showToast({ type: 'success', message: `Delivery ${orderId} → ${newStatus.replace(/_/g, ' ')}` });
+      await deliveryAdmin.updateDeliveryStatus(changeReq.row.id, changeReq.next, extra);
+      setChangeReq(null);
+      showToast({ type: 'success', message: `Delivery ${changeReq.row.orderId} → ${changeReq.next.replace(/_/g, ' ')}` });
       refetch();
     } catch (err) {
-      showToast({
-        type: 'error',
-        message: err instanceof ApiError ? err.message : 'Failed to change delivery status',
-      });
+      const message = err instanceof ApiError ? err.message : 'Failed to change delivery status';
+      setChangeError(message);
+      showToast({ type: 'error', message });
     } finally {
       setActionLoading(false);
     }
@@ -220,9 +231,14 @@ export function AssignmentsTab() {
       key: 'actions',
       header: 'Actions',
       render: (row) => {
-        const transitions = getValidTransitions(row.status);
-        const showAssign = !row.providerId && row.status === 'pending';
-        const showReassign = row.providerId && row.status !== 'delivered' && row.status !== 'cancelled' && row.status !== 'pending';
+        const transitions = getManualTransitions(row.status || '');
+        // New assignment: an unowned delivery in the ready pool (or a
+        // requeued `reassigned` one) — states where no active assignment can
+        // exist and `assigned` is a legal transition.
+        const showAssign = ASSIGNABLE_STATUSES.includes(row.status || '');
+        // Hand-over to another rider: only states the reassign flow can move
+        // through `reassigned` (see REASSIGNABLE_STATUSES).
+        const showReassign = REASSIGNABLE_STATUSES.includes(row.status || '');
         return (
           <div className="flex gap-1 flex-wrap">
             {showAssign && (
@@ -248,7 +264,7 @@ export function AssignmentsTab() {
                 key={t}
                 size="sm"
                 variant="ghost"
-                onClick={(e) => { e.stopPropagation(); handleStatusChange(row.id, row.orderId, t); }}
+                onClick={(e) => { e.stopPropagation(); openStatusChange(row, t); }}
                 disabled={actionLoading}
               >
                 {t.replace(/_/g, ' ')}
@@ -415,6 +431,17 @@ export function AssignmentsTab() {
           </div>
         </Modal>
       )}
+
+      {/* Status-change dialog (reason / proof collection before the PUT) */}
+      <StatusChangeDialog
+        open={!!changeReq}
+        delivery={changeReq?.row ?? null}
+        nextStatus={changeReq?.next ?? ''}
+        busy={actionLoading}
+        error={changeError}
+        onClose={() => { setChangeReq(null); setChangeError(null); }}
+        onConfirm={confirmStatusChange}
+      />
     </>
   );
 }

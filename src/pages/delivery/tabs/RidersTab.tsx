@@ -58,7 +58,17 @@ export function RidersTab() {
     if (!bulkAction || selectedRiders.size === 0) return;
     setBulkLoading(true);
     try {
+      const statusMap = new Map((data?.items ?? []).map(r => [r.id, r.status]));
+      const allowedFrom: Record<string, string[]> = {
+        activate: ['pending', 'offline', 'busy'],
+        deactivate: ['available', 'busy', 'offline', 'pending'],
+        'set-busy': ['available', 'offline'],
+      };
+      const allowed = allowedFrom[bulkAction] ?? [];
+      let skipped = 0;
       for (const riderId of selectedRiders) {
+        const current = statusMap.get(riderId);
+        if (current && !allowed.includes(current)) { skipped++; continue; }
         if (bulkAction === 'activate') {
           await ridersService.updateStatus(riderId, 'available');
         } else if (bulkAction === 'deactivate') {
@@ -66,6 +76,9 @@ export function RidersTab() {
         } else if (bulkAction === 'set-busy') {
           await ridersService.updateStatus(riderId, 'busy');
         }
+      }
+      if (skipped > 0) {
+        console.warn(`Skipped ${skipped} rider(s): current status does not allow this transition`);
       }
       setSelectedRiders(new Set());
       setBulkAction('');
@@ -92,7 +105,7 @@ export function RidersTab() {
       } else if (current === 'busy') {
         newStatus = 'available';
       } else if (current === 'pending' || current === 'suspended') {
-        newStatus = 'available';
+        newStatus = 'offline';
       } else {
         newStatus = 'suspended';
       }
@@ -161,7 +174,7 @@ export function RidersTab() {
       header: 'Coverage',
       render: (row) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {row.sector || 'All'}
+          {row.sectorId ? 'Assigned' : 'All'}
         </span>
       ),
     },
@@ -179,7 +192,7 @@ export function RidersTab() {
       header: 'Total',
       render: (row) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {row.totalDeliveries ?? 0}
+          {row.completedDeliveries ?? 0}
         </span>
       ),
     },
@@ -301,11 +314,11 @@ export function RidersTab() {
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Zone</dt>
-                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.zone?.name ?? '—'}</dd>
+                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.zoneIds?.length ? `${selectedRiderForDetail.zoneIds.length} zone(s)` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Sector Coverage</dt>
-                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.sector || 'All sectors'}</dd>
+                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.sectorId ? 'Assigned' : 'All sectors'}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Active Deliveries</dt>
@@ -313,7 +326,7 @@ export function RidersTab() {
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Total Deliveries</dt>
-                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.totalDeliveries ?? 0}</dd>
+                  <dd className="text-gray-800 dark:text-gray-100">{selectedRiderForDetail.completedDeliveries ?? 0}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 dark:text-gray-400">Joined</dt>

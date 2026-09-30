@@ -620,10 +620,11 @@ export const deliveryAdmin = {
     };
   },
 
-  async listRidersWithFilters(page = 1, limit = 10, search = '', status = '') {
+  async listRidersWithFilters(page = 1, limit = 10, search = '', status = '', isOnline?: boolean) {
     const params: Record<string, string | number> = { page, limit };
     if (search) params.search = search;
     if (status) params.status = status;
+    if (isOnline !== undefined) params.isOnline = String(isOnline);
     
     const res = await http.get<{
       success: boolean;
@@ -824,10 +825,22 @@ export const deliveryAdmin = {
     return { ...res.assignment, id: res.assignment._id || res.assignment.id };
   },
 
-  async updateDeliveryStatus(deliveryId: string, status: string, note?: string) {
+  /**
+   * `PUT /delivery/delivery/:id/status`.
+   *
+   * `extra` carries the fields the transition needs — `reason` (failed /
+   * cancelled), `nextAction` (failed), `proofOfDelivery` (delivered),
+   * `override` (cancel from out_for_delivery) and `note`. The service envelope
+   * is `{ success, code, message, errors }`, surfaced by the http client.
+   */
+  async updateDeliveryStatus(
+    deliveryId: string,
+    status: string,
+    extra: Record<string, unknown> = {}
+  ) {
     const res = await http.put<{ success: boolean; delivery: any }>(
       `/delivery/delivery/${deliveryId}/status`,
-      { status, note }
+      { status, ...extra }
     );
     return {
       ...res.delivery,

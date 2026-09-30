@@ -143,17 +143,26 @@ function buildHeaders(authenticated: boolean): Headers {
 async function toError(response: Response): Promise<ApiError> {
   let message = `Request failed (${response.status})`;
   let code: string | undefined;
+  let errors: unknown;
   try {
     const body = (await response.json()) as {
       message?: string;
+      code?: string | number;
+      errors?: unknown;
       error?: { message?: string; code?: string | number };
     };
     message = body.message ?? body.error?.message ?? message;
-    if (typeof body.error?.code === 'string') code = body.error.code;
+    // Every Aritii service answers with a top-level `{ success, code, message,
+    // errors }` envelope; some gateways instead nest it under `error`. Read
+    // both so codes like `UNKNOWN_STATUS` / `PROOF_REQUIRED` reach the UI.
+    const rawCode = body.code ?? body.error?.code;
+    if (typeof rawCode === 'string') code = rawCode;
+    else if (typeof rawCode === 'number') code = String(rawCode);
+    errors = body.errors;
   } catch {
     // non-JSON error body, keep default message
   }
-  return new ApiError(response.status, message, code);
+  return new ApiError(response.status, message, code, errors);
 }
 
 async function doFetch<T>(

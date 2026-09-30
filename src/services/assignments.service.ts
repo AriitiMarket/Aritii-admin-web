@@ -55,11 +55,11 @@ export const assignmentsService = {
     sectorId?: string;
   } = {}): Promise<EligiblePartner[]> {
     return http
-      .get<{ success: boolean; partners?: EligiblePartner[]; count?: number }>(
+      .get<{ success: boolean; providers?: EligiblePartner[]; partners?: EligiblePartner[]; count?: number }>(
         '/delivery/assignment/eligible-partners',
         { params: params as never }
       )
-      .then((res) => res.partners ?? []);
+      .then((res) => res.providers ?? res.partners ?? []);
   },
 
   async list(params?: { page?: number; limit?: number; status?: string; providerId?: string }): Promise<AssignmentResult> {

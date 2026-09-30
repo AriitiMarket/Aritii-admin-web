@@ -14,7 +14,8 @@ import { DELIVERY_STATUSES } from './constants';
 import { deliveryAdmin } from '@/api/admin';
 import { deliveryServicesService } from '@/services/deliveryServices.service';
 import { locationsService, zonesService } from '@/services/locations.service';
-import { getDeliveryStatusColor, getValidTransitions } from './utils/statusHelpers';
+import { getDeliveryStatusColor, getManualTransitions } from './utils/statusHelpers';
+import { StatusChangeDialog } from './components/StatusChangeDialog';
 import type { Delivery } from './types';
 import { useToast } from '@/hooks/useToast';
 import { ApiError } from '@/types/api';
@@ -136,6 +137,8 @@ export function DeliveriesPage() {
   const [detail, setDetail] = useState<Delivery | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [changeReq, setChangeReq] = useState<{ row: Delivery; next: string } | null>(null);
+  const [changeError, setChangeError] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const debouncedSearch = useDebounce(search, 300);
@@ -239,29 +242,15 @@ export function DeliveriesPage() {
           <Button size="sm" variant="ghost" onClick={() => { setDetail(row); setDetailOpen(true); }}>
             History
           </Button>
-          {row.status && getValidTransitions(row.status).map((t) => (
+          {row.status && getManualTransitions(row.status).map((t) => (
             <Button
               key={t}
               size="sm"
               variant="outline"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                setActionLoading(true);
-                try {
-                  await deliveryAdmin.updateDeliveryStatus(row.id, t);
-                  refetch();
-                  showToast({
-                    type: 'success',
-                    message: `Delivery ${row.orderId} → ${t.replace(/_/g, ' ')}`,
-                  });
-                } catch (err) {
-                  showToast({
-                    type: 'error',
-                    message: err instanceof ApiError ? err.message : 'Failed to change delivery status',
-                  });
-                } finally {
-                  setActionLoading(false);
-                }
+                setChangeError(null);
+                setChangeReq({ row, next: t });
               }}
               disabled={actionLoading}
             >
@@ -272,6 +261,28 @@ export function DeliveriesPage() {
       ),
     },
   ];
+
+  /** Fire the requested transition with the payload the dialog collected. */
+  const confirmStatusChange = async (extra: Record<string, unknown>) => {
+    if (!changeReq) return;
+    setActionLoading(true);
+    setChangeError(null);
+    try {
+      await deliveryAdmin.updateDeliveryStatus(changeReq.row.id, changeReq.next, extra);
+      setChangeReq(null);
+      refetch();
+      showToast({
+        type: 'success',
+        message: `Delivery ${changeReq.row.orderId} → ${changeReq.next.replace(/_/g, ' ')}`,
+      });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to change delivery status';
+      setChangeError(message);
+      showToast({ type: 'error', message });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const resetFilters = () => {
     setSearch('');
@@ -380,6 +391,16 @@ export function DeliveriesPage() {
       </DataSection>
 
       <HistoryModal delivery={detail} open={detailOpen} onClose={() => { setDetailOpen(false); setDetail(null); }} />
+
+      <StatusChangeDialog
+        open={!!changeReq}
+        delivery={changeReq?.row ?? null}
+        nextStatus={changeReq?.next ?? ''}
+        busy={actionLoading}
+        error={changeError}
+        onClose={() => { setChangeReq(null); setChangeError(null); }}
+        onConfirm={confirmStatusChange}
+      />
     </div>
   );
 }

@@ -37,7 +37,7 @@ export function RidersPendingPage() {
         </div>
       ),
     },
-    { key: 'username', header: 'Username', accessor: (row) => row.username },
+    { key: 'name', header: 'Name', accessor: (row) => row.name },
     { key: 'vehicle', header: 'Vehicle', accessor: (row) => row.vehicleType },
     {
       key: 'status',

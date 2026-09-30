@@ -70,7 +70,17 @@ export function RidersManagementPage() {
     if (!bulkAction || selectedRiders.size === 0) return;
     setBulkLoading(true);
     try {
+      const statusMap = new Map((data?.items ?? []).map(r => [r.id, r.status]));
+      const allowedFrom: Record<string, string[]> = {
+        activate: ['pending', 'offline', 'busy'],
+        deactivate: ['available', 'busy', 'offline', 'pending'],
+        'set-busy': ['available', 'offline'],
+      };
+      const allowed = allowedFrom[bulkAction] ?? [];
+      let skipped = 0;
       for (const riderId of selectedRiders) {
+        const current = statusMap.get(riderId);
+        if (current && !allowed.includes(current)) { skipped++; continue; }
         if (bulkAction === 'activate') {
           await ridersService.updateStatus(riderId, 'available');
         } else if (bulkAction === 'deactivate') {
@@ -78,6 +88,9 @@ export function RidersManagementPage() {
         } else if (bulkAction === 'set-busy') {
           await ridersService.updateStatus(riderId, 'busy');
         }
+      }
+      if (skipped > 0) {
+        console.warn(`Skipped ${skipped} rider(s): current status does not allow this transition`);
       }
       setSelectedRiders(new Set());
       setBulkAction('');

@@ -100,6 +100,10 @@ export interface Delivery {
   createdAt: string;
   pickedUpAt?: string;
   deliveredAt?: string;
+  /** COD or PREPAID — the payment the rider collects at the door. */
+  paymentMethod?: string;
+  /** Amount the rider must collect when `paymentMethod` is COD. */
+  paymentAmount?: number;
 }
 
 export interface RiderDelivery {
@@ -123,5 +127,20 @@ export interface PaginatedData<T> {
   totalPages: number;
 }
 
-export type DeliveryStatus = 'pending' | 'assigned' | 'pickup' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'failed' | 'cancelled' | 'reassigned';
+/** The Delivery Service's full status vocabulary (14 values). */
+export type DeliveryStatus =
+  | 'pending'
+  | 'validated'
+  | 'ready_for_pickup'
+  | 'assigned'
+  | 'reassigned'
+  | 'pickup'
+  | 'in_transit'
+  | 'arrived_at_hub'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'failed'
+  | 'cancelled'
+  | 'return_requested'
+  | 'returned';
 export type RiderStatus = 'available' | 'busy' | 'offline' | 'pending' | 'suspended';

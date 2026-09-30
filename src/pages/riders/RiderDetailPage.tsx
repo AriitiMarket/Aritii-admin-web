@@ -72,7 +72,7 @@ export function RiderDetailPage() {
       } else if (current === 'busy') {
         newStatus = 'available';
       } else if (current === 'pending' || current === 'suspended') {
-        newStatus = 'available';
+        newStatus = 'offline';
       } else {
         newStatus = 'suspended';
       }
@@ -202,11 +202,11 @@ export function RiderDetailPage() {
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Zone</dt>
-              <dd className="text-gray-800 dark:text-gray-100">{rider.zone?.name ?? '—'}</dd>
+              <dd className="text-gray-800 dark:text-gray-100">{rider.zoneIds?.length ? `${rider.zoneIds.length} zone(s)` : '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Sector Coverage</dt>
-              <dd className="text-gray-800 dark:text-gray-100">{rider.sector || 'All sectors'}</dd>
+              <dd className="text-gray-800 dark:text-gray-100">{rider.sectorId ? 'Assigned' : 'All sectors'}</dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Active Deliveries</dt>
@@ -214,7 +214,7 @@ export function RiderDetailPage() {
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Total Deliveries</dt>
-              <dd className="text-gray-800 dark:text-gray-100">{rider.totalDeliveries ?? 0}</dd>
+              <dd className="text-gray-800 dark:text-gray-100">{rider.completedDeliveries ?? 0}</dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Joined</dt>

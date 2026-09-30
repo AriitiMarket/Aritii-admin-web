@@ -275,8 +275,8 @@ export function ProviderDetailDrawer({
               onClick={() =>
                 act(() =>
                   detailTyped?.status === 'suspended'
-                    ? providersService.setStatus(detailTyped!._id, 'available')
-                    : providersService.reject(detailTyped!._id, 'Suspended by admin')
+                    ? providersService.setStatus(detailTyped!._id, 'offline')
+                    : providersService.setStatus(detailTyped!._id, 'suspended')
                 )
               }
             >

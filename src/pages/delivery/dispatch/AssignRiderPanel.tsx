@@ -65,7 +65,7 @@ export function AssignRiderPanel({
               }))
             )
         : ridersService
-            .list({ page: 1, limit: 100, status: 'available' })
+            .list({ page: 1, limit: 100, status: 'available', isOnline: true })
             .then((result) => result.items);
     loader
       .then(setRiders)

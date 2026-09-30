@@ -51,7 +51,7 @@ export function DeliveryAssignmentDetailPage() {
     setNewRiderId('');
     setReassignOpen(true);
     ridersService
-      .list({ page: 1, limit: 100, status: 'available' })
+      .list({ page: 1, limit: 100, status: 'available', isOnline: true })
       .then((r) => setRiders(r.items))
       .catch(() => setRiders([]));
   };

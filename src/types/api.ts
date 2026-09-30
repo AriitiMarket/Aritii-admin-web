@@ -35,12 +35,19 @@ export interface PaginatedResult<T> {
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly code?: string;
+  /**
+   * Field-level problems from the service envelope
+   * (`{ success, code, message, errors }`), e.g. validation messages keyed by
+   * field. Present only when the service sent them.
+   */
+  readonly errors?: unknown;
 
-  constructor(statusCode: number, message: string, code?: string) {
+  constructor(statusCode: number, message: string, code?: string, errors?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.statusCode = statusCode;
     this.code = code;
+    this.errors = errors;
   }
 }
 

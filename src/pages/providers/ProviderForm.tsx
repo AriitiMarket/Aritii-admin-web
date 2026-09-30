@@ -27,6 +27,8 @@ const VEHICLES = [
 const STATUSES: { value: ProviderStatus; label: string }[] = [
   { value: 'pending', label: 'Pending' },
   { value: 'available', label: 'Active' },
+  { value: 'busy', label: 'Busy' },
+  { value: 'offline', label: 'Offline' },
   { value: 'suspended', label: 'Suspended' },
 ];
 
@@ -129,7 +131,6 @@ export function ProviderForm({
         sectorId: draft.sectorId || null,
         zoneIds: draft.zoneIds,
         zoneId: draft.zoneIds[0] ?? null,
-        status: draft.status,
       };
       if (initial) {
         await providersService.update(initial._id, payload);
