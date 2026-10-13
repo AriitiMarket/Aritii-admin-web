@@ -8,12 +8,13 @@ import { OverviewTab } from './tabs/OverviewTab';
 /**
  * Delivery & Logistics -> Overview.
  *
- * A dashboard only: stats, filters and recent deliveries. The working views
- * are sidebar entries (Deliveries, Assignments, Partners & Providers), so the
- * page carries no tabs that would repeat them.
+ * A control centre, not a second management page: it summarises the current
+ * state, flags what needs attention and links to the working views (Deliveries,
+ * Requests, Locations, Providers). It owns no status editing, so nothing here
+ * is duplicated from those pages.
  *
- * The dashboard data itself is owned by OverviewTab (one fetch, filters and
- * refresh included) — this page only drives the Refresh / auto-refresh clock.
+ * The dashboard body lives in OverviewTab; this page only drives the
+ * Refresh / auto-refresh clock and passes it down as `refreshKey`.
  */
 export function DeliveryLogisticsPage() {
   const [autoRefresh, setAutoRefresh] = useState(false);
@@ -43,7 +44,7 @@ export function DeliveryLogisticsPage() {
     <div>
       <PageHeader
         title="Delivery & Logistics"
-        description="Manage delivery operations, riders, and assignments"
+        description="Control centre — delivery status, exceptions and shortcuts to the pages that manage them."
         actions={
           <div className="flex gap-2">
             <Button

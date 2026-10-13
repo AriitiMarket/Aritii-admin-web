@@ -8,7 +8,7 @@ import { Modal } from '@/components/common/Modal';
 import { Pagination } from '@/components/common/Pagination';
 import { TextField } from '@/components/forms/TextField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
-import { hubsService, type Hub } from '@/services/hubs.service';
+import { portsService, type Port } from '@/services/ports.service';
 import { locationsService } from '@/services/locations.service';
 import { FilterBar } from '@/components/workspace/FilterBar';
 import { DataSection, RowActions } from '@/components/workspace/DataSection';
@@ -23,7 +23,7 @@ const STATUS_OPTIONS = [
   { value: 'suspended', label: 'Suspended' },
 ];
 
-interface HubDraft {
+interface PortDraft {
   id?: string;
   name: string;
   locationId: string;
@@ -33,25 +33,25 @@ interface HubDraft {
   description: string;
 }
 
-const EMPTY: HubDraft = {
+const EMPTY: PortDraft = {
   name: '', locationId: '', capacity: '', contactPhone: '', contactEmail: '', description: '',
 };
 
-/** Hubs tab: physical/logistical sites and their real zone/route/provider counts. */
-export function HubsTab() {
+/** Ports tab: physical/logistical sites and their real zone/route/provider counts. */
+export function PortsTab() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [locationId, setLocationId] = useState('');
-  const [detail, setDetail] = useState<Hub | null>(null);
+  const [detail, setDetail] = useState<Port | null>(null);
   const [detailTab, setDetailTab] = useState('overview');
-  const [draft, setDraft] = useState<HubDraft | null>(null);
+  const [draft, setDraft] = useState<PortDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, loading, error, refetch } = useAsync(
-    () => hubsService.list({
+    () => portsService.list({
       page, limit: LIMIT,
       status: status || undefined,
       locationId: locationId || undefined,
@@ -60,20 +60,20 @@ export function HubsTab() {
     [page, status, locationId, debouncedSearch]
   );
   const { data: locations } = useAsync(() => locationsService.list(), []);
-  const { data: stats } = useAsync(() => hubsService.getStats(), []);
+  const { data: stats } = useAsync(() => portsService.getStats(), []);
 
-  const hubs = data?.hubs ?? [];
+  const ports = data?.ports ?? [];
   const isFiltered = !!(search || status || locationId);
   const reset = () => { setSearch(''); setStatus(''); setLocationId(''); setPage(1); };
 
-  const openEdit = (hub: Hub) => setDraft({
-    id: hub._id,
-    name: hub.name,
-    locationId: hub.locationId,
-    capacity: hub.capacity != null ? String(hub.capacity) : '',
-    contactPhone: hub.contactPhone ?? '',
-    contactEmail: hub.contactEmail ?? '',
-    description: hub.description ?? '',
+  const openEdit = (port: Port) => setDraft({
+    id: port._id,
+    name: port.name,
+    locationId: port.locationId,
+    capacity: port.capacity != null ? String(port.capacity) : '',
+    contactPhone: port.contactPhone ?? '',
+    contactEmail: port.contactEmail ?? '',
+    description: port.description ?? '',
   });
 
   const save = async () => {
@@ -89,19 +89,19 @@ export function HubsTab() {
         contactEmail: draft.contactEmail,
         capacity: draft.capacity === '' ? undefined : Number(draft.capacity),
       };
-      if (draft.id) await hubsService.update(draft.id, payload as unknown as Record<string, unknown>);
-      else await hubsService.create(payload);
+      if (draft.id) await portsService.update(draft.id, payload as unknown as Record<string, unknown>);
+      else await portsService.create(payload);
       setDraft(null);
       refetch();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not save the hub');
+      setFormError(err instanceof Error ? err.message : 'Could not save the port');
     } finally {
       setSaving(false);
     }
   };
 
-  const columns: Column<Hub>[] = [
-    { key: 'name', header: 'Hub', render: (r) => <span className="font-medium text-gray-800 dark:text-gray-100">{r.name}</span> },
+  const columns: Column<Port>[] = [
+    { key: 'name', header: 'Port', render: (r) => <span className="font-medium text-gray-800 dark:text-gray-100">{r.name}</span> },
     { key: 'location', header: 'Location', render: (r) => r.locationName ?? '—' },
     { key: 'zones', header: 'Zones', accessor: (r) => r.zoneCount },
     { key: 'routes', header: 'Routes', accessor: (r) => r.routeCount },
@@ -176,8 +176,8 @@ const h = detail;
       {stats && (
         <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { label: 'Total Hubs', value: stats.totalHubs },
-            { label: 'Active', value: stats.activeHubs },
+            { label: 'Total Ports', value: stats.totalPorts },
+            { label: 'Active', value: stats.activePorts },
             { label: 'Total Capacity', value: stats.totalCapacity },
             { label: 'Current Load', value: stats.currentLoad },
           ].map((c) => (
@@ -192,11 +192,11 @@ const h = detail;
       <FilterBar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
-        searchPlaceholder="Search hubs…"
+        searchPlaceholder="Search ports…"
         isFiltered={isFiltered}
         onReset={reset}
-        resultSummary={data ? `${data.total} hub${data.total === 1 ? '' : 's'}` : undefined}
-        actions={<Button variant="primary" onClick={() => { setFormError(null); setDraft(EMPTY); }}>Add Hub</Button>}
+        resultSummary={data ? `${data.total} port${data.total === 1 ? '' : 's'}` : undefined}
+        actions={<Button variant="primary" onClick={() => { setFormError(null); setDraft(EMPTY); }}>Add Port</Button>}
         filters={[
           { key: 'status', label: 'Status', value: status, onChange: (v) => { setStatus(v); setPage(1); }, options: STATUS_OPTIONS },
           {
@@ -212,17 +212,17 @@ const h = detail;
       <DataSection
         error={error}
         onRetry={refetch}
-        isEmpty={!loading && hubs.length === 0}
-        emptyTitle={isFiltered ? 'No hubs match these filters' : 'No hubs yet'}
-        emptyDescription={isFiltered ? 'Try widening or resetting the filters above.' : 'Add a hub to give the network a physical collection and dispatch point.'}
-        emptyAction={isFiltered ? undefined : { label: 'Add Hub', onClick: () => setDraft(EMPTY) }}
+        isEmpty={!loading && ports.length === 0}
+        emptyTitle={isFiltered ? 'No ports match these filters' : 'No ports yet'}
+        emptyDescription={isFiltered ? 'Try widening or resetting the filters above.' : 'Add a port to give the network a physical collection and dispatch point.'}
+        emptyAction={isFiltered ? undefined : { label: 'Add Port', onClick: () => setDraft(EMPTY) }}
       >
-        <DataTable columns={columns} rows={hubs} rowKey={(r) => r._id} loading={loading} emptyTitle="No hubs found" />
+        <DataTable columns={columns} rows={ports} rowKey={(r) => r._id} loading={loading} emptyTitle="No ports found" />
         <Pagination className="mt-4" page={page} totalPages={data?.totalPages ?? 1} total={data?.total} onPageChange={setPage} />
       </DataSection>
 
       {draft && (
-        <Modal open onClose={() => setDraft(null)} title={draft.id ? 'Edit Hub' : 'Add Hub'} size="lg">
+        <Modal open onClose={() => setDraft(null)} title={draft.id ? 'Edit Port' : 'Add Port'} size="lg">
           <div className="space-y-3">
             <TextField label="Name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <label className="block">
@@ -245,7 +245,7 @@ const h = detail;
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setDraft(null)} disabled={saving}>Cancel</Button>
               <Button variant="primary" onClick={save} loading={saving} disabled={!draft.name || !draft.locationId}>
-                {draft.id ? 'Save Changes' : 'Create Hub'}
+                {draft.id ? 'Save Changes' : 'Create Port'}
               </Button>
             </div>
           </div>

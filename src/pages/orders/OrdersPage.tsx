@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useUserDirectory } from '@/hooks/useUserDirectory';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -14,6 +15,8 @@ import { Card } from '@/components/common/Card';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { formatDate } from '@/utils/format';
 import { commerceService } from '@/services/commerce.service';
+import { storesService } from '@/services/stores.service';
+import { businessesService } from '@/services/businesses.service';
 import type { AdminOrderRow } from '@/services/commerce.service';
 import type { OrderStatus } from '@/types';
 
@@ -40,7 +43,34 @@ export function OrdersMonitoringPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [search, setSearch] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [stage, setStage] = useState('');
+  const [shopId, setShopId] = useState('');
+  const [businessId, setBusinessId] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Select options name the entity; the id only travels as the value.
+  const { data: shops } = useAsync(() => storesService.list({ page: 1, limit: 200 }), []);
+  const { data: businesses } = useAsync(
+    () => businessesService.listApplications({ page: 1, limit: 200 }),
+    []
+  );
+  const shopOptions = [
+    { value: '', label: t('All Shops') },
+    ...(shops?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name || shop.email || shop.id })),
+  ];
+  const businessOptions = [
+    { value: '', label: t('All Businesses') },
+    ...(businesses?.items ?? []).map((business) => ({
+      value: business.id,
+      label:
+        business.businessInformation?.businessName ||
+        business.businessName ||
+        business.shopInformation?.shopName ||
+        business.id,
+    })),
+  ];
 
   const { data, loading, error, refetch } = useAsync(
     useCallback(
@@ -51,10 +81,15 @@ export function OrdersMonitoringPage() {
           status: status === '' ? undefined : status,
           startDate: startDate || undefined,
           endDate: endDate || undefined,
+          search: debouncedSearch || undefined,
+          paymentStatus: paymentStatus || undefined,
+          stage: stage || undefined,
+          shopId: shopId || undefined,
+          businessId: businessId || undefined,
         }),
-      [page, status, startDate, endDate]
+      [page, status, startDate, endDate, debouncedSearch, paymentStatus, stage, shopId, businessId]
     ),
-    [page, status, startDate, endDate]
+    [page, status, startDate, endDate, debouncedSearch, paymentStatus, stage, shopId, businessId]
   );
 
   // The customer column shows the buyer's NAME (the id only as a fallback
@@ -68,10 +103,22 @@ export function OrdersMonitoringPage() {
     setStartDate('');
     setEndDate('');
     setSearch('');
+    setPaymentStatus('');
+    setStage('');
+    setShopId('');
+    setBusinessId('');
     setPage(1);
   };
 
-  const hasActiveFilters = status !== '' || startDate !== '' || endDate !== '' || search !== '';
+  const hasActiveFilters =
+    status !== '' ||
+    startDate !== '' ||
+    endDate !== '' ||
+    search !== '' ||
+    paymentStatus !== '' ||
+    stage !== '' ||
+    shopId !== '' ||
+    businessId !== '';
 
   const columns: Column<AdminOrderRow>[] = [
     {
@@ -85,17 +132,44 @@ export function OrdersMonitoringPage() {
       key: 'customer',
       header: t('Customer'),
       render: (row) => {
-        const name = buyerNameFor(row.buyerId);
-        const email = buyerEmailFor(row.buyerId);
+        // Prefer the server-resolved name; the directory lookup fills in rows
+        // the server could not resolve (older documents, or an outage).
+        const name = row.buyerName || row.user?.name || buyerNameFor(row.buyerId);
+        const email = row.buyerEmail || row.user?.email || buyerEmailFor(row.buyerId);
         return (
           <div>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               {name || row.customerRef || '—'}
             </div>
-            {name && email && <div className="text-xs text-gray-500">{email}</div>}
+            {email && <div className="text-xs text-gray-500">{email}</div>}
           </div>
         );
       },
+    },
+    {
+      // Which shop/business/seller this order belongs to — the ownership column
+      // the old table dropped, which is why two sellers with the same shop
+      // name were indistinguishable.
+      key: 'shop',
+      header: t('Shop'),
+      render: (row) => (
+        <div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">{row.shopName || '—'}</div>
+          {row.businessName && (
+            <div className="text-xs text-gray-500">{row.businessName}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'seller',
+      header: t('Seller'),
+      render: (row) => (
+        <div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">{row.sellerName || '—'}</div>
+          {row.sellerEmail && <div className="text-xs text-gray-500">{row.sellerEmail}</div>}
+        </div>
+      ),
     },
     {
       key: 'items',
@@ -125,7 +199,12 @@ export function OrdersMonitoringPage() {
               ? 'bg-red-50 text-red-700'
               : row.paymentStatus === 'CONFIRMED'
                 ? 'bg-green-50 text-green-700'
-                : ''
+                // SETTLING is a real, in-flight state: styling it like PENDING
+                // made a COD order mid-collection indistinguishable from one
+                // nobody has paid yet.
+                : row.paymentStatus === 'SETTLING'
+                  ? 'bg-amber-50 text-amber-700'
+                  : ''
           }
         />
       ),
@@ -204,6 +283,49 @@ export function OrdersMonitoringPage() {
                 setPage(1);
               }}
               label={t('Status')}
+            />
+            <SelectField
+              value={paymentStatus}
+              options={[
+                { value: '', label: t('All Payments') },
+                { value: 'PENDING', label: t('Pending') },
+                { value: 'SETTLING', label: t('Settling') },
+                { value: 'CONFIRMED', label: t('Confirmed') },
+                { value: 'FAILED', label: t('Failed') },
+                { value: 'REFUNDED', label: t('Refunded') },
+              ]}
+              onChange={(e) => { setPaymentStatus(e.target.value); setPage(1); }}
+              label={t('Payment')}
+            />
+            <SelectField
+              value={stage}
+              options={[
+                { value: '', label: t('All Stages') },
+                { value: 'new', label: t('New') },
+                { value: 'accepted', label: t('Accepted') },
+                { value: 'ready_for_pickup', label: t('Ready for Pickup') },
+                { value: 'pickup_assigned', label: t('Pickup Assigned') },
+                { value: 'picked_up', label: t('Picked Up') },
+                { value: 'in_transit', label: t('In Transit') },
+                { value: 'delivered', label: t('Delivered') },
+                { value: 'completed', label: t('Completed') },
+                { value: 'cancelled', label: t('Cancelled') },
+                { value: 'exception', label: t('Exception') },
+              ]}
+              onChange={(e) => { setStage(e.target.value); setPage(1); }}
+              label={t('Stage')}
+            />
+            <SelectField
+              value={shopId}
+              options={shopOptions}
+              onChange={(e) => { setShopId(e.target.value); setPage(1); }}
+              label={t('Shop')}
+            />
+            <SelectField
+              value={businessId}
+              options={businessOptions}
+              onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
+              label={t('Business')}
             />
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">

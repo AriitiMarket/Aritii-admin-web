@@ -48,7 +48,7 @@ export function UserPicker({
   const rootRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 250);
 
-  // Selected id -> its name, so the input shows "TechHub Seller", not a uuid.
+  // Selected id -> its name, so the input shows "TechPort Seller", not a uuid.
   const { nameFor, emailFor } = useUserDirectory(value ? [value] : []);
 
   useEffect(() => {

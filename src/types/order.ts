@@ -20,8 +20,19 @@ export type OrderStatus =
   | 'Refund Success'
   | 'Refund Rejected';
 
-/** Payment status as stored on the order document. */
-export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'FAILED' | 'REFUNDED';
+/**
+ * Payment status as stored on the order document — mirrors the order model's
+ * enum. `SETTLING` is written while a COD collection is being confirmed; it was
+ * missing here, which made those orders impossible to filter for and fall
+ * through to the neutral badge styling, so they looked like ordinary pending
+ * orders.
+ */
+export type PaymentStatus =
+  | 'PENDING'
+  | 'SETTLING'
+  | 'CONFIRMED'
+  | 'FAILED'
+  | 'REFUNDED';
 
 export type OrderType = 'DELIVERY' | 'PICKUP';
 

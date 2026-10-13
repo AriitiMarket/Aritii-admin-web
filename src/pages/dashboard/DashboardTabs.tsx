@@ -479,8 +479,13 @@ function OrdersSection({ data, loading, error, refetch, navigate }: any) {
                 <td className="py-3">{order.customer}</td>
                 <td className="py-3">${order.totalPrice}</td>
                 <td className="py-3">
+                  {/* `COMPLETED` is a PAYMENT status, never an order status, so
+                      this comparison never matched and every row rendered in the
+                      "pending" style — including delivered ones. */}
                   <span className={`px-2 py-1 rounded text-sm ${
-                    order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    order.status === 'Delivered' ? 'bg-green-100 text-green-800'
+                      : order.status === 'Cancelled' ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {order.status}
                   </span>

@@ -167,11 +167,17 @@ function toUiOrder(row: AdminOrderRow): Order {
 
 export const identityAdmin = {
   async listSellers(page = 1, limit = 10, search = '') {
-    const res = await http.get<{ success: boolean; sellers: Seller[] }>(
+    const res = await http.get<{ success: boolean; sellers: Seller[]; total: number; page: number; limit: number }>(
       '/admin/sellers',
       { params: { page, limit, search } }
     );
-    return res.sellers || [];
+    // Keep the full envelope — the UI must be able to paginate beyond page 1.
+    return {
+      sellers: res.sellers || [],
+      total: res.total ?? (res.sellers || []).length,
+      page: res.page,
+      limit: res.limit,
+    };
   },
 
   async getSeller(id: string) {
@@ -608,6 +614,18 @@ export const deliveryAdmin = {
     };
   },
 
+  async rejectRider(id: string, reason?: string) {
+    const res = await http.post<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord }>(
+      `/delivery/provider/${id}/reject`,
+      { reason }
+    );
+    const provider = res.provider || res.partner || {};
+    return {
+      ...provider,
+      id: provider._id || provider.id,
+    };
+  },
+
   async updateRiderStatus(id: string, status: string) {
     const res = await http.put<{ success: boolean; provider?: RiderRecord; partner?: RiderRecord }>(
       `/delivery/provider/${id}/status`,
@@ -830,7 +848,7 @@ export const deliveryAdmin = {
    *
    * `extra` carries the fields the transition needs — `reason` (failed /
    * cancelled), `nextAction` (failed), `proofOfDelivery` (delivered),
-   * `override` (cancel from out_for_delivery) and `note`. The service envelope
+   * `override` (cancel from in_transit) and `note`. The service envelope
    * is `{ success, code, message, errors }`, surfaced by the http client.
    */
   async updateDeliveryStatus(
@@ -1708,21 +1726,10 @@ export const adminApi = {
     return { business: res.business || {}, shops: res.shops || [], shopCount: res.shopCount || 0 };
   },
 
-  async approveBusiness(applicationId: string, notes?: string) {
-    const res = await http.post<{ success: boolean; business: any }>(
-      `/admin/businesses/${applicationId}/approve`,
-      { notes }
-    );
-    return res.business || {};
-  },
-
-  async rejectBusiness(applicationId: string, reason: string) {
-    const res = await http.post<{ success: boolean; business: any }>(
-      `/admin/businesses/${applicationId}/reject`,
-      { reason }
-    );
-    return res.business || {};
-  },
+  // approve/reject for seller applications: the console uses
+  // `commerceAdmin.approveSellerApplication` (POST /seller-application/:id/...),
+  // which is the same implementation the /admin/businesses/:id/... path now
+  // delegates to on the backend.
 
   // Shop Management — the ONE admin shop list is getShopsPaged (/admin/shops).
   async getShopsPaged(filters?: Record<string, unknown>) {

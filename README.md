@@ -239,14 +239,14 @@ Roles: `SUPER` = `SUPER_ADMIN`; `+SELLER` = `SUPER_ADMIN, SELLER_ADMIN`;
 | --- | --- | --- |
 | `/login` | `LoginPage` (AuthLayout) | public |
 | `/` → `/home` | `dashboard/HomePage` (KPI dashboard) | SUPER |
-| `/operations` | `operations/OperationsPage` (live operations) | SUPER |
+| `/operations` | redirects to `/delivery/deliveries` (delivery history) | — |
 | `/explorer` | `explorer/PlatformExplorerPage` (platform explorer) | SUPER |
 | `/users`, `/users/:userId` | `users/UsersPage`, `UserDetailPage` | +CUSTOMER |
 | `/sellers`, `/sellers/:sellerId` | `sellers/SellersPage`, `SellerDetailPage` | +SELLER |
 | `/businesses`, `/businesses/:businessId` | `businesses/BusinessesPage`, `BusinessDetailPage` | +SELLER |
 | `/stores`, `/stores/pending`, `/stores/:storeId`, `/stores/analytics` | `stores/*` | +SELLER |
 | `/locations`, `/locations/create`, `/locations/hierarchy`, `/locations/:locationId`, `/locations/:locationId/zones`, `/locations/bulk/import` | `locations/*` | SUPER |
-| `/riders`, `/riders/pending`, `/riders/:riderId` | `riders/*` | +RIDER |
+| `/riders`, `/riders/pending`, `/riders/:riderId` | redirect to `/delivery/providers` (one provider workspace) | +RIDER |
 | `/customers`, `/customers/:customerId` | `customers/*` | +CUSTOMER |
 | `/disputes` | `disputes/DisputesPage` | +CUSTOMER |
 | `/admins`, `/admins/new`, `/admins/:adminId`, `/admin-roles` | `admins/*` | SUPER |
@@ -257,7 +257,8 @@ Roles: `SUPER` = `SUPER_ADMIN`; `+SELLER` = `SUPER_ADMIN, SELLER_ADMIN`;
 | `/audit-logs` | `audit/AuditLogsPage` | SUPER |
 | `/settings/platform`, `/settings/notifications`, `/settings/system` | `settings/*` | SUPER |
 | `/commerce`, `/commerce/products`, `/commerce/transactions`, `/commerce/promotions` | `commerce/*` | SUPER |
-| `/delivery`, `/delivery/assignments`, `/delivery/zones` | `delivery/*` | +RIDER |
+| `/delivery`, `/delivery/deliveries`, `/delivery/requests` | `delivery/*` (assignment happens inside each delivery) | +RIDER |
+| `/delivery/assignments`, `/delivery/dispatch`, `/delivery/shipments`, `/delivery/consolidation` | redirects to the Deliveries / Overview screens | — |
 | `/forbidden`, `*` | `ForbiddenPage`, `NotFoundPage` | public |
 
 Sidebar navigation (`src/routes/navigation.ts`) is grouped as Dashboard, Users,

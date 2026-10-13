@@ -119,24 +119,19 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery & Logistics — ONE entry per destination. Zones, Hubs and Routes
-  // are tabs of Locations & Expansion (their old URLs redirect there), and the
-  // dispatch/batch panels live as tabs of Assignments, so neither is repeated
-  // as a separate sidebar entry.
+  // Delivery & Logistics — MVP: one page per core responsibility. Deliveries
+  // is the single operational screen (assignment happens inside each delivery);
+  // there are no Assignments / Operations / Shipments / Consolidation entries —
+  // their old routes redirect there.
   {
     labelKey: 'Delivery & Logistics',
     items: [
       { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Locations & Expansion', path: '/locations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Delivery Services', path: '/delivery/services', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Partners & Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Delivery Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      // Deliveries is the ONE operational screen: its second tab is Tracking.
       { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Assignments', path: '/delivery/assignments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Operations', path: '/operations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Shipments', path: '/delivery/shipments', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Consolidation', path: '/delivery/consolidation', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Tracking', path: '/delivery/tracking', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
     ],
   },
 

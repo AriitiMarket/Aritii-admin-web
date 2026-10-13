@@ -23,22 +23,26 @@ export const PROVIDER_TYPE_LABELS: Record<ProviderType, string> = {
   logistics_partner: 'Logistics Partner',
 };
 
-export type ProviderStatus = 'pending' | 'available' | 'busy' | 'offline' | 'suspended';
+export type ProviderStatus = 'pending' | 'available' | 'busy' | 'offline' | 'suspended' | 'rejected';
 
-export const PROVIDER_STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'available', label: 'Available' },
-  { value: 'busy', label: 'Busy' },
-  { value: 'offline', label: 'Offline' },
-  { value: 'suspended', label: 'Suspended' },
-];
-
-export const AVAILABILITY_OPTIONS = [
-  { value: '', label: 'All' },
-  { value: 'true', label: 'Online' },
-  { value: 'false', label: 'Offline' },
-];
+/**
+ * Canonical provider-status labels.
+ *
+ * PROVIDER status is its own lifecycle and is never mixed with delivery status:
+ * `pending` = application under review, `rejected` = declined application,
+ * `suspended` = an approved provider taken off the platform (the Admin console
+ * labels it Deactivated). `available` / `busy` / `offline` are operational
+ * shifts of an already-approved provider — read-only in the Admin console, not
+ * approvals and not delivery progress.
+ */
+export const PROVIDER_STATUS_LABELS: Record<ProviderStatus, string> = {
+  pending: 'Pending approval',
+  rejected: 'Rejected',
+  available: 'Available',
+  busy: 'Busy',
+  offline: 'Offline',
+  suspended: 'Deactivated',
+};
 
 export interface ProviderAvailability {
   isOnline?: boolean;
@@ -58,10 +62,12 @@ export interface Provider {
   actorType?: string;
   availability?: ProviderAvailability;
   serviceId?: string | null;
-  sectorId?: string | null;
+  /** Operating location: City -> Zone -> Port (§4, §5). */
+  cityId?: string | null;
+  portId?: string | null;
+  portName?: string;
   zoneId?: string | null;
   zoneIds?: string[];
-  hubId?: string | null;
   vehicleType?: string;
   plateNumber?: string;
   maxCapacityKg?: number;
@@ -69,6 +75,16 @@ export interface Provider {
   activeDeliveries?: number;
   completedDeliveries?: number;
   rating?: number;
+  /**
+   * Free-form record data the backend owns: `application` (what a self-applied
+   * provider declared — the review questions, §4/§15) and
+   * `deactivationReason` (why an Admin deactivated them, §6).
+   */
+  metadata?: {
+    application?: Record<string, unknown>;
+    deactivationReason?: string;
+    [key: string]: unknown;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -89,7 +105,8 @@ export interface ProviderAssignment {
 
 /** Provider plus the relations the detail workspace needs. */
 export interface ProviderDetail extends Provider {
-  operatingLocationName?: string | null;
+  /** Resolved name of `cityId` — the City in the City/Zone/Port block. */
+  cityName?: string | null;
   zones: Zone[];
   routes: DeliveryRoute[];
   assignments: ProviderAssignment[];
@@ -128,7 +145,7 @@ export const providersService = {
     status?: string;
     providerType?: string;
     zoneId?: string;
-    sectorId?: string;
+    portId?: string;
     isOnline?: string;
   }): Promise<ProviderListResult> {
     const res = await http.get<{
@@ -173,13 +190,18 @@ export const providersService = {
     return unwrapProvider(res);
   },
 
-  async setStatus(id: string, status: ProviderStatus): Promise<Provider> {
-    const res = await http.put<ProviderEnvelope>(`${BASE}/${id}/status`, { status });
-    return unwrapProvider(res);
-  },
-
-  async setOnline(id: string, isOnline: boolean): Promise<Provider> {
-    const res = await http.put<ProviderEnvelope>(`${BASE}/${id}/online`, { isOnline });
+  /**
+   * Change the provider's ACCOUNT status (approve/reject/activate/deactivate).
+   * `reason` is required by the UI for deactivation and is stored on the record.
+   * Availability (Online/Offline/Busy) has no admin endpoint — it is the
+   * provider's own switch, exposed only through the PROVIDER-facing
+   * `PUT /delivery/provider/:id/online`.
+   */
+  async setStatus(id: string, status: ProviderStatus, reason?: string): Promise<Provider> {
+    const res = await http.put<ProviderEnvelope>(`${BASE}/${id}/status`, {
+      status,
+      ...(reason ? { reason } : {}),
+    });
     return unwrapProvider(res);
   },
 

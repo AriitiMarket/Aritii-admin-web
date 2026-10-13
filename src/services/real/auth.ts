@@ -13,6 +13,7 @@ import { assertGatewayConfigured, http } from '@/services/client/httpClient';
 import { createPkcePair } from '@/utils/pkce';
 import { ADMIN_ROLES } from '@/utils/auth-roles';
 import {
+  getAccessToken,
   getRefreshToken,
   setAuthTokens,
   clearAuthTokens,
@@ -188,9 +189,11 @@ export async function realLogin(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function realGetCurrentAdmin(): Promise<AdminUser> {
-  assertGatewayConfigured();
-  const res = await http.get<BackendMeResponse>('/user/getuser');
-  return toAdminUser(res.user);
+    assertGatewayConfigured();
+    const token = getAccessToken();
+    if (!token) throw new Error('No access token available');
+    const res = await http.get<BackendMeResponse>('/user/getuser');
+    return toAdminUser(res.user);
 }
 
 export async function realRefreshSession(): Promise<boolean> {

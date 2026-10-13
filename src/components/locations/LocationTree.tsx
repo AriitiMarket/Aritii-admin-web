@@ -6,12 +6,6 @@ const TYPE_LABELS: Record<string, string> = {
   country: '🌍',
   region: '📍',
   city: '🏙️',
-  town: '🏘️',
-  area: '🗺️',
-  sector: '📐',
-  community: '👥',
-  village: '🏡',
-  rural: '🌾',
   other: '📌',
 };
 
@@ -19,12 +13,6 @@ const TYPE_COLORS: Record<string, string> = {
   country: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   region: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   city: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  town: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
-  area: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  sector: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  community: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-  village: 'bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200',
-  rural: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   other: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
 };
 

@@ -1,17 +1,32 @@
-import { useState } from 'react';
-import { PageHeader } from '@/components/common/PageHeader';
-import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { Pagination } from '@/components/common/Pagination';
-import { DataTable, type Column } from '@/components/tables/DataTable';
-import { DataSection } from '@/components/workspace/DataSection';
-import { FilterBar } from '@/components/workspace/FilterBar';
+/**
+ * Delivery Services — the catalog of delivery services/types Ariiti offers.
+ *
+ * CATALOG CONFIGURATION ONLY. This page owns what a service IS (name, type,
+ * pricing, capacity, duration, where it is offered). It deliberately shows no
+ * assignment or rider operations and offers no way to change an individual
+ * delivery's status — a service's availability is configuration, never delivery
+ * progress. Actual deliveries live on the Deliveries page.
+ *
+ * Every column is derived from the existing `GET /delivery/service` contract;
+ * nothing here is invented.
+ */
+import { useMemo, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
-import { providersService } from '@/services/providers.service';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Pagination } from '@/components/common/Pagination';
+import { DataTable, type Column } from '@/components/tables/DataTable';
+import { FilterBar } from '@/components/workspace/FilterBar';
+import { DataSection, RowActions } from '@/components/workspace/DataSection';
+import { Facts } from '@/components/workspace/DetailList';
+import { RecordDrawer, type DetailTab } from '@/components/workspace/RecordDrawer';
 import { ApiError } from '@/types/api';
+import { zonesService } from '@/services/locations.service';
 import {
   DELIVERY_SERVICE_STATUSES,
   DELIVERY_SERVICE_TYPES,
@@ -21,32 +36,51 @@ import {
 } from '@/services/deliveryServices.service';
 import { DeliveryServiceForm } from './DeliveryServiceForm';
 import { useDeliveryStats } from './hooks/useDeliveryStats';
+import { truncate } from '@/utils/format';
 
 const LIMIT = 20;
+/** Zone rows scanned to resolve the names behind `coverageZones`. */
+const ZONE_LOOKUP_LIMIT = 200;
+
+const TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  DELIVERY_SERVICE_TYPES.map((t) => [t.value, t.label])
+);
+
+const STATUS_VARIANTS: Record<DeliveryServiceStatus, 'success' | 'neutral' | 'warning'> = {
+  active: 'success',
+  inactive: 'neutral',
+  suspended: 'warning',
+};
+
+const typeLabel = (value: string) => TYPE_LABELS[value] ?? value ?? '—';
 
 /**
- * Delivery Services — the catalog page, fully manageable by the admin.
- *
- *   cards: totals/active from the operations dashboard + linked providers;
- *   table: GET /delivery/service — name, type, pricing, capacity, coverage;
- *   row actions: edit, change status inline, delete (backend blocks delete
- *   while providers are still linked, message surfaces in the toast);
- *   header: Add Delivery Service opens the same form used to edit.
- *
- * With no seed data the table renders its empty state and the counters show
- * 0; nothing is faked and no toast fires on entry.
+ * Availability is CONFIGURATION: whether the service is switched on AND where it
+ * is offered. It never reflects how many deliveries a service currently has.
  */
+function availabilityOf(service: DeliveryService): { label: string; variant: 'success' | 'neutral' } {
+  const areas = service.coverageZones?.length ?? 0;
+  if (service.status !== 'active') return { label: 'Unavailable', variant: 'neutral' };
+  if (areas === 0) return { label: 'No areas configured', variant: 'neutral' };
+  return {
+    label: `Available in ${areas} area${areas === 1 ? '' : 's'}`,
+    variant: 'success',
+  };
+}
+
 export function DeliveryServicesPage() {
+  const { showToast } = useToast();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [serviceType, setServiceType] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<DeliveryService | null>(null);
+  const [detail, setDetail] = useState<DeliveryService | null>(null);
+  const [deactivating, setDeactivating] = useState<DeliveryService | null>(null);
   const [deleting, setDeleting] = useState<DeliveryService | null>(null);
-  const [deletingBusy, setDeletingBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const { showToast } = useToast();
+  const [deletingBusy, setDeletingBusy] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const {
@@ -73,55 +107,46 @@ export function DeliveryServicesPage() {
     [page, debouncedSearch, status, serviceType]
   );
 
-  const {
-    data: usage,
-    loading: usageLoading,
-    refetch: refetchUsage,
-  } = useAsync(async () => {
-    const res = await providersService.list({ page: 1, limit: 200 });
-    const items = res.items ?? [];
-    const total = res.total ?? items.length;
-    return {
-      linked: items.filter((p) => !!p.serviceId).length,
-      total,
-      partial: total > items.length,
-    };
-  }, []);
+  /** One read turns the stored zone ids into names for the coverage column. */
+  const { data: zoneLookup } = useAsync(
+    () => zonesService.list({ page: 1, limit: ZONE_LOOKUP_LIMIT }),
+    []
+  );
+
+  const zoneNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const zone of zoneLookup?.zones ?? []) map.set(zone._id, zone.name);
+    return map;
+  }, [zoneLookup]);
+
+  const services = catalog?.items ?? [];
+  const isFiltered = !!(search || status || serviceType);
 
   const handleRefresh = () => {
     refetchStats();
     refetchCatalog();
-    refetchUsage();
   };
 
-  const isFiltered = !!(search || status || serviceType);
-  const reset = () => {
-    setSearch('');
-    setStatus('');
-    setServiceType('');
-    setPage(1);
-  };
+  const reset = () => { setSearch(''); setStatus(''); setServiceType(''); setPage(1); };
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
+  const openCreate = () => { setEditing(null); setFormOpen(true); };
+  const openEdit = (service: DeliveryService) => { setFormOpen(true); setEditing(service); };
 
-  const openEdit = (row: DeliveryService) => {
-    setEditing(row);
-    setFormOpen(true);
-  };
-
-  const changeStatus = async (row: DeliveryService, next: DeliveryServiceStatus) => {
-    setBusyId(row._id);
+  const setServiceStatus = async (service: DeliveryService, next: DeliveryServiceStatus) => {
+    setBusyId(service._id);
     try {
-      await deliveryServicesService.update(row._id, { status: next });
-      showToast({ type: 'success', message: `${row.name} is now ${next}` });
-      handleRefresh();
+      await deliveryServicesService.update(service._id, { status: next });
+      showToast({
+        type: 'success',
+        message: `${service.name} is now ${next}.`,
+      });
+      setDeactivating(null);
+      refetchCatalog();
+      refetchStats();
     } catch (err) {
       showToast({
         type: 'error',
-        message: err instanceof ApiError ? err.message : 'Could not change status',
+        message: err instanceof ApiError ? err.message : 'Could not change the service state',
       });
     } finally {
       setBusyId(null);
@@ -134,8 +159,6 @@ export function DeliveryServicesPage() {
     try {
       await deliveryServicesService.remove(deleting._id);
       showToast({ type: 'success', message: `${deleting.name} deleted` });
-      // Last row on this page? Step back so the admin never lands on a blank page.
-      if ((catalog?.items.length ?? 0) === 1 && page > 1) setPage(page - 1);
       setDeleting(null);
       handleRefresh();
     } catch (err) {
@@ -143,7 +166,6 @@ export function DeliveryServicesPage() {
         type: 'error',
         message: err instanceof ApiError ? err.message : 'Could not delete the service',
       });
-      setDeleting(null);
     } finally {
       setDeletingBusy(false);
     }
@@ -154,109 +176,160 @@ export function DeliveryServicesPage() {
     statsLoading || statsError ? '—' : value ?? 0;
 
   const cards = [
-    { label: 'Total Delivery Services', value: display(stats?.totalServices), hint: 'from operations dashboard' },
-    { label: 'Active Services', value: display(stats?.activeServices), hint: 'status = active' },
-    {
-      label: 'Providers with a Service',
-      value: usageLoading || !usage ? '—' : usage.linked,
-      hint: usage ? `of ${usage.total} providers${usage.partial ? '+' : ''}` : 'from providers list',
-    },
+    { label: 'Total delivery services', value: display(stats?.totalServices), hint: 'in the catalog' },
+    { label: 'Active services', value: display(stats?.activeServices), hint: 'available to book' },
   ];
+
+  const areaNames = (service: DeliveryService) =>
+    (service.coverageZones ?? [])
+      .map((id) => zoneNameById.get(id))
+      .filter((name): name is string => !!name);
 
   const columns: Column<DeliveryService>[] = [
     {
       key: 'name',
       header: 'Service',
       render: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium text-gray-800 dark:text-gray-100">{row.name}</span>
-          <span className="rounded-full px-2 py-0.5 text-xs font-mono text-gray-500">{row.code}</span>
+        <div className="min-w-0">
+          <p className="font-medium text-gray-800 dark:text-gray-100">{row.name}</p>
+          <p className="font-mono text-xs text-gray-500 dark:text-gray-400">{row.code}</p>
         </div>
       ),
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      render: (row) =>
+        row.description ? (
+          <span className="text-sm text-gray-600 dark:text-gray-400" title={row.description}>
+            {truncate(row.description, 70)}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">—</span>
+        ),
+    },
+    {
+      key: 'coverage',
+      header: 'Supported areas',
+      render: (row) => {
+        const count = row.coverageZones?.length ?? 0;
+        if (count === 0) return <span className="text-sm text-gray-400">No areas set</span>;
+        const names = areaNames(row);
+        const text = names.length ? names.join(', ') : `${count} area(s)`;
+        return (
+          <span className="text-sm text-gray-700 dark:text-gray-200" title={text}>
+            {truncate(text, 60)}
+          </span>
+        );
+      },
     },
     {
       key: 'serviceType',
       header: 'Type',
-      accessor: (row) => row.serviceType || '—',
-    },
-    {
-      key: 'fees',
-      header: 'Fees',
       render: (row) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
-          base {row.baseFee} + {row.perKmFee} / km · max {row.maxWeightKg} kg
-        </span>
+        <span className="text-sm text-gray-700 dark:text-gray-200">{typeLabel(row.serviceType)}</span>
       ),
     },
     {
-      key: 'duration',
-      header: 'Est. Duration',
-      accessor: (row) => `${row.estimatedDurationMinutes} min`,
+      key: 'availability',
+      header: 'Availability',
+      render: (row) => {
+        const availability = availabilityOf(row);
+        return (
+          <StatusBadge label={availability.label} variant={availability.variant} />
+        );
+      },
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: 'config',
+      header: 'Configuration',
       render: (row) => (
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-            row.status === 'active'
-              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-              : row.status === 'inactive'
-              ? 'bg-gray-100 text-gray-700 dark:bg-dark-800 dark:text-gray-300'
-              : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-          }`}
-        >
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      key: 'coverage',
-      header: 'Coverage',
-      accessor: (row) => (row.coverageZones?.length ?? 0) || '—',
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openEdit(row)}
-            className="text-sm text-primary-dark hover:underline dark:text-primary-color"
-          >
-            Edit
-          </button>
-          <select
-            aria-label={`Status of ${row.name}`}
-            value={row.status}
-            disabled={busyId === row._id}
-            onChange={(e) => void changeStatus(row, e.target.value as DeliveryServiceStatus)}
-            className="h-8 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-700 focus:border-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark disabled:opacity-60 dark:border-dark-600 dark:bg-dark-900 dark:text-gray-200"
-          >
-            {DELIVERY_SERVICE_STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setDeleting(row)}
-            className="text-sm text-red-600 hover:underline"
-          >
-            Delete
-          </button>
+        <div className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+          <p>
+            {row.baseFee} base + {row.perKmFee} / km
+          </p>
+          <p>
+            max {row.maxWeightKg} kg · est. {row.estimatedDurationMinutes} min
+          </p>
         </div>
       ),
     },
+    {
+      key: 'status',
+      header: 'State',
+      render: (row) => (
+        <StatusBadge label={row.status} variant={STATUS_VARIANTS[row.status] ?? 'neutral'} />
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (row) => (
+        <RowActions
+          onView={() => setDetail(row)}
+          onEdit={() => openEdit(row)}
+          onManage={() =>
+            row.status === 'active'
+              ? setDeactivating(row)
+              : void setServiceStatus(row, 'active')
+          }
+        />
+      ),
+    },
   ];
+
+  const detailTabs: DetailTab[] = detail
+    ? [
+        {
+          id: 'overview',
+          label: 'Overview',
+          content: (
+            <Facts
+              items={[
+                ['Name', detail.name],
+                ['Code', detail.code],
+                ['Type', typeLabel(detail.serviceType)],
+                ['State', detail.status],
+                ['Availability', availabilityOf(detail).label],
+                ['Description', detail.description || '—'],
+              ]}
+            />
+          ),
+        },
+        {
+          id: 'configuration',
+          label: 'Configuration',
+          content: (
+            <Facts
+              items={[
+                ['Base fee', detail.baseFee],
+                ['Fee per km', detail.perKmFee],
+                ['Max weight', `${detail.maxWeightKg} kg`],
+                ['Estimated duration', `${detail.estimatedDurationMinutes} min`],
+              ]}
+            />
+          ),
+        },
+        {
+          id: 'coverage',
+          label: 'Supported areas',
+          content: (
+            <Facts
+              items={(detail.coverageZones ?? []).map((id) => [
+                zoneNameById.get(id) ?? 'Unknown zone',
+                '',
+              ])}
+            />
+          ),
+        },
+      ]
+    : [];
 
   return (
     <div>
       <PageHeader
         title="Delivery Services"
-        description="Delivery service catalog — type, pricing, capacity and coverage."
+        description="The delivery services Ariiti offers — type, pricing, capacity and where each one is available."
         actions={
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             Refresh
@@ -264,97 +337,86 @@ export function DeliveryServicesPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
         {cards.map((c) => (
           <Card key={c.label} className="p-4">
+            <p className="text-2xl font-semibold text-gray-900 dark:text-white">{c.value}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{c.label}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{c.hint}</p>
-            <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{c.value}</p>
-            <p className="text-xs text-gray-500">{c.label}</p>
           </Card>
         ))}
       </div>
 
-      <div className="mt-4">
-        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Catalog</h3>
+      <FilterBar
+        searchValue={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="Search services…"
+        isFiltered={isFiltered}
+        onReset={reset}
+        resultSummary={
+          catalog
+            ? `${catalog.total} service${catalog.total === 1 ? '' : 's'}${isFiltered ? ' matching filters' : ''}`
+            : undefined
+        }
+        actions={
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            Add Delivery Service
+          </Button>
+        }
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            value: status,
+            onChange: (v: string) => { setStatus(v); setPage(1); },
+            options: [{ value: '', label: 'All' }, ...DELIVERY_SERVICE_STATUSES],
+          },
+          {
+            key: 'type',
+            label: 'Type',
+            value: serviceType,
+            onChange: (v: string) => { setServiceType(v); setPage(1); },
+            options: [{ value: '', label: 'All' }, ...DELIVERY_SERVICE_TYPES],
+          },
+        ]}
+      />
 
-        <FilterBar
-          searchValue={search}
-          onSearchChange={(v) => {
-            setSearch(v);
-            setPage(1);
-          }}
-          searchPlaceholder="Search services…"
-          isFiltered={isFiltered}
-          onReset={reset}
-          resultSummary={
-            catalog ? `${catalog.total} service${catalog.total === 1 ? '' : 's'}` : undefined
-          }
-          actions={
-            <Button variant="primary" onClick={openCreate}>
-              Add Delivery Service
-            </Button>
-          }
-          filters={[
-            {
-              key: 'status',
-              label: 'Status',
-              value: status,
-              onChange: (v) => {
-                setStatus(v);
-                setPage(1);
-              },
-              options: [{ value: '', label: 'All' }, ...DELIVERY_SERVICE_STATUSES],
-            },
-            {
-              key: 'type',
-              label: 'Type',
-              value: serviceType,
-              onChange: (v) => {
-                setServiceType(v);
-                setPage(1);
-              },
-              options: [{ value: '', label: 'All' }, ...DELIVERY_SERVICE_TYPES],
-            },
-          ]}
+      <DataSection
+        error={catalogError}
+        onRetry={refetchCatalog}
+        isEmpty={!catalogLoading && services.length === 0}
+        emptyTitle={isFiltered ? 'No services match these filters' : 'No delivery services yet'}
+        emptyDescription={
+          isFiltered
+            ? 'Try widening or resetting the filters above.'
+            : 'Create the first delivery service to describe what Ariiti offers.'
+        }
+        emptyAction={isFiltered ? undefined : { label: 'Add Delivery Service', onClick: openCreate }}
+      >
+        <DataTable<DeliveryService>
+          columns={columns}
+          rows={services}
+          rowKey={(row) => row._id || row.code}
+          loading={catalogLoading}
+          emptyTitle="No delivery services found"
+          onRowClick={(row) => setDetail(row)}
         />
-
-        <DataSection
-          error={catalogError}
-          onRetry={refetchCatalog}
-          isEmpty={!catalogLoading && (catalog?.items.length ?? 0) === 0}
-          emptyTitle={isFiltered ? 'No services match these filters' : 'No delivery services yet'}
-          emptyDescription={
-            isFiltered
-              ? 'Try widening or resetting the filters above.'
-              : 'Nothing has been added in this environment. Create the first delivery service to get started.'
-          }
-          emptyAction={
-            isFiltered ? undefined : { label: 'Add Delivery Service', onClick: openCreate }
-          }
-        >
-          <DataTable<DeliveryService>
-            columns={columns}
-            rows={catalog?.items ?? []}
-            rowKey={(row) => row._id || row.code}
-            loading={catalogLoading}
-            emptyTitle="No delivery services found"
+        {(catalog?.total ?? 0) > 0 && (
+          <Pagination
+            className="mt-4"
+            page={page}
+            totalPages={catalog?.totalPages ?? 1}
+            total={catalog?.total}
+            onPageChange={setPage}
           />
-          {(catalog?.total ?? 0) > 0 && (
-            <Pagination
-              className="mt-4"
-              page={page}
-              totalPages={catalog?.totalPages ?? 1}
-              total={catalog?.total}
-              onPageChange={setPage}
-            />
-          )}
-        </DataSection>
-      </div>
+        )}
+      </DataSection>
 
+      {/* Simple form dialog for create / edit. */}
       <DeliveryServiceForm
         open={formOpen}
         initial={editing}
-        onClose={() => setFormOpen(false)}
+        onClose={() => { setFormOpen(false); setEditing(null); }}
         onSaved={() => {
           setFormOpen(false);
           setEditing(null);
@@ -364,6 +426,17 @@ export function DeliveryServicesPage() {
           });
           handleRefresh();
         }}
+      />
+
+      {/* Deactivating hides the service from booking — worth confirming. */}
+      <ConfirmDialog
+        open={!!deactivating}
+        onClose={() => setDeactivating(null)}
+        onConfirm={() => deactivating && void setServiceStatus(deactivating, 'inactive')}
+        title={`Deactivate ${deactivating?.name ?? 'service'}?`}
+        message="The service stays in the catalog with its configuration, but it is no longer offered. You can activate it again at any time."
+        confirmLabel="Deactivate"
+        loading={busyId === deactivating?._id}
       />
 
       <ConfirmDialog
@@ -378,6 +451,44 @@ export function DeliveryServicesPage() {
         }
         confirmLabel="Delete"
         loading={deletingBusy}
+      />
+
+      <RecordDrawer
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        title={detail?.name ?? ''}
+        subtitle={detail ? `${detail.code} · ${typeLabel(detail.serviceType)}` : undefined}
+        statusLabel={detail?.status}
+        statusVariant={detail ? STATUS_VARIANTS[detail.status] ?? 'neutral' : undefined}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => detail && openEdit(detail)}>
+              Edit
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={busyId === detail?._id}
+              onClick={() => {
+                if (!detail) return;
+                if (detail.status === 'active') setDeactivating(detail);
+                else void setServiceStatus(detail, 'active');
+              }}
+            >
+              {detail?.status === 'active' ? 'Deactivate' : 'Activate'}
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => detail && setDeleting(detail)}>
+              Delete
+            </Button>
+          </>
+        }
+        summary={[
+          { label: 'Type', value: detail ? typeLabel(detail.serviceType) : '—' },
+          { label: 'Availability', value: detail ? availabilityOf(detail).label : '—' },
+          { label: 'Supported areas', value: detail?.coverageZones?.length ?? 0 },
+        ]}
+        tabs={detailTabs}
+        activeTab="overview"
       />
     </div>
   );

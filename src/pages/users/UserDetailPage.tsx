@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { usersService } from '@/services/users.service';
+import { storesService } from '@/services/stores.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -40,6 +41,16 @@ export function UserDetailPage() {
   const { data: user, loading, error, refetch } = useAsync(
     () => usersService.get(userId ?? ''),
     [userId]
+  );
+
+  // A seller's linked shop: resolve the id into something a human can read
+  // (name, business, status) instead of printing the raw foreign key.
+  const { data: linkedShop } = useAsync(
+    () =>
+      user?.shopId
+        ? storesService.get(user.shopId).catch(() => null)
+        : Promise.resolve(null),
+    [user?.shopId]
   );
 
   const handleStatusChange = async (newStatus: 'active' | 'inactive' | 'suspended' | 'banned') => {
@@ -251,10 +262,20 @@ export function UserDetailPage() {
           <p className="card-h1 mb-4 dark:text-white">{t('Shop Information')}</p>
           <div className="space-y-3">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('Shop ID')}: <span className="font-mono text-gray-900 dark:text-white">{user.shopId}</span>
+              <Link to={`/stores/${user.shopId}`} className="text-primary-dark hover:underline dark:text-primary-color">
+                {linkedShop?.name || t('Open shop')}
+              </Link>
             </p>
+            {linkedShop?.businessName && linkedShop.businessId && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {t('Business')}:{' '}
+                <Link to={`/businesses/${linkedShop.businessId}`} className="text-primary-dark hover:underline dark:text-primary-color">
+                  {linkedShop.businessName}
+                </Link>
+              </p>
+            )}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              This seller has a linked shop. Navigate to the Shops module for full shop management.
+              For full shop management open the store page.
             </p>
           </div>
         </Card>

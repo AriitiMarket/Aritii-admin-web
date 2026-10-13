@@ -18,18 +18,16 @@ interface LocationFormProps {
   onCancel: () => void;
 }
 
-/** Allowed child types for each parent type (matches delivery-service constants). */
+/**
+ * Allowed child types per parent type. Mirrors `LOCATION_CHILD_TYPES` in the
+ * Delivery Service: MVP geography is Region (optional) -> City. Zone and Port
+ * are separate models, never location types.
+ */
 const CHILDREN_BY_TYPE: Record<string, string[]> = {
-  country: ['region'],
-  region: ['city', 'area', 'sector'],
-  city: ['town', 'area', 'sector'],
-  town: ['area', 'sector'],
-  area: ['sector', 'community'],
-  sector: ['community', 'village'],
-  community: ['village'],
-  village: [],
-  rural: ['community', 'village'],
-  other: ['sector', 'community'],
+  country: ['region', 'city', 'other'],
+  region: ['city', 'other'],
+  city: ['other'],
+  other: [],
 };
 
 function getSelectableTypes(parentType?: string): string[] {

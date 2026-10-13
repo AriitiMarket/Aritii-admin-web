@@ -73,7 +73,7 @@ export function ZonesTab() {
       ),
     },
     { key: 'locations', header: 'Locations', accessor: (r) => r.locationIds?.length ?? 0 },
-    { key: 'hub', header: 'Hub', render: (r) => (r.hubId ? 'Assigned' : '—') },
+    { key: 'port', header: 'Port', render: (r) => (r.portId ? 'Assigned' : '—') },
     { key: 'coverage', header: 'Coverage', render: (r) => (r.coverage?.radiusKm ? `${r.coverage.radiusKm} km` : '—') },
     {
       key: 'serviceable',
@@ -85,7 +85,7 @@ export function ZonesTab() {
         />
       ),
     },
-    { key: 'status', header: 'Status', render: (r) => <StatusBadge label={r.status} /> },
+    { key: 'status', header: 'Status', render: (r) => <StatusBadge label={r.lifecycle ? `${r.status} · ${r.lifecycle}` : r.status} /> },
     {
       key: 'actions',
       header: 'Actions',
@@ -110,10 +110,11 @@ const z = detail;
           <Facts items={[
             ['Code', z.code],
             ['Status', z.status],
+            ['Lifecycle', z.lifecycle ?? 'LIVE'],
             ['Description', z.description || '—'],
             ['Locations', z.locationIds?.length ?? 0],
             ['Priority', z.priority],
-            ['Hub', z.hubId ? 'Assigned' : '—'],
+            ['Port', z.portId ? 'Assigned' : '—'],
           ]} />
         ),
       },

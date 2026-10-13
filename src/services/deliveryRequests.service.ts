@@ -64,9 +64,14 @@ export interface DeliveryRequest {
   deliveryStatus?: string | null;
 }
 
+/**
+ * The list route enriches each request with `_id` as `id` plus the resolved
+ * seller/buyer/shop names, so the admin table and detail panel can show them
+ * without a second lookup.
+ */
 export interface DeliveryRequestsListResponse {
   success: boolean;
-  requests?: DeliveryRequest[];
+  requests?: DeliveryRequestRequest[];
   count?: number;
   total?: number;
   page?: number;
@@ -75,7 +80,9 @@ export interface DeliveryRequestsListResponse {
 }
 
 export interface DeliveryRequestRequest extends DeliveryRequest {
-  id: string;
+  /** Document id. The list route sends it as `id`; `_id` is the raw form. */
+  id?: string;
+  _id?: string;
   sellerName?: string;
   buyerName?: string;
   buyerPhone?: string;
@@ -92,10 +99,10 @@ export const deliveryRequestsService = {
     orderId?: string;
     serviceId?: string;
     zoneId?: string;
-    sectorId?: string;
     dateFrom?: string;
     dateTo?: string;
     search?: string;
+    status?: string;
   }): Promise<DeliveryRequestsListResponse> {
     const res = await http.get<DeliveryRequestsListResponse>('/delivery/request', { params: params as never });
     return res ?? { requests: [] };

@@ -1,19 +1,40 @@
-// Overview Tab Component — the body of the Delivery & Logistics dashboard.
-
-import { useState, useEffect } from 'react';
+/**
+ * Overview — the body of the Delivery & Logistics control centre.
+ *
+ * Monitoring and navigation ONLY. There is deliberately no status editing, no
+ * inline management and no second copy of the delivery tables: every number and
+ * every row here leads to the page that owns the work (Requests, Deliveries,
+ * Assignments, Operations, Tracking, Partners).
+ *
+ * Counts come from `GET /delivery/operation/dashboard` and the recent rows from
+ * `GET /delivery/delivery`. Every status shown is the canonical backend value
+ * rendered through `DeliveryStatusPill`, so it reads identically here and on the
+ * Deliveries, Tracking and Operations pages.
+ */
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faListCheck,
+  faMap,
+  faMotorcycle,
+  faTruck,
+  type IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
 import { Card } from '@/components/common/Card';
-import { SelectField } from '@/components/forms/SelectField';
-import { DataTable, type Column } from '@/components/tables/DataTable';
 import { Button } from '@/components/common/Button';
 import { ErrorState } from '@/components/common/ErrorState';
-import { PageLoader } from '@/components/common/PageLoader';
-import { locationsService, type Location } from '@/services/locations.service';
-import { formatNumber, formatDate } from '@/utils/format';
+import { EmptyState } from '@/components/common/EmptyState';
+import { DataTable, type Column } from '@/components/tables/DataTable';
+import { deliveryRequestsService } from '@/services/deliveryRequests.service';
+import { formatDateTime, formatNumber, timeAgo } from '@/utils/format';
+import { useAsync } from '@/hooks/useAsync';
+import { useAuth } from '@/hooks/useAuth';
+import type { AdminRole } from '@/types/auth';
 import { useDeliveryStats } from '../hooks/useDeliveryStats';
 import { useRecentDeliveries } from '../hooks/useRecentDeliveries';
-import { getDeliveryStatusColor } from '../utils/statusHelpers';
-import { DELIVERY_STATUSES } from '../constants';
+import { DeliveryStatusPill } from '../components/DeliveryStatusPill';
+import { BLOCKED_DELIVERY_STATUSES, DELIVERY_STATUSES } from '../constants';
 import type { RecentDelivery } from '../types';
 
 interface OverviewTabProps {
@@ -22,20 +43,32 @@ interface OverviewTabProps {
 }
 
 /**
- * A metric card that opens the list it counts. Every number on this dashboard
- * leads to the rows behind it — no orphan stats.
+ * "Active" = any canonical status that is not blocked (the service's
+ * READY + IN_PROGRESS groupings). Derived from `DELIVERY_STATUSES` and the
+ * module's ONE blocked set, so the Recent table can neither show a status this
+ * console does not know nor disagree with the Tracking page about which
+ * deliveries are finished.
  */
-function StatCard({
+const ACTIVE_DELIVERY_STATUSES = new Set<string>(
+  DELIVERY_STATUSES.map((s) => s.value)
+    .filter(Boolean)
+    .filter((value) => !BLOCKED_DELIVERY_STATUSES.includes(value))
+);
+
+/** How many delivery requests to scan when counting ones not yet handed over. */
+const REQUEST_SCAN_LIMIT = 200;
+
+const shortId = (id: string) => (id && id.length > 10 ? `${id.slice(0, 8)}…` : id || '—');
+
+/** A count that opens the list behind it — no orphan stats on this page. */
+function MetricTile({
   label,
   value,
-  display,
   tone,
   to,
 }: {
   label: string;
   value: number | undefined;
-  /** Overrides the rendered number — e.g. "12/40" active-of-total ratios. */
-  display?: string;
   tone: string;
   to: string;
 }) {
@@ -46,10 +79,72 @@ function StatCard({
         type="button"
         onClick={() => navigate(to)}
         title={`Open ${label}`}
-        className="flex w-full flex-col items-center gap-2 rounded-md py-1 outline-none transition hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-dark dark:hover:bg-dark-800"
+        className="flex w-full flex-col gap-1 rounded-md text-left outline-none transition hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-dark dark:hover:bg-dark-800"
       >
-        <p className="text-sm text-gray-600 dark:text-gray-400">{label}</p>
-        <p className={`text-2xl font-bold ${tone}`}>{display ?? formatNumber(value ?? 0)}</p>
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          {label}
+        </span>
+        <span className={`text-2xl font-bold ${tone}`}>{formatNumber(value ?? 0)}</span>
+      </button>
+    </Card>
+  );
+}
+
+/** One "needs attention" item: what is wrong, how many, and where to fix it. */
+function AttentionRow({
+  label,
+  hint,
+  value,
+  to,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  to: string;
+}) {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(to)}
+      className="flex w-full items-center justify-between gap-4 rounded-md border border-gray-200 px-4 py-3 text-left transition hover:border-primary-dark hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-dark dark:border-dark-600 dark:hover:bg-dark-800"
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">{label}</span>
+        <span className="block text-xs text-gray-500 dark:text-gray-400">{hint}</span>
+      </span>
+      <span className="shrink-0 text-lg font-bold text-gray-800 dark:text-gray-100">{value}</span>
+    </button>
+  );
+}
+
+/** Shortcut to the page that owns a slice of the work. */
+function QuickNavCard({
+  icon,
+  label,
+  hint,
+  to,
+}: {
+  icon: IconDefinition;
+  label: string;
+  hint: string;
+  to: string;
+}) {
+  const navigate = useNavigate();
+  return (
+    <Card className="p-4">
+      <button
+        type="button"
+        onClick={() => navigate(to)}
+        className="flex w-full items-start gap-3 rounded-md text-left outline-none transition hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-dark dark:hover:bg-dark-800"
+      >
+        <span className="rounded-md bg-gray-100 p-2 text-gray-700 dark:bg-dark-800 dark:text-gray-300">
+          <FontAwesomeIcon icon={icon} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-gray-800 dark:text-gray-100">{label}</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400">{hint}</span>
+        </span>
       </button>
     </Card>
   );
@@ -57,297 +152,286 @@ function StatCard({
 
 export function OverviewTab({ refreshKey = 0 }: OverviewTabProps) {
   const navigate = useNavigate();
-  const [regions, setRegions] = useState<Location[]>([]);
-  const [cities, setCities] = useState<Location[]>([]);
-  const [sectors, setSectors] = useState<Location[]>([]);
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedSector, setSelectedSector] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const { user } = useAuth();
 
-  // One date picker covers a full day: [00:00, 23:59:59.999].
-  const dateFrom = selectedDate ? `${selectedDate}T00:00:00` : '';
-  const dateTo = selectedDate ? `${selectedDate}T23:59:59.999` : '';
-
-  const {
-    stats,
-    loading: statsLoading,
-    error: statsError,
-    refetch: refetchStats,
-  } = useDeliveryStats(
-    { status: selectedStatus, sectorId: selectedSector, dateFrom, dateTo },
-    refreshKey
-  );
+  const { stats, error: statsError, refetch: refetchStats } = useDeliveryStats({}, refreshKey);
 
   const {
     recentDeliveries,
     loading: recentLoading,
     error: recentError,
     refetch: refetchRecent,
-  } = useRecentDeliveries({
-    status: selectedStatus,
-    sectorId: selectedSector,
-    dateFrom,
-    dateTo,
-    limit: 10,
-    refreshKey,
-  });
+  } = useRecentDeliveries({ limit: 25, refreshKey });
 
-  // Region → City → Sector cascade. The chosen sector (and date/status) is
-  // what actually filters the metrics and the table below.
-  useEffect(() => {
-    locationsService.list({ type: 'region' }).then(setRegions).catch(console.error);
-  }, []);
+  /**
+   * Requests still waiting to become a delivery. The API derives each request's
+   * state (`pending` until a Delivery exists), so this count comes from a real
+   * scan of the list — shown with a "+" when the scan page came back full.
+   */
+  const { data: requestScan } = useAsync(async () => {
+    const res = await deliveryRequestsService
+      .list({ page: 1, limit: REQUEST_SCAN_LIMIT })
+      .catch(() => null);
+    if (!res) return null;
+    const items = res.requests ?? [];
+    return {
+      pending: items.filter((r) => r.status === 'pending').length,
+      truncated: items.length >= REQUEST_SCAN_LIMIT,
+    };
+  }, [refreshKey]);
 
-  useEffect(() => {
-    if (!selectedRegion) { setCities([]); return; }
-    locationsService.getChildren(selectedRegion).then(setCities).catch(console.error);
-  }, [selectedRegion]);
+  /** The Deliveries page owns delivery status — hand over, never edit here. */
+  const openDelivery = useCallback(
+    (row: RecentDelivery) => {
+      navigate(`/delivery/deliveries?orderId=${encodeURIComponent(row.orderId)}`);
+    },
+    [navigate]
+  );
 
-  useEffect(() => {
-    if (!selectedCity) { setSectors([]); return; }
-    locationsService.getChildren(selectedCity).then(setSectors).catch(console.error);
-  }, [selectedCity]);
+  const activeRows = (recentDeliveries ?? []).filter((row) =>
+    ACTIVE_DELIVERY_STATUSES.has(row.status)
+  );
 
-  const clearFilters = () => {
-    setSelectedRegion('');
-    setSelectedCity('');
-    setSelectedSector('');
-    setSelectedStatus('');
-    setSelectedDate('');
-  };
+  /** Deliveries that stopped before reaching the customer. */
+  const problemCount = (stats?.failedDeliveries ?? 0) + (stats?.cancelledDeliveries ?? 0);
 
-  const hasFilters = selectedRegion || selectedCity || selectedSector || selectedStatus || selectedDate;
-
-  const recentColumns: Column<RecentDelivery>[] = [
+  const columns: Column<RecentDelivery>[] = [
+    {
+      key: 'delivery',
+      header: 'Delivery',
+      render: (row) => (
+        <span className="font-mono text-xs text-gray-600 dark:text-gray-400" title={row._id}>
+          {shortId(row._id)}
+        </span>
+      ),
+    },
     {
       key: 'orderId',
       header: 'Order',
       render: (row) => (
-        <span className="font-medium text-gray-800 dark:text-gray-100">
-          {row.orderId || '—'}
-        </span>
+        <span className="font-medium text-gray-800 dark:text-gray-100">{row.orderId}</span>
       ),
     },
     {
-      key: 'status',
-      header: 'Status',
-      render: (row) => (
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getDeliveryStatusColor(row.status || '')}`}>
-          {(row.status || '—').replace(/_/g, ' ')}
-        </span>
-      ),
+      key: 'seller',
+      header: 'Seller / Shop',
+      accessor: (row) => row.pickupAddress?.shopName || row.pickupAddress?.cityName || '—',
     },
     {
-      key: 'partnerName',
-      header: 'Actor',
-      render: (row) => (
-        <span className="text-sm text-gray-800 dark:text-gray-100">
-          {row.providerName || row.partnerName || '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'destinationAddress',
+      key: 'destination',
       header: 'Destination',
       render: (row) => {
-        const addr = row.destinationAddress;
-        const location = [addr?.sectorName, addr?.cityName, addr?.regionName].filter(Boolean).join(', ');
+        const a = row.destinationAddress;
+        const place = [a?.cityName, a?.regionName].filter(Boolean).join(', ');
         return (
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            {location || addr?.addressDetail || '—'}
+            {place || a?.addressDetail || '—'}
           </span>
         );
       },
     },
     {
-      key: 'createdAt',
-      header: 'Created',
+      key: 'provider',
+      header: 'Provider / Rider',
+      render: (row) =>
+        row.providerName || row.partnerName ? (
+          <span className="text-sm text-gray-700 dark:text-gray-200">
+            {row.providerName || row.partnerName}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">Unassigned</span>
+        ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <DeliveryStatusPill status={row.status} />,
+    },
+    {
+      key: 'updatedAt',
+      header: 'Last update',
+      render: (row) => {
+        const stamp = row.updatedAt ?? row.createdAt;
+        return (
+          <span className="text-xs text-gray-500 dark:text-gray-400" title={formatDateTime(stamp)}>
+            {timeAgo(stamp)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
       render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {formatDate(row.createdAt)}
-        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            openDelivery(row);
+          }}
+        >
+          View Details
+        </Button>
       ),
     },
   ];
 
-  if (statsLoading && !stats) return <PageLoader label="Loading overview" />;
+  const quickLinks: {
+    icon: IconDefinition;
+    label: string;
+    hint: string;
+    to: string;
+    roles?: AdminRole[];
+  }[] = [
+    { icon: faListCheck, label: 'Requests', hint: 'Buyer handoffs awaiting pickup', to: '/delivery/requests' },
+    { icon: faTruck, label: 'Deliveries', hint: 'Operational list, status changes and live tracking', to: '/delivery/deliveries' },
+    { icon: faMap, label: 'Locations', hint: 'Regions, cities, zones and ports', to: '/locations', roles: ['SUPER_ADMIN'] },
+    { icon: faMotorcycle, label: 'Providers', hint: 'Riders, businesses, logistics partners', to: '/delivery/providers' },
+  ];
+
+  /** Hide a shortcut the signed-in role cannot open — no dead links on the dashboard. */
+  const visibleQuickLinks = quickLinks.filter(
+    (link) => !link.roles || (!!user && link.roles.includes(user.role))
+  );
 
   return (
-    <>
-      {/* Filters — every control here feeds both the metrics and the table. */}
-      <Card className="mb-6 p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <SelectField
-            label="Region"
-            value={selectedRegion}
-            onChange={(e) => { setSelectedRegion(e.target.value); setSelectedCity(''); setSelectedSector(''); }}
-            options={[
-              { value: '', label: 'All Regions' },
-              ...regions.map((r) => ({ value: r._id, label: r.name })),
-            ]}
-            className="w-44"
-          />
-          <SelectField
-            label="City/Area"
-            value={selectedCity}
-            onChange={(e) => { setSelectedCity(e.target.value); setSelectedSector(''); }}
-            options={[
-              { value: '', label: 'All Cities' },
-              ...cities.map((c) => ({ value: c._id, label: c.name })),
-            ]}
-            className="w-44"
-            disabled={!selectedRegion}
-          />
-          <SelectField
-            label="Sector"
-            value={selectedSector}
-            onChange={(e) => setSelectedSector(e.target.value)}
-            options={[
-              { value: '', label: 'All Sectors' },
-              ...sectors.map((s) => ({ value: s._id, label: s.name })),
-            ]}
-            className="w-44"
-            disabled={!selectedCity}
-          />
-          <SelectField
-            label="Status"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            options={DELIVERY_STATUSES}
-            className="w-44"
-          />
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Date</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:border-primary-dark focus:outline-none dark:border-dark-600 dark:bg-dark-900 dark:text-white"
-            />
-          </div>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
-        <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-          Region and City narrow the sector list — the selected Sector, Status and Date filter the
-          metrics and the deliveries below.
-        </p>
-      </Card>
-
+    <div className="space-y-6">
       {statsError && <ErrorState message={statsError} onRetry={refetchStats} />}
 
-      {/* Riders Section */}
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold dark:text-white">
-          Riders & Delivery Actors
-        </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <StatCard label="Total Actors" value={stats?.totalPartners} tone="text-blue-600 dark:text-blue-400" to="/delivery/providers" />
-          <StatCard label="Available" value={stats?.availablePartners} tone="text-green-600 dark:text-green-400" to="/delivery/providers?status=available" />
-          <StatCard label="Busy" value={stats?.busyPartners} tone="text-orange-600 dark:text-orange-400" to="/delivery/providers?status=busy" />
-          <StatCard label="Pending" value={stats?.pendingPartners} tone="text-yellow-600 dark:text-yellow-400" to="/delivery/providers?status=pending" />
-          <StatCard label="Suspended" value={stats?.suspendedPartners} tone="text-red-600 dark:text-red-400" to="/delivery/providers?status=suspended" />
-        </div>
-      </div>
-
-      {/* Active Operations — the live delivery funnel. */}
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold dark:text-white">
-          Active Operations
-        </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <StatCard label="Pending" value={stats?.pendingDeliveries} tone="text-yellow-600 dark:text-yellow-400" to="/delivery/deliveries?status=pending" />
-          <StatCard label="Assigned" value={stats?.assignedDeliveries} tone="text-blue-600 dark:text-blue-400" to="/delivery/deliveries?status=assigned" />
-          <StatCard label="Pickup" value={stats?.pickupDeliveries} tone="text-cyan-600 dark:text-cyan-400" to="/delivery/deliveries?status=pickup" />
-          <StatCard label="In Transit" value={stats?.inTransitDeliveries} tone="text-indigo-600 dark:text-indigo-400" to="/delivery/deliveries?status=in_transit" />
-          <StatCard label="Delivered Today" value={stats?.deliveredToday} tone="text-green-600 dark:text-green-400" to="/delivery/deliveries?status=delivered" />
-        </div>
-      </div>
-
-      {/* Delivery Results Section */}
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold dark:text-white">
-          Delivery Results
-        </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard label="Completed" value={stats?.completedDeliveries} tone="text-green-600 dark:text-green-400" to="/delivery/deliveries?status=delivered" />
-          <StatCard label="Failed" value={stats?.failedDeliveries} tone="text-red-600 dark:text-red-400" to="/delivery/deliveries?status=failed" />
-          <StatCard label="Cancelled" value={stats?.cancelledDeliveries} tone="text-red-600 dark:text-red-400" to="/delivery/deliveries?status=cancelled" />
-        </div>
-      </div>
-
-      {/* Shipments in motion */}
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold dark:text-white">
-          Shipments
-        </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard label="Active Shipments" value={stats?.activeShipments} tone="text-teal-600 dark:text-teal-400" to="/delivery/shipments" />
-          <StatCard label="Waiting for Dispatch" value={stats?.waitingForDispatchShipments} tone="text-amber-600 dark:text-amber-400" to="/delivery/shipments" />
-          <StatCard label="In Transit" value={stats?.inTransitShipments} tone="text-indigo-600 dark:text-indigo-400" to="/delivery/shipments" />
-        </div>
-      </div>
-
-      {/* Infrastructure Section */}
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold dark:text-white">
-          Infrastructure & Coverage
-        </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            label="Active Zones"
-            value={stats?.activeZones}
-            display={`${formatNumber(stats?.activeZones ?? 0)}/${formatNumber(stats?.totalZones ?? 0)}`}
-            tone="text-teal-600 dark:text-teal-400"
-            to="/locations?tab=zones"
+      {/* 1 — Delivery summary */}
+      <section aria-labelledby="overview-summary">
+        <h2 id="overview-summary" className="mb-3 text-lg font-semibold dark:text-white">
+          Delivery summary
+        </h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+          <MetricTile
+            label="Total active"
+            value={stats?.activeDeliveries}
+            tone="text-gray-800 dark:text-gray-100"
+            to="/delivery/deliveries"
           />
-          <StatCard
-            label="Active Routes"
-            value={stats?.activeRoutes}
-            display={`${formatNumber(stats?.activeRoutes ?? 0)}/${formatNumber(stats?.totalRoutes ?? 0)}`}
-            tone="text-teal-600 dark:text-teal-400"
-            to="/locations?tab=routes"
+          <MetricTile
+            label="Unassigned"
+            value={stats?.unassignedDeliveries}
+            tone="text-amber-600 dark:text-amber-400"
+            to="/delivery/deliveries?status=pending"
           />
-          <StatCard
-            label="Active Services"
-            value={stats?.activeServices}
-            display={`${formatNumber(stats?.activeServices ?? 0)}/${formatNumber(stats?.totalServices ?? 0)}`}
-            tone="text-teal-600 dark:text-teal-400"
-            to="/delivery/services"
+          <MetricTile
+            label="Assigned"
+            value={stats?.assignedDeliveries}
+            tone="text-blue-600 dark:text-blue-400"
+            to="/delivery/deliveries?status=assigned"
+          />
+          <MetricTile
+            label="Picked up"
+            value={stats?.pickupDeliveries}
+            tone="text-cyan-600 dark:text-cyan-400"
+            to="/delivery/deliveries?status=pickup"
+          />
+          <MetricTile
+            label="In transit"
+            value={stats?.inTransitDeliveries}
+            tone="text-indigo-600 dark:text-indigo-400"
+            to="/delivery/deliveries?status=in_transit"
+          />
+          <MetricTile
+            label="Delivered today"
+            value={stats?.deliveredToday}
+            tone="text-green-600 dark:text-green-400"
+            to="/delivery/deliveries?status=delivered"
+          />
+          <MetricTile
+            label="Failed / exception"
+            value={stats?.failedDeliveries}
+            tone="text-red-600 dark:text-red-400"
+            to="/delivery/deliveries?status=failed"
           />
         </div>
-      </div>
+      </section>
 
-      {/* Recent Deliveries */}
-      <div className="mb-6">
+      {/* 2 — Needs attention */}
+      <section aria-labelledby="overview-attention">
+        <h2 id="overview-attention" className="mb-3 text-lg font-semibold dark:text-white">
+          Needs attention
+        </h2>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <AttentionRow
+            label="Unassigned deliveries"
+            hint="Requested but no rider yet"
+            value={formatNumber(stats?.unassignedDeliveries ?? 0)}
+            to="/delivery/deliveries?status=pending"
+          />
+          <AttentionRow
+            label="Failed deliveries"
+            hint="Delivery attempt failed"
+            value={formatNumber(stats?.failedDeliveries ?? 0)}
+            to="/delivery/deliveries?status=failed"
+          />
+          <AttentionRow
+            label="Delayed / problem deliveries"
+            hint="Failed or cancelled — stopped before delivery"
+            value={formatNumber(problemCount)}
+            to="/delivery/deliveries?status=cancelled"
+          />
+          <AttentionRow
+            label="Pending delivery requests"
+            hint="Buyer handoffs not turned into a delivery"
+            value={
+              requestScan
+                ? `${formatNumber(requestScan.pending)}${requestScan.truncated ? '+' : ''}`
+                : '—'
+            }
+            to="/delivery/requests"
+          />
+        </div>
+      </section>
+
+      {/* 3 — Recent active deliveries (read-only; View Details hands over) */}
+      <section aria-labelledby="overview-recent">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold dark:text-white">Recent Deliveries</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/delivery/deliveries')}
-          >
+          <h2 id="overview-recent" className="text-lg font-semibold dark:text-white">
+            Recent active deliveries
+          </h2>
+          <Button variant="outline" size="sm" onClick={() => navigate('/delivery/deliveries')}>
             View All
           </Button>
         </div>
         {recentError ? (
           <ErrorState message={recentError} onRetry={refetchRecent} />
+        ) : activeRows.length === 0 && !recentLoading ? (
+          <EmptyState
+            title="No active deliveries"
+            description="Deliveries appear here once they are created and before they reach a final state."
+            action={
+              <Button size="sm" variant="outline" onClick={() => navigate('/delivery/requests')}>
+                View delivery requests
+              </Button>
+            }
+          />
         ) : (
           <DataTable<RecentDelivery>
-            columns={recentColumns}
-            rows={recentDeliveries ?? []}
+            columns={columns}
+            rows={activeRows}
             rowKey={(row) => row._id}
             loading={recentLoading}
-            emptyTitle="No recent deliveries"
-            onRowClick={(row) => navigate(`/delivery/deliveries?orderId=${encodeURIComponent(row.orderId)}`)}
+            emptyTitle="No active deliveries"
+            onRowClick={openDelivery}
           />
         )}
-      </div>
-    </>
+      </section>
+
+      {/* 4 — Quick navigation */}
+      <section aria-labelledby="overview-shortcuts">
+        <h2 id="overview-shortcuts" className="mb-3 text-lg font-semibold dark:text-white">
+          Go to
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleQuickLinks.map((link) => (
+            <QuickNavCard key={link.label} {...link} />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

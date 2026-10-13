@@ -52,17 +52,10 @@ const ICONS: Record<string, IconDefinition> = {
   'Delivery Zones': faLayerGroup,
   'Active Deliveries': faClock,
   'Delivery & Logistics': faTruck,
-  'Locations & Expansion': faMap,
   'Overview': faChartLine,
-  'Delivery Services': faTruck,
-  'Partners & Providers': faMotorcycle,
-  'Delivery Requests': faListCheck,
+  'Providers': faMotorcycle,
+  'Requests': faListCheck,
   'Deliveries': faTruck,
-  'Assignments': faListCheck,
-  'Operations': faCog,
-  'Shipments': faTruck,
-  'Consolidation': faBoxesStacked,
-  'Tracking': faMap,
 };
 
 export function NavList({
@@ -89,7 +82,7 @@ export function NavList({
                   to={item.path}
                   // Exact match where the path is only a parent of other
                   // entries: /home and /delivery must not stay highlighted
-                  // while a sibling page (e.g. /delivery/shipments) is open.
+                  // while a sibling page (e.g. /delivery/deliveries) is open.
                   end={item.path === '/home' || item.path === '/delivery'}
                   onClick={onNavigate}
                   className={({ isActive }) =>

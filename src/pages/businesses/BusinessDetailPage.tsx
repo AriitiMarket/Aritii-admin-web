@@ -244,32 +244,29 @@ export function BusinessDetailPage() {
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {isPending && (
-              <>
-                <Button variant="primary" loading={actionLoading} onClick={handleApprove}>
-                  {t('Approve')}
-                </Button>
-                <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
-                  {t('Request information')}
-                </Button>
-                <Button variant="danger" loading={actionLoading} onClick={() => setShowRejectDialog(true)}>
-                  {t('Reject')}
-                </Button>
-              </>
-            )}
-            {isMoreInfo && (
-              <>
-                <Button variant="primary" loading={actionLoading} onClick={handleApprove}>
-                  {t('Approve')}
-                </Button>
-                <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
-                  {t('Request information')}
-                </Button>
-                <Button variant="danger" loading={actionLoading} onClick={() => setShowRejectDialog(true)}>
-                  {t('Reject')}
-                </Button>
-              </>
-            )}
+{isPending && (
+    <>
+        <Button variant="primary" loading={actionLoading} onClick={handleApprove}>
+            {t('Approve')}
+        </Button>
+        <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
+            {t('Request information')}
+        </Button>
+        <Button variant="danger" loading={actionLoading} onClick={() => setShowRejectDialog(true)}>
+            {t('Reject')}
+        </Button>
+    </>
+)}
+{isMoreInfo && (
+    <>
+        <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
+            {t('Request information')}
+        </Button>
+        <p className="text-sm text-gray-500">
+            {t('The applicant needs to update the application before it can be approved or rejected.')}
+        </p>
+    </>
+)}
             {isApproved && (
               <Button variant="danger" loading={actionLoading} onClick={handleSuspend}>
                 {t('Suspend')}

@@ -3,14 +3,12 @@ import { Modal } from '@/components/common/Modal';
 import { Button } from '@/components/common/Button';
 import { TextField } from '@/components/common/TextField';
 import { SelectField } from '@/components/forms/SelectField';
-import { DELIVERY_STATUSES, FAILURE_NEXT_ACTIONS } from '../constants';
+import { CANCELLATION_OVERRIDE_FROM, FAILURE_NEXT_ACTIONS } from '../constants';
+import { getDeliveryStatusLabel } from '../utils/statusHelpers';
 import type { Delivery } from '../types';
 
 const TEXTAREA_BASE =
   'w-full rounded-md border border-dark-border bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-dark focus:ring-1 focus:ring-primary-dark dark:border-dark-600 dark:bg-dark-900 dark:text-white';
-
-const statusLabel = (status: string) =>
-  DELIVERY_STATUSES.find((s) => s.value === status)?.label ?? status.replace(/_/g, ' ');
 
 /**
  * Collects the input a status change actually needs before the console fires
@@ -20,10 +18,10 @@ const statusLabel = (status: string) =>
  *    service records an operator proof-override, so the fields are optional by
  *    design; with them the delivery closes out with real proof.
  *  - `failed`    — a reason (stored as `failureReason`) and the agreed
- *    `nextAction` (retry / reschedule / return / escalation).
- *  - `cancelled` — a reason (stored as `cancellationReason`); cancelling from
- *    `out_for_delivery` needs the administrative `override` flag or the
- *    service answers `OVERRIDE_REQUIRED`.
+ *    `nextAction` (retry / reschedule / escalation).
+ *  - `cancelled` — a reason (stored as `cancellationReason`); cancelling a
+ *    delivery that is already `in_transit` needs the administrative `override`
+ *    flag or the service answers `OVERRIDE_REQUIRED`.
  *  - anything else — an optional note, sent as `note`.
  *
  * The parent performs the API call and passes its busy/error state back in.
@@ -76,8 +74,10 @@ export function StatusChangeDialog({
   const isFailed = nextStatus === 'failed';
   const isCancelled = nextStatus === 'cancelled';
   const isDelivered = nextStatus === 'delivered';
-  // The service refuses a plain cancel once the rider is out for delivery.
-  const needsOverride = isCancelled && delivery.status === 'out_for_delivery';
+  // The service refuses a plain cancel once the rider is on the customer leg:
+  // the parcel is out of the seller's hands, so cancelling needs an audited
+  // decision. Mirrors the service's CANCELLATION_OVERRIDE_FROM.
+  const needsOverride = isCancelled && CANCELLATION_OVERRIDE_FROM.includes(delivery.status || '');
 
   const submit = () => {
     setLocalError(null);
@@ -115,14 +115,14 @@ export function StatusChangeDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title={`${statusLabel(nextStatus)} — order ${delivery.orderId}`}
+      title={`${getDeliveryStatusLabel(nextStatus)} — order ${delivery.orderId}`}
       size="sm"
     >
       <div className="space-y-4">
         <p className="text-sm text-gray-500">
           Current status:{' '}
           <span className="font-medium text-gray-800 dark:text-gray-100">
-            {statusLabel(delivery.status || '')}
+            {getDeliveryStatusLabel(delivery.status || '')}
           </span>
         </p>
 
@@ -167,8 +167,8 @@ export function StatusChangeDialog({
               className="mt-0.5"
             />
             <span>
-              Administrative override — the delivery is already out for delivery
-              and can no longer be cancelled without it.
+              Administrative override — the delivery is already in transit and can
+              no longer be cancelled without one.
             </span>
           </label>
         )}
@@ -233,7 +233,7 @@ export function StatusChangeDialog({
             onClick={submit}
             disabled={busy || (needsOverride && !override)}
           >
-            {busy ? 'Applying…' : `Change to ${statusLabel(nextStatus)}`}
+            {busy ? 'Applying…' : `Change to ${getDeliveryStatusLabel(nextStatus)}`}
           </Button>
         </div>
       </div>

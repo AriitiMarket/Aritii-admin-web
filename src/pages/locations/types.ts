@@ -28,11 +28,11 @@ export interface LocationServiceability {
   };
 }
 
-export interface HubInfo {
-  isHub: boolean;
-  hubName?: string;
-  hubCode?: string;
-  hubAddress?: string;
+export interface PortInfo {
+  isPort: boolean;
+  portName?: string;
+  portCode?: string;
+  portAddress?: string;
   contactInfo?: {
     phone?: string;
     email?: string;
@@ -47,7 +47,7 @@ export interface ExpansionProgress {
   locationCreated: boolean;
   serviceabilityConfigured: boolean;
   zonesConfigured: boolean;
-  hubConfigured: boolean;
+  portConfigured: boolean;
   routesConfigured: boolean;
   providersConfigured: boolean;
   serviceabilityTested: boolean;
@@ -59,7 +59,7 @@ export interface LocationStats {
   totalLocations: number;
   activeLocations: number;
   serviceableLocations: number;
-  hubs: number;
+  ports: number;
   pendingExpansion: number;
 }
 
@@ -68,7 +68,7 @@ export interface LocationDetail {
   ancestors: Location[];
   children: Location[];
   zones: Zone[];
-  hubs: Hub[];
+  ports: Port[];
   routes: Route[];
   stats: LocationActivityStats;
 }
@@ -79,7 +79,7 @@ export interface LocationActivityStats {
   sellers: number;
   orders: number;
   riders: number;
-  hubs: number;
+  ports: number;
 }
 
 export interface ZoneCoverage {
@@ -106,7 +106,7 @@ export interface DeliveryRules {
 export interface OperationalRules {
   allowedProviders?: string[];
   allowedRiders?: string[];
-  hubId?: string;
+  portId?: string;
   priority?: number;
   operatingHours?: {
     open: string;
@@ -151,7 +151,7 @@ export interface RouteDetail {
   activity: ActivityLog[];
 }
 
-export interface Hub {
+export interface Port {
   _id: string;
   name: string;
   code: string;
@@ -177,7 +177,7 @@ export interface Provider {
   status: 'active' | 'inactive' | 'suspended';
   zoneIds: string[];
   routeIds: string[];
-  hubIds: string[];
+  portIds: string[];
   contactInfo?: {
     phone?: string;
     email?: string;
@@ -190,7 +190,7 @@ export interface Rider {
   status: 'available' | 'busy' | 'offline';
   zoneIds: string[];
   routeIds: string[];
-  hubId?: string;
+  portId?: string;
 }
 
 export interface ActivityLog {

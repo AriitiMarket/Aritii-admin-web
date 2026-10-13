@@ -11,9 +11,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run test:lifecycle && tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test:map": "node scripts/test-map-geo.mjs",
+    "test:lifecycle": "node scripts/check-delivery-lifecycle.mjs",
     "lint": "eslint src --ext .ts,.tsx",
     "preview": "vite preview",
     "prettier": "prettier --write src",

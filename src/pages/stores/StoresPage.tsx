@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storesService } from '@/services/stores.service';
+import { businessesService } from '@/services/businesses.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSector } from '@/hooks/useSector';
@@ -56,6 +57,24 @@ export function StoresManagementPage() {
       }),
     [page, debouncedSearch, status, sector, businessId, ownerEmail]
   );
+
+  // Business filter picks by NAME — the console must never ask for a raw
+  // Mongo id, it is not a vocabulary a human thinks in.
+  const { data: businesses } = useAsync(
+    () => businessesService.listApplications({ page: 1, limit: 200 }),
+    []
+  );
+  const businessOptions = [
+    { value: '', label: t('All Businesses') },
+    ...(businesses?.items ?? []).map((business) => ({
+      value: business.id,
+      label:
+        business.businessInformation?.businessName ||
+        business.businessName ||
+        business.shopInformation?.shopName ||
+        business.id,
+    })),
+  ];
 
   const getLocationDisplay = (store: Store) => {
     const snap = store.locationSnapshot;
@@ -150,8 +169,48 @@ export function StoresManagementPage() {
       header: t('Owner'),
       render: (row) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
-          {row.ownerName || row.ownerEmail || '—'}
+          {row.ownerId ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/sellers/${row.ownerId}`);
+              }}
+              className="text-primary-dark hover:underline dark:text-primary-color"
+            >
+              {row.ownerName || row.ownerEmail || '—'}
+            </button>
+          ) : (
+            row.ownerName || row.ownerEmail || '—'
+          )}
         </span>
+      ),
+    },
+    {
+      key: 'business',
+      header: t('Business'),
+      render: (row) => (
+        <div>
+          {row.businessId ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/businesses/${row.businessId}`);
+              }}
+              className="text-sm text-primary-dark hover:underline dark:text-primary-color"
+            >
+              {row.businessName || '—'}
+            </button>
+          ) : (
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {row.businessName || '—'}
+            </span>
+          )}
+          {row.businessStatus && (
+            <div className="text-xs text-gray-500">{row.businessStatus}</div>
+          )}
+        </div>
       ),
     },
     {
@@ -348,16 +407,12 @@ export function StoresManagementPage() {
             onChange={(e) => { setSector(e.target.value); setPage(1); }}
             label={t('Sector')}
           />
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Business ID')}</label>
-            <input
-              type="text"
-              value={businessId}
-              onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-dark-800 dark:text-white text-sm"
-              placeholder={t('Filter by business')}
-            />
-          </div>
+          <SelectField
+            value={businessId}
+            options={businessOptions}
+            onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
+            label={t('Business')}
+          />
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Owner Email')}</label>
             <input

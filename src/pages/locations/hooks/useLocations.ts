@@ -12,13 +12,13 @@ export function useLocations(params?: {
   type?: string;
   status?: string;
   serviceability?: string;
-  hub?: string;
+  port?: string;
   expansionStatus?: string;
   search?: string;
   page?: number;
   limit?: number;
 }) {
-  const { type, status, serviceability, hub, expansionStatus, search, page = 1, limit = 50 } = params || {};
+  const { type, status, serviceability, port, expansionStatus, search, page = 1, limit = 50 } = params || {};
   const debouncedSearch = useDebounce(search || '', 300);
 
   const { data, loading, error, refetch } = useAsync(
@@ -31,7 +31,7 @@ export function useLocations(params?: {
         if (serviceability) {
           filter.serviceable = serviceability === 'serviceable' ? 'true' : 'false';
         }
-        if (hub) filter.hub = hub === 'hub' ? 'true' : 'false';
+        if (port) filter.port = port === 'port' ? 'true' : 'false';
         if (expansionStatus) filter.expansionStatus = expansionStatus;
         if (debouncedSearch) filter.q = debouncedSearch;
         filter.page = page;
@@ -50,7 +50,7 @@ export function useLocations(params?: {
         throw err;
       }
     },
-    [type, status, serviceability, hub, expansionStatus, debouncedSearch, page, limit]
+    [type, status, serviceability, port, expansionStatus, debouncedSearch, page, limit]
   );
 
   return { data, loading, error, refetch };
@@ -90,7 +90,7 @@ export function useLocationDetail(id: string) {
             sellers: 0,
             orders: 0,
             riders: 0,
-            hubs: 0,
+            ports: 0,
           },
         } as LocationDetail;
       } catch (err) {

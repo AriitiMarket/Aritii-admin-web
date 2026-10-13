@@ -1,5 +1,5 @@
 /** Rider (delivery actor) types — aligned with Delivery Service Partner model. */
-export type RiderStatus = 'pending' | 'available' | 'busy' | 'offline' | 'suspended';
+export type RiderStatus = 'pending' | 'available' | 'busy' | 'offline' | 'suspended' | 'rejected';
 export type ActorType = 'rider' | 'driver' | 'courier' | 'pickup_agent';
 
 export interface Rider {
@@ -13,8 +13,8 @@ export interface Rider {
   actorType?: ActorType;
   vehicleType?: string;
   plateNumber?: string;
-  sector?: string;
-  sectorId?: string;
+  portId?: string | null;
+  portName?: string;
   totalDeliveries?: number;
   activeDeliveries?: number;
   completedDeliveries?: number;
@@ -27,7 +27,6 @@ export interface Rider {
   locationSnapshot?: {
     regionName?: string;
     cityName?: string;
-    sectorName?: string;
     fullAddress?: string;
   };
   createdAt?: string;

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 /**
  * Compact key/value list used inside every detail drawer, so Locations, Zones,
- * Hubs and Routes present their facts identically.
+ * Ports and Routes present their facts identically.
  */
 export function Facts({ items }: { items: [string, ReactNode | null | undefined][] }) {
   return (

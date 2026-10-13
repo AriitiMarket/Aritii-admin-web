@@ -5,23 +5,21 @@ Backend contract:
   GET /delivery/tracking/:deliveryId/latest -> { location: { coordinates?: [lng, lat], accuracy?, speed?, heading?, timestamp? } }
   GET /delivery/tracking/nearby       -> { events, count }  *(live location query, best effort)*
 
-Tracking events: { status: 'pending'|'assigned'|'pickup'|'in_transit'|'out_for_delivery'|'delivered'|'failed'|'cancelled'|'reassigned',
+Tracking events: { status: 'pending'|'assigned'|'reassigned'|'pickup'|'in_transit'|'delivered'|'failed'|'cancelled',
                    location?: { type:'Point', coordinates:[lng,lat] }, accuracy?, speed?, heading?, note?, timestamp? }.
 */
 
 import { http } from '@/services/client/httpClient';
 
 export interface TrackingEvent {
-  status:
-    | 'pending'
-    | 'assigned'
-    | 'pickup'
-    | 'in_transit'
-    | 'out_for_delivery'
-    | 'delivered'
-    | 'failed'
-    | 'cancelled'
-    | 'reassigned';
+  /**
+   * A tracking event records a status the delivery REACHED, so the value is
+   * always a canonical delivery status (the backend derives the enum from
+   * DELIVERY_STATUSES). The older spellings below are still accepted on read so
+   * a historical event renders through the canonical label map rather than
+   * being dropped.
+   */
+  status: string;
   location?: { type?: 'Point'; coordinates?: [number, number] };
   accuracy?: number;
   speed?: number;
@@ -29,6 +27,8 @@ export interface TrackingEvent {
   note?: string;
   timestamp?: string;
   providerId?: string | null;
+  /** Mongoose timestamps — used to fall back to a real event time. */
+  createdAt?: string;
 }
 
 export interface TrackingLocation {
@@ -47,7 +47,12 @@ export interface TrackingResponse {
 }
 
 export const trackingService = {
-  /** Event history for a delivery (backend: GET /delivery/tracking/:deliveryId) */
+  /**
+   * Event history for a delivery (backend: GET /delivery/tracking/:deliveryId).
+   *
+   * The route is keyed by DELIVERY id, not order id — the caller resolves the
+   * order id through the delivery list first.
+   */
   async getEvents(deliveryId: string): Promise<TrackingEvent[]> {
     const res = await http.get<TrackingResponse>(`/delivery/tracking/${deliveryId}`);
     return res?.events ?? [];

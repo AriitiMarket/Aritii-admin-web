@@ -59,11 +59,6 @@ const StoreDetailPage = lazy(() =>
     default: m.StoreDetailPage,
   }))
 );
-const RiderDetailPage = lazy(() =>
-  import('@/pages/riders/RiderDetailPage').then((m) => ({
-    default: m.RiderDetailPage,
-  }))
-);
 const CustomerDetailPage = lazy(() =>
   import('@/pages/customers/CustomerDetailPage').then((m) => ({
     default: m.CustomerDetailPage,
@@ -110,9 +105,6 @@ const OrdersPage = lazy(() =>
 );
 
 // Platform Admin Control Center — live operations
-const OperationsPage = lazy(() =>
-  import('@/pages/operations/OperationsPage').then((m) => ({ default: m.OperationsPage }))
-);
 const OrderDetailPage = lazy(() =>
   import('@/pages/orders/OrderDetailPage').then((m) => ({
     default: m.OrderDetailPage,
@@ -176,17 +168,6 @@ const DeliveryLogisticsPage = lazy(() =>
   }))
 );
 
-const DeliveryAssignmentsPage = lazy(() =>
-  import('@/pages/delivery/DeliveryAssignmentsPage').then((m) => ({
-    default: m.DeliveryAssignmentsPage,
-  }))
-);
-const DeliveryAssignmentDetailPage = lazy(() =>
-  import('@/pages/delivery/DeliveryAssignmentDetailPage').then((m) => ({
-    default: m.DeliveryAssignmentDetailPage,
-  }))
-);
-
 // Location Management
 const LocationsPage = lazy(() =>
   import('@/pages/locations/LocationsPage').then((m) => ({
@@ -239,15 +220,6 @@ const DeliveryRequestsPage = lazy(() =>
 const DeliveriesPage = lazy(() =>
   import('@/pages/delivery/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage }))
 );
-const ShipmentsPage = lazy(() =>
-  import('@/pages/delivery/ShipmentsPage').then((m) => ({ default: m.ShipmentsPage }))
-);
-const ConsolidationPage = lazy(() =>
-  import('@/pages/delivery/ConsolidationPage').then((m) => ({ default: m.ConsolidationPage }))
-);
-const TrackingPage = lazy(() =>
-  import('@/pages/delivery/TrackingPage').then((m) => ({ default: m.TrackingPage }))
-);
 
 export function AppRoutes() {
   const router = createBrowserRouter([
@@ -269,8 +241,9 @@ export function AppRoutes() {
       children: [
         { index: true, element: <Navigate to="/home" replace /> },
         { path: 'home', element: <Suspend roles={SUPER}><HomePage /></Suspend> },
-        // Platform Admin Control Center
-        { path: 'operations', element: <Suspend roles={SUPER}><OperationsPage /></Suspend> },
+        // The old live-operations feed is now the delivery history inside each
+        // delivery (Deliveries page) — no separate Operations page.
+        { path: 'operations', element: <Navigate to="/delivery/deliveries" replace /> },
         { path: 'users', element: <Suspend roles={USERS}><UsersPage /></Suspend> },
         { path: 'users/:userId', element: <Suspend roles={CUSTOMER}><UserDetailPage /></Suspend> },
         // Legacy list paths redirect to Users tabs; detail routes stay unchanged.
@@ -288,7 +261,9 @@ export function AppRoutes() {
         { path: 'delivery/providers', element: <Suspend roles={RIDER}><ProvidersPage /></Suspend> },
         { path: 'riders', element: <Navigate to="/delivery/providers" replace /> },
         { path: 'riders/pending', element: <Navigate to="/delivery/providers?status=pending" replace /> },
-        { path: 'riders/:riderId', element: <Suspend roles={RIDER}><RiderDetailPage /></Suspend> },
+        // Provider detail lives in the Providers workspace (drawer); the old
+        // per-rider page was a duplicate with admin Online/Offline controls.
+        { path: 'riders/:riderId', element: <Navigate to="/delivery/providers" replace /> },
         { path: 'customers', element: <Navigate to="/users?tab=customers" replace /> },
         { path: 'customers/:buyerId', element: <Suspend roles={CUSTOMER}><CustomerDetailPage /></Suspend> },
         { path: 'disputes', element: <Suspend roles={CUSTOMER}><DisputesPage /></Suspend> },
@@ -311,30 +286,32 @@ export function AppRoutes() {
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
         
-        // Delivery Module Routes
+        // Delivery Module Routes — ONE operational screen (Deliveries) with the
+        // assignment action inside each delivery. There are deliberately no
+        // separate Assignments / Dispatch / Shipments / Consolidation pages:
+        // the old URLs redirect so bookmarks keep working.
         { path: 'delivery', element: <Suspend roles={RIDER}><DeliveryLogisticsPage /></Suspend> },
         { path: 'delivery/overview', element: <Navigate to="/delivery" replace /> },
-        { path: 'delivery/assignments', element: <Suspend roles={RIDER}><DeliveryAssignmentsPage /></Suspend> },
-        // Dispatch / Batches is now the tabs of Assignments (ready orders →
-        // assign/reassign → batches); old links and bookmarks land there.
-        { path: 'delivery/dispatch', element: <Navigate to="/delivery/assignments" replace /> },
+        { path: 'delivery/assignments', element: <Navigate to="/delivery/deliveries" replace /> },
+        { path: 'delivery/dispatch', element: <Navigate to="/delivery/deliveries" replace /> },
         { path: 'delivery/services', element: <Suspend roles={RIDER}><DeliveryServicesPage /></Suspend> },
         { path: 'delivery/requests', element: <Suspend roles={RIDER}><DeliveryRequestsPage /></Suspend> },
         { path: 'delivery/deliveries', element: <Suspend roles={RIDER}><DeliveriesPage /></Suspend> },
-        { path: 'delivery/shipments', element: <Suspend roles={RIDER}><ShipmentsPage /></Suspend> },
-        { path: 'delivery/consolidation', element: <Suspend roles={RIDER}><ConsolidationPage /></Suspend> },
-        { path: 'delivery/tracking', element: <Suspend roles={RIDER}><TrackingPage /></Suspend> },
-
-        { path: 'delivery/assignments/:assignmentId', element: <Suspend roles={RIDER}><DeliveryAssignmentDetailPage /></Suspend> },
+        { path: 'delivery/shipments', element: <Navigate to="/delivery" replace /> },
+        { path: 'delivery/consolidation', element: <Navigate to="/delivery" replace /> },
+        // Tracking is the second view of the Deliveries screen (same records, same
+        // status). The old URL still works and lands on that view.
+        { path: 'delivery/tracking', element: <Navigate to="/delivery/deliveries?view=tracking" replace /> },
+        { path: 'delivery/assignments/:assignmentId', element: <Navigate to="/delivery/deliveries" replace /> },
         // Locations & Expansion is ONE workspace with tabs. The standalone
-        // zone/hub/route list pages redirect into the matching tab so old links
+        // zone/port/route list pages redirect into the matching tab so old links
         // and bookmarks (including the sidebar entries) keep working without
         // creating duplicate dashboards.
         { path: 'locations', element: <Suspend roles={SUPER}><LocationsExpansionPage /></Suspend> },
         { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
         { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
         { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },
-        { path: 'delivery/hubs', element: <Navigate to="/locations?tab=hubs" replace /> },
+        { path: 'delivery/ports', element: <Navigate to="/locations?tab=ports" replace /> },
         { path: 'delivery/routes', element: <Navigate to="/locations?tab=routes" replace /> },
         { path: 'delivery/routes/:id', element: <Suspend roles={SUPER}><RouteDetailPage /></Suspend> },
       ],

@@ -3,7 +3,8 @@ import { Button } from '@/components/common/Button';
 import { TextField } from '@/components/forms/TextField';
 import { SelectField } from '@/components/forms/SelectField';
 import { Modal } from '@/components/common/Modal';
-import { locationsService, zonesService, type Location, type Zone } from '@/services/locations.service';
+import { locationsService, zonesService, type Zone } from '@/services/locations.service';
+import { portsService } from '@/services/ports.service';
 import { useAsync } from '@/hooks/useAsync';
 import { ApiError } from '@/types/api';
 import {
@@ -11,7 +12,6 @@ import {
   providersService,
   type Provider,
   type ProviderType,
-  type ProviderStatus,
 } from '@/services/providers.service';
 
 const VEHICLES = [
@@ -24,14 +24,6 @@ const VEHICLES = [
   { value: 'foot', label: 'On foot' },
 ];
 
-const STATUSES: { value: ProviderStatus; label: string }[] = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'available', label: 'Active' },
-  { value: 'busy', label: 'Busy' },
-  { value: 'offline', label: 'Offline' },
-  { value: 'suspended', label: 'Suspended' },
-];
-
 interface Draft {
   name: string;
   phone: string;
@@ -41,26 +33,32 @@ interface Draft {
   vehicleType: string;
   plateNumber: string;
   maxCapacityKg: string;
-  sectorId: string;
+  cityId: string;
+  portId: string;
   zoneIds: string[];
-  status: ProviderStatus;
-  isOnline: boolean;
 }
 
 const EMPTY: Draft = {
   name: '', phone: '', email: '',
   providerType: 'individual_rider', actorType: 'rider',
   vehicleType: 'motorcycle', plateNumber: '', maxCapacityKg: '10',
-  sectorId: '', zoneIds: [], status: 'pending', isOnline: false,
+  cityId: '', portId: '', zoneIds: [],
 };
 
 /**
- * Add / Edit Delivery Provider.
+ * Add / Edit Delivery Provider — INCLUDING its initial operating location
+ * (City / Zone / Port) for an admin-created provider (§4).
+ *
+ * What this form deliberately does NOT contain:
+ *   - a STATUS selector — every provider starts `pending` (both registration
+ *     paths share one lifecycle: PENDING -> approve/reject); account status
+ *     changes go through their own audited actions;
+ *   - an "Available now" switch — availability is the provider's own, never
+ *     the admin's (§7).
  *
  * Only zones the admin can actually assign are offered (active + serviceable),
  * matching the backend rule so the form cannot submit an invalid assignment.
- * Routes are assigned from the provider's detail workspace, reusing the
- * existing Routes module rather than duplicating route management here.
+ * Routes are assigned from the provider's detail workspace.
  */
 export function ProviderForm({
   open,
@@ -77,8 +75,12 @@ export function ProviderForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: locations } = useAsync(() => locationsService.list(), [open]);
+  const { data: ports } = useAsync(() => portsService.list({ limit: 200 }), [open]);
   const { data: allZones } = useAsync(() => zonesService.list({ page: 1, limit: 200 }), [open]);
+  const { data: cities } = useAsync(
+    () => locationsService.list({ type: 'city', status: 'all', page: 1, limit: 200 }),
+    [open]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -94,10 +96,9 @@ export function ProviderForm({
             vehicleType: initial.vehicleType ?? 'motorcycle',
             plateNumber: initial.plateNumber ?? '',
             maxCapacityKg: String(initial.maxCapacityKg ?? 10),
-            sectorId: initial.sectorId ?? '',
+            cityId: initial.cityId ?? '',
+            portId: initial.portId ?? '',
             zoneIds: initial.zoneIds ?? [],
-            status: initial.status ?? 'pending',
-            isOnline: initial.availability?.isOnline ?? false,
           }
         : EMPTY
     );
@@ -119,6 +120,8 @@ export function ProviderForm({
     setSaving(true);
     setError(null);
     try {
+      // Location only — City / Zone / Port. NO status / availability fields:
+      // the backend strips them anyway, and account status has its own actions.
       const payload = {
         name: draft.name,
         phone: draft.phone,
@@ -128,16 +131,15 @@ export function ProviderForm({
         vehicleType: draft.vehicleType,
         plateNumber: draft.plateNumber,
         maxCapacityKg: Number(draft.maxCapacityKg) || 10,
-        sectorId: draft.sectorId || null,
+        cityId: draft.cityId || null,
+        portId: draft.portId || null,
         zoneIds: draft.zoneIds,
         zoneId: draft.zoneIds[0] ?? null,
       };
       if (initial) {
         await providersService.update(initial._id, payload);
-        await providersService.setOnline(initial._id, draft.isOnline);
       } else {
-        const created = await providersService.create(payload);
-        if (draft.isOnline) await providersService.setOnline(created._id, true);
+        await providersService.create(payload);
       }
       onSaved();
     } catch (err) {
@@ -147,9 +149,9 @@ export function ProviderForm({
     }
   };
 
-  const locOptions = [
-    { value: '', label: 'Any location' },
-    ...(locations ?? []).map((l: Location) => ({ value: l._id, label: l.name })),
+  const portOptions = [
+    { value: '', label: '—' },
+    ...(ports?.ports ?? []).map((pt) => ({ value: pt._id, label: pt.name })),
   ];
 
   return (
@@ -167,7 +169,6 @@ export function ProviderForm({
               onChange={(e) => setDraft({ ...draft, providerType: e.target.value as ProviderType })}
               options={PROVIDER_TYPES}
             />
-            <SelectField label="Operating Location" value={draft.sectorId} onChange={(e) => setDraft({ ...draft, sectorId: e.target.value })} options={locOptions} />
             <SelectField
               label="Transport Role"
               value={draft.actorType}
@@ -192,11 +193,27 @@ export function ProviderForm({
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Coverage</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Operating location — City / Zone / Port
+          </h3>
           <p className="mb-2 text-xs text-gray-500">
-            Only active, serviceable zones can be assigned. Routes are assigned from the
-            provider&apos;s detail workspace.
+            Where this provider normally operates. Chosen once here (or on the
+            application, for a self-applied provider) — not re-assigned per
+            delivery. Only active, serviceable zones can be chosen; routes are
+            assigned from the provider&apos;s detail workspace.
           </p>
+          <div className="mb-3 grid gap-3 sm:grid-cols-2">
+            <SelectField
+              label="City"
+              value={draft.cityId}
+              onChange={(e) => setDraft({ ...draft, cityId: e.target.value })}
+              options={[
+                { value: '', label: '—' },
+                ...(cities ?? []).map((c) => ({ value: c._id, label: c.name })),
+              ]}
+            />
+            <SelectField label="Port" value={draft.portId} onChange={(e) => setDraft({ ...draft, portId: e.target.value })} options={portOptions} />
+          </div>
           {assignableZones.length === 0 ? (
             <p className="text-sm text-gray-500">No active serviceable zones available yet.</p>
           ) : (
@@ -214,21 +231,9 @@ export function ProviderForm({
           )}
         </section>
 
-        <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Availability &amp; Status</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <SelectField
-              label="Status"
-              value={draft.status}
-              onChange={(e) => setDraft({ ...draft, status: e.target.value as ProviderStatus })}
-              options={STATUSES}
-            />
-            <label className="flex items-center gap-2 self-end pb-2 text-sm text-gray-700 dark:text-gray-200">
-              <input type="checkbox" checked={draft.isOnline} onChange={(e) => setDraft({ ...draft, isOnline: e.target.checked })} />
-              Available now
-            </label>
-          </div>
-        </section>
+        {/* No "Availability & Status" section: account status changes through
+            the audited Approve/Reject/Activate/Deactivate actions, and
+            availability is the provider's own switch (§7, §19). */}
 
         {error && (
           <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">

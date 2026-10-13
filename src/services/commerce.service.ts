@@ -27,6 +27,11 @@ export interface CommerceProduct {
   sold_out?: number;
   createdAt?: string;
   shop?: { name?: string; ownerId?: string; email?: string };
+  // Ownership — resolved server-side so rows read as Shop / Business / Seller
+  // rather than routed through raw ids.
+  businessId?: string | null;
+  businessName?: string | null;
+  sellerEmail?: string | null;
 }
 
 export interface PaginatedProducts {
@@ -77,6 +82,8 @@ export interface AdminOrderRow {
     sellerId?: string;
     businessId?: string;
     shopId?: string;
+    shopName?: string | null;
+    businessName?: string | null;
     items?: Array<{ productId?: string; name?: string; qty?: number; price?: number }>;
     subtotal?: number;
     origin?: {
@@ -93,6 +100,16 @@ export interface AdminOrderRow {
   }>;
   createdAt?: string;
   updatedAt?: string;
+  // Ownership — resolved server-side, displayed in the console rather than ids.
+  user?: { name?: string | null; email?: string | null } | null;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  sellerName?: string | null;
+  sellerEmail?: string | null;
+  shopId?: string | null;
+  shopName?: string | null;
+  businessId?: string | null;
+  businessName?: string | null;
 }
 
 export interface PaginatedOrders {
@@ -336,6 +353,8 @@ export const commerceService = {
     stockFilter?: string;
     shopId?: string;
     category?: string;
+    businessId?: string;
+    ownerId?: string;
     priceMin?: number;
     priceMax?: number;
     dateFrom?: string;
@@ -348,6 +367,8 @@ export const commerceService = {
     if (params.status && params.status !== 'all') query.set('status', params.status);
     if (params.stockFilter && params.stockFilter !== 'all') query.set('stockFilter', params.stockFilter);
     if (params.shopId) query.set('shopId', params.shopId);
+    if (params.businessId) query.set('businessId', params.businessId);
+    if (params.ownerId) query.set('ownerId', params.ownerId);
     if (params.category) query.set('category', params.category);
     if (params.priceMin) query.set('priceMin', String(params.priceMin));
     if (params.priceMax) query.set('priceMax', String(params.priceMax));
@@ -447,17 +468,30 @@ export const commerceService = {
     page?: number;
     limit?: number;
     status?: string;
+    stage?: string;
+    paymentStatus?: string;
     startDate?: string;
     endDate?: string;
     search?: string;
+    sellerId?: string;
+    shopId?: string;
+    businessId?: string;
   }): Promise<PaginatedOrders> {
     const query: Record<string, string | number> = {
       page: params.page || 1,
       limit: params.limit || 20,
     };
     if (params.status) query.status = params.status;
+    if (params.stage) query.stage = params.stage;
+    if (params.paymentStatus) query.paymentStatus = params.paymentStatus;
     if (params.startDate) query.from = params.startDate;
     if (params.endDate) query.to = params.endDate;
+    // The search box was a controlled input that never reached the API — an
+    // admin typing an order id or buyer email got the unfiltered list.
+    if (params.search) query.search = params.search;
+    if (params.sellerId) query.sellerId = params.sellerId;
+    if (params.shopId) query.shopId = params.shopId;
+    if (params.businessId) query.businessId = params.businessId;
 
     const res = await http.get<{
       success: boolean;

@@ -1,13 +1,13 @@
 /**
- * Hubs service facade.
+ * Ports service facade.
  *
- * Hubs are physical/logistical sites attached to a location. Their zone, route
+ * Ports are physical/logistical sites attached to a location. Their zone, route
  * and provider counts are DERIVED server-side from the real Zone / Route /
  * Partner records, so this client never invents relationships.
  */
 import { http } from '@/services/client/httpClient';
 
-export interface HubProvider {
+export interface PortProvider {
   _id: string;
   name: string;
   status: string;
@@ -15,7 +15,7 @@ export interface HubProvider {
   phone?: string;
 }
 
-export interface Hub {
+export interface Port {
   _id: string;
   id?: string;
   name: string;
@@ -32,13 +32,13 @@ export interface Hub {
   zoneCount: number;
   routeCount: number;
   providerCount: number;
-  providers?: HubProvider[];
+  providers?: PortProvider[];
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface HubListResult {
-  hubs: Hub[];
+export interface PortListResult {
+  ports: Port[];
   count: number;
   total: number;
   page: number;
@@ -46,56 +46,56 @@ export interface HubListResult {
   totalPages: number;
 }
 
-export interface HubStats {
-  totalHubs: number;
-  activeHubs: number;
-  inactiveHubs: number;
-  suspendedHubs: number;
+export interface PortStats {
+  totalPorts: number;
+  activePorts: number;
+  inactivePorts: number;
+  suspendedPorts: number;
   totalCapacity: number;
   currentLoad: number;
   withProviders: number;
 }
 
-export const hubsService = {
+export const portsService = {
   async list(params: {
     page?: number;
     limit?: number;
     search?: string;
     status?: string;
     locationId?: string;
-  }): Promise<HubListResult> {
+  }): Promise<PortListResult> {
     const res = await http.get<{
       success: boolean;
-      hubs?: Hub[];
+      ports?: Port[];
       total?: number;
       page?: number;
       limit?: number;
       totalPages?: number;
-    }>('/delivery/hub', { params: params as never });
+    }>('/delivery/port', { params: params as never });
 
-    const hubs = res.hubs ?? [];
+    const ports = res.ports ?? [];
     return {
-      hubs,
-      count: hubs.length,
-      total: res.total ?? hubs.length,
+      ports,
+      count: ports.length,
+      total: res.total ?? ports.length,
       page: res.page ?? params.page ?? 1,
       limit: res.limit ?? params.limit ?? 20,
       totalPages: res.totalPages ?? 1,
     };
   },
 
-  async get(id: string): Promise<Hub> {
-    const res = await http.get<{ success: boolean; hub: Hub }>(`/delivery/hub/${id}`);
-    return res.hub;
+  async get(id: string): Promise<Port> {
+    const res = await http.get<{ success: boolean; port: Port }>(`/delivery/port/${id}`);
+    return res.port;
   },
 
-  async getStats(): Promise<HubStats> {
-    const res = await http.get<{ success: boolean } & Partial<HubStats>>('/delivery/hub/stats');
+  async getStats(): Promise<PortStats> {
+    const res = await http.get<{ success: boolean } & Partial<PortStats>>('/delivery/port/stats');
     return {
-      totalHubs: res.totalHubs ?? 0,
-      activeHubs: res.activeHubs ?? 0,
-      inactiveHubs: res.inactiveHubs ?? 0,
-      suspendedHubs: res.suspendedHubs ?? 0,
+      totalPorts: res.totalPorts ?? 0,
+      activePorts: res.activePorts ?? 0,
+      inactivePorts: res.inactivePorts ?? 0,
+      suspendedPorts: res.suspendedPorts ?? 0,
       totalCapacity: res.totalCapacity ?? 0,
       currentLoad: res.currentLoad ?? 0,
       withProviders: res.withProviders ?? 0,
@@ -110,27 +110,27 @@ export const hubsService = {
     capacity?: number;
     contactPhone?: string;
     contactEmail?: string;
-  }): Promise<Hub> {
-    const res = await http.post<{ success: boolean; hub: Hub }>(
-      '/delivery/hub',
+  }): Promise<Port> {
+    const res = await http.post<{ success: boolean; port: Port }>(
+      '/delivery/port',
       data as unknown as Record<string, unknown>
     );
-    return res.hub;
+    return res.port;
   },
 
-  async update(id: string, data: Record<string, unknown>): Promise<Hub> {
-    const res = await http.put<{ success: boolean; hub: Hub }>(
-      `/delivery/hub/${id}`,
+  async update(id: string, data: Record<string, unknown>): Promise<Port> {
+    const res = await http.put<{ success: boolean; port: Port }>(
+      `/delivery/port/${id}`,
       data
     );
-    return res.hub;
+    return res.port;
   },
 
-  async setStatus(id: string, status: string): Promise<Hub> {
-    const res = await http.put<{ success: boolean; hub: Hub }>(
-      `/delivery/hub/${id}/status`,
+  async setStatus(id: string, status: string): Promise<Port> {
+    const res = await http.put<{ success: boolean; port: Port }>(
+      `/delivery/port/${id}/status`,
       { status }
     );
-    return res.hub;
+    return res.port;
   },
 };

@@ -1,5 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { sellersService } from '@/services/sellers.service';
+import { storesService } from '@/services/stores.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { Card } from '@/components/common/Card';
@@ -20,10 +21,22 @@ export function SellerDetailPage() {
     [sellerId]
   );
 
+  // A seller's shops are owned by their account id — one batched commerce call,
+  // so the page shows shop NAMES (and the business each belongs to) instead of
+  // the opaque shop ids identity alone can report.
+  const { data: shops } = useAsync(
+    () => storesService.list({ ownerId: sellerId ?? '', page: 1, limit: 50 }),
+    [sellerId]
+  );
+
   if (loading) return <PageLoader label={t('Loading')} />;
   if (error || !seller) {
     return <ErrorState message={error ?? 'Not found'} onRetry={refetch} />;
   }
+
+  const storeIds = seller.stores || [];
+  const shopRows = shops?.items ?? [];
+  const hasAnyStore = shopRows.length > 0 || storeIds.length > 0;
 
   return (
     <div>
@@ -43,7 +56,7 @@ export function SellerDetailPage() {
           <p className="heading-5 dark:text-white">{seller.name}</p>
           <StatusBadge label={seller.status} />
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {formatNumber(seller.storesCount)} {t('Stores')}
+            {formatNumber(shops?.total ?? seller.storesCount ?? 0)} {t('Stores')}
           </p>
         </Card>
 
@@ -72,24 +85,56 @@ export function SellerDetailPage() {
             </dd>
           </dl>
 
-          {(seller.stores || []).length > 0 && (
-            <div className="mt-4">
-              <p className="card-h2 mb-2 dark:text-gray-300">{t('Stores')}</p>
-              <ul className="space-y-1 text-sm">
-                {(seller.stores || []).map((storeId) => (
-                  <li key={storeId}>
+          <div className="mt-4">
+            <p className="card-h2 mb-2 dark:text-gray-300">{t('Stores')}</p>
+            {hasAnyStore ? (
+              <ul className="space-y-2 text-sm">
+                {shopRows.map((shop) => (
+                  <li key={shop.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
                     <button
                       type="button"
-                      onClick={() => navigate(`/stores/${storeId}`)}
+                      onClick={() => navigate(`/stores/${shop.id}`)}
                       className="text-primary-dark hover:underline"
                     >
-                      {storeId}
+                      {shop.name}
                     </button>
+                    {shop.businessName &&
+                      (shop.businessId ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/businesses/${shop.businessId}`)}
+                          className="text-xs text-gray-500 hover:underline"
+                        >
+                          {shop.businessName}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-500">{shop.businessName}</span>
+                      ))}
+                    <span className="text-xs text-gray-400">{shop.status}</span>
                   </li>
                 ))}
+                {/* Shops the commerce list has not returned (legacy records):
+                    fall back to the ids on the seller record, no better source. */}
+                {storeIds
+                  .filter((id) => !shopRows.some((shop) => shop.id === id))
+                  .map((storeId) => (
+                    <li key={storeId}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/stores/${storeId}`)}
+                        className="text-primary-dark hover:underline"
+                      >
+                        {storeId}
+                      </button>
+                    </li>
+                  ))}
               </ul>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('No shops registered for this seller yet')}
+              </p>
+            )}
+          </div>
         </Card>
       </div>
     </div>

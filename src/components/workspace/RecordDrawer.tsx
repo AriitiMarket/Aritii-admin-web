@@ -3,7 +3,7 @@ import { Button } from '@/components/common/Button';
 import { StatusBadge, type StatusVariant } from '@/components/common/StatusBadge';
 
 /**
- * ONE detail pattern shared by Locations, Zones, Hubs and Routes so the module
+ * ONE detail pattern shared by Locations, Zones, Ports and Routes so the module
  * feels like a single system instead of four unrelated CRUD pages.
  *
  *   Header  — name, status, primary actions
@@ -35,6 +35,7 @@ export function RecordDrawer({
   statusVariant,
   actions,
   summary,
+  body,
   tabs,
   activeTab,
   onTabChange,
@@ -50,7 +51,13 @@ export function RecordDrawer({
   statusVariant?: StatusVariant;
   actions?: ReactNode;
   summary: SummaryItem[];
-  tabs: DetailTab[];
+  /**
+   * Optional tab-free content rendered after the summary. Use this for simple,
+   * single-view panels; callers with related information to switch between pass
+   * `tabs` instead (or alongside).
+   */
+  body?: ReactNode;
+  tabs?: DetailTab[];
   activeTab?: string;
   onTabChange?: (id: string) => void;
   loading?: boolean;
@@ -71,7 +78,7 @@ export function RecordDrawer({
   }, [open, onClose]);
 
   if (!open) return null;
-  const current = tabs.find((t) => t.id === activeTab) ?? tabs[0];
+  const current = (tabs ?? []).find((t) => t.id === activeTab) ?? tabs?.[0];
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={title}>
@@ -132,13 +139,15 @@ export function RecordDrawer({
                 </dl>
               )}
 
-              {tabs.length > 0 && (
+              {body}
+
+              {(tabs ?? []).length > 0 && (
                 <>
                   <div
                     className="mb-3 flex gap-1 overflow-x-auto border-b border-gray-200 dark:border-dark-600"
                     role="tablist"
                   >
-                    {tabs.map((t) => (
+                    {(tabs ?? []).map((t) => (
                       <button
                         key={t.id}
                         type="button"

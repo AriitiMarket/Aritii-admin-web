@@ -59,7 +59,7 @@ export function ShopsAnalyticsPage() {
       avgRating: 4.2,
       topShops: [
         { name: 'Market Plus', gmv: 450000, rating: 4.5 },
-        { name: 'Trading Hub', gmv: 380000, rating: 4.0 },
+        { name: 'Trading Port', gmv: 380000, rating: 4.0 },
         { name: 'Tech Store', gmv: 320000, rating: 4.3 },
       ],
     },

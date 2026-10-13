@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -15,18 +15,21 @@ import { Card } from '@/components/common/Card';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { commerceService } from '@/services/commerce.service';
 import { storesService } from '@/services/stores.service';
+import { businessesService } from '@/services/businesses.service';
 import type { CommerceProduct } from '@/services/commerce.service';
 import { resolveImageUrl } from '@/utils/image';
 
 export function ProductsPage() {
   const { t } = useLocalization();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [category, setCategory] = useState('');
+  const [businessId, setBusinessId] = useState('');
   // Deep-linkable: /commerce/products?shopId=<id> opens this shop's catalogue
   // (used by the store detail page — product management stays in this module).
   const [shopId, setShopId] = useState(() => searchParams.get('shopId') || '');
@@ -55,6 +58,23 @@ export function ProductsPage() {
     shopOptions.push({ value: shopId, label: `#${shopId.slice(-6)}` });
   }
 
+  // Business filter — same pattern: pick by name, send the id.
+  const { data: businesses } = useAsync(
+    () => businessesService.listApplications({ page: 1, limit: 200 }),
+    []
+  );
+  const businessOptions = [
+    { value: '', label: t('All Businesses') },
+    ...(businesses?.items ?? []).map((business) => ({
+      value: business.id,
+      label:
+        business.businessInformation?.businessName ||
+        business.businessName ||
+        business.shopInformation?.shopName ||
+        business.id,
+    })),
+  ];
+
   const { data, loading, error, refetch } = useAsync(
     async () => {
       return commerceService.listProducts({
@@ -65,13 +85,14 @@ export function ProductsPage() {
         stockFilter,
         category: category || undefined,
         shopId: shopId || undefined,
+        businessId: businessId || undefined,
         priceMin: priceMin ? Number(priceMin) : undefined,
         priceMax: priceMax ? Number(priceMax) : undefined,
         dateFrom: dateFrom || undefined,
         includeInactive: true,
       });
     },
-    [page, debouncedSearch, status, stockFilter, category, shopId, priceMin, priceMax, dateFrom]
+    [page, debouncedSearch, status, stockFilter, category, shopId, businessId, priceMin, priceMax, dateFrom]
   );
 
   const columns: Column<CommerceProduct>[] = [
@@ -116,15 +137,32 @@ export function ProductsPage() {
     },
     {
       key: 'shopName',
-      header: t('Shop'),
-      render: (row) => (
-        <div>
-          <div className="text-sm text-gray-700 dark:text-gray-300">{row.shopName || row.shop?.name || '—'}</div>
-          {row.sellerName && (
-            <div className="text-xs text-gray-500">{row.sellerName}</div>
-          )}
-        </div>
-      ),
+      header: t('Shop / Business'),
+      render: (row) => {
+        return (
+          <div>
+            {row.shopId ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/stores/${row.shopId}`)}
+                className="text-sm text-primary-dark hover:underline dark:text-primary-color"
+              >
+                {row.shopName || row.shop?.name || '—'}
+              </button>
+            ) : (
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                {row.shopName || row.shop?.name || '—'}
+              </div>
+            )}
+            {row.businessName && (
+              <div className="text-xs text-gray-500">{row.businessName}</div>
+            )}
+            {row.sellerName && !row.businessName && (
+              <div className="text-xs text-gray-500">{row.sellerName}</div>
+            )}
+          </div>
+        );
+      },
     },
     { key: 'category', header: t('Category'), accessor: (row) => row.category || '-' },
     {
@@ -233,7 +271,7 @@ export function ProductsPage() {
     }
   };
 
-  const hasActiveFilters = status !== 'all' || stockFilter !== 'all' || category !== '' || shopId !== '' || priceMin !== '' || priceMax !== '' || dateFrom !== '';
+  const hasActiveFilters = status !== 'all' || stockFilter !== 'all' || category !== '' || shopId !== '' || businessId !== '' || priceMin !== '' || priceMax !== '' || dateFrom !== '';
 
   return (
     <div>
@@ -292,6 +330,12 @@ export function ProductsPage() {
               onChange={(e) => { setShopId(e.target.value); setPage(1); }}
               label={t('Shop')}
             />
+            <SelectField
+              value={businessId}
+              options={businessOptions}
+              onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
+              label={t('Business')}
+            />
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Min Price')}</label>
               <input
@@ -329,6 +373,7 @@ export function ProductsPage() {
                     setStockFilter('all');
                     setCategory('');
                     setShopId('');
+                    setBusinessId('');
                     setPriceMin('');
                     setPriceMax('');
                     setDateFrom('');

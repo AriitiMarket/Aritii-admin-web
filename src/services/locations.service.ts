@@ -22,11 +22,11 @@ export interface LocationServiceability {
   };
 }
 
-export interface Hub {
-  isHub: boolean;
-  hubName?: string;
-  hubCode?: string;
-  hubAddress?: string;
+export interface Port {
+  isPort: boolean;
+  portName?: string;
+  portCode?: string;
+  portAddress?: string;
   contactInfo?: { phone?: string; email?: string };
   operatingStatus: 'active' | 'inactive' | 'maintenance';
   capacity?: number;
@@ -44,7 +44,7 @@ export interface Location {
   /** GeoJSON Point, [longitude, latitude]. Null when the location is not mapped. */
   coordinates?: GeoPoint | null;
   serviceability?: LocationServiceability;
-  hub?: Hub;
+  port?: Port;
   expansionStatus?: 'planned' | 'preparing' | 'testing' | 'active' | 'suspended' | 'closed';
   metadata?: Record<string, unknown>;
   createdAt?: string;
@@ -100,8 +100,8 @@ export interface Zone {
   name: string;
   code: string;
   status: string;
+  lifecycle?: 'DRAFT' | 'READY' | 'LIVE' | 'PAUSED';
   locationIds: string[];
-  sectorId?: string;
   coverage?: {
     radiusKm?: number;
     /** Typed as GeoPoint (not `unknown`) so the map needs no unsafe cast. */
@@ -111,9 +111,9 @@ export interface Zone {
     excludedAreas?: string[];
   };
   deliveryRules?: { serviceable: boolean; deliveryFee: number; freeDeliveryThreshold?: number; estimatedDeliveryTime: string; minimumOrder?: number; codAvailable: boolean; pickupAvailable: boolean };
-  operationalRules?: { allowedProviders?: string[]; allowedRiders?: string[]; hubId?: string; priority: number; operatingHours?: { open: string; close: string; days: string[] } };
+  operationalRules?: { allowedProviders?: string[]; allowedRiders?: string[]; priority: number; operatingHours?: { open: string; close: string; days: string[] } };
   priority?: number;
-  hubId?: string;
+  portId?: string;
   description?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -130,7 +130,7 @@ export interface LocationListParams {
   /** 'true' | 'false' */
   serviceable?: string;
   /** 'true' | 'false' */
-  hub?: string;
+  port?: string;
   expansionStatus?: string;
   /** Free-text search over name / localName / code. */
   q?: string;
@@ -152,7 +152,7 @@ export interface LocationStats {
   totalLocations: number;
   activeLocations: number;
   serviceableLocations: number;
-  hubs: number;
+  ports: number;
   pendingExpansion: number;
 }
 
@@ -205,7 +205,7 @@ export const locationsService = {
         totalLocations: res.totalLocations ?? 0,
         activeLocations: res.activeLocations ?? 0,
         serviceableLocations: res.serviceableLocations ?? 0,
-        hubs: res.hubs ?? 0,
+        ports: res.ports ?? 0,
         pendingExpansion: res.pendingExpansion ?? 0,
       }));
   },

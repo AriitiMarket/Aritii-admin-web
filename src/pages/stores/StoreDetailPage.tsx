@@ -226,15 +226,19 @@ export function StoreDetailPage() {
           <dl className="space-y-3 text-sm">
             <div>
               <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Name')}</dt>
-              <dd className="text-gray-900 dark:text-white">{owner.name || (store as any).ownerName || '—'}</dd>
+              <dd className="text-gray-900 dark:text-white">
+                {(store as any).ownerId ? (
+                  <Link to={`/sellers/${(store as any).ownerId}`} className="text-primary-dark hover:underline dark:text-primary-color">
+                    {owner.name || (store as any).ownerName || '—'}
+                  </Link>
+                ) : (
+                  owner.name || (store as any).ownerName || '—'
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Email')}</dt>
               <dd className="text-gray-900 dark:text-white">{owner.email || (store as any).ownerEmail || (store as any).email || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Owner ID')}</dt>
-              <dd className="text-gray-900 dark:text-white font-mono text-xs">{(store as any).ownerId || '—'}</dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Owner Role')}</dt>
@@ -242,10 +246,6 @@ export function StoreDetailPage() {
                 {owner.role || '—'}
                 {owner.status ? ` · ${owner.status}` : ''}
               </dd>
-            </div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Application ID')}</dt>
-              <dd className="text-gray-900 dark:text-white font-mono text-xs">{(store as any).applicationId || '—'}</dd>
             </div>
           </dl>
         </Card>
@@ -260,7 +260,15 @@ export function StoreDetailPage() {
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Business Name')}</dt>
-              <dd className="text-gray-900 dark:text-white">{bi.businessName || '—'}</dd>
+              <dd className="text-gray-900 dark:text-white">
+                {(store as any).applicationId ? (
+                  <Link to={`/businesses/${(store as any).applicationId}`} className="text-primary-dark hover:underline dark:text-primary-color">
+                    {bi.businessName || '—'}
+                  </Link>
+                ) : (
+                  bi.businessName || '—'
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-gray-500 dark:text-gray-400 text-xs font-semibold mb-1">{t('Business Description')}</dt>

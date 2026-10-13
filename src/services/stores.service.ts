@@ -13,18 +13,25 @@ export interface StoreListFilter {
   /** SellerApplication id (the business). */
   businessId?: string;
   ownerId?: string;
+  /** Comma-separated owner ids — one call for exactly one page of sellers. */
+  ownerIds?: string;
   ownerEmail?: string;
   dateFrom?: string;
   dateTo?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapShopToStore(shop: any): Store {
   return {
     ...shop,
-    id: shop._id || shop.id,
-    ownerId: shop.ownerId,
+    id: shop._id || shop.id || '',
+    ownerId: shop.ownerId || undefined,
     ownerName: shop.ownerName || shop.owner?.name,
     ownerEmail: shop.ownerEmail || shop.owner?.email || shop.email,
+    ownerPhoneNumber: shop.ownerPhoneNumber || null,
+    businessId: shop.businessId || null,
+    businessName: shop.businessName || null,
+    businessStatus: shop.businessStatus || null,
     locationSnapshot: shop.locationSnapshot || undefined,
     sectorId: shop.sectorId || (typeof shop.sector === 'string' ? shop.sector : shop.sector?.id),
   };
@@ -41,6 +48,7 @@ export const storesService = {
     if (filter.sectorId && filter.sectorId !== 'all') params.sectorId = filter.sectorId;
     if (filter.businessId) params.businessId = filter.businessId;
     if (filter.ownerId) params.ownerId = filter.ownerId;
+    if (filter.ownerIds) params.ownerIds = filter.ownerIds;
     // The backend resolves the email to an owner id (Identity lookup) and
     // answers "no match" for an unknown address — it is no longer ignored.
     if (filter.ownerEmail) params.ownerEmail = filter.ownerEmail;
@@ -63,7 +71,7 @@ export const storesService = {
     const shop = await commerceAdmin.getShop(id);
     return {
       ...shop,
-      id: shop._id || shop.id,
+    id: shop._id || shop.id || '',
       ownerId: shop.ownerId,
       ownerName: shop.ownerName || shop.owner?.name,
       ownerEmail: shop.ownerEmail || shop.owner?.email || shop.email,

@@ -1,280 +1,133 @@
-import { useState, useEffect } from 'react';
+/**
+ * Deliveries — the main operational delivery list.
+ *
+ * One row per delivery, showing the record's identity, who moves it, and its
+ * current position in the CANONICAL lifecycle. The admin views and operates
+ * from here: the detail panel offers only the transitions the backend allows
+ * from the delivery's CURRENT state, so there is no free-form status editor and
+ * no invented status name anywhere.
+ */
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useToast } from '@/hooks/useToast';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
+import { Tabs } from '@/components/common/Tabs';
 import { Pagination } from '@/components/common/Pagination';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { FilterBar } from '@/components/workspace/FilterBar';
 import { DataSection } from '@/components/workspace/DataSection';
-import { formatDate } from '@/utils/format';
-import { DELIVERY_STATUSES } from './constants';
+import { formatDateTime } from '@/utils/format';
+import { ADMIN_DELIVERY_STATUS_FILTERS, EXCEPTIONAL_DELIVERY_STATUSES } from './constants';
 import { deliveryAdmin } from '@/api/admin';
 import { deliveryServicesService } from '@/services/deliveryServices.service';
 import { locationsService, zonesService } from '@/services/locations.service';
-import { getDeliveryStatusColor, getManualTransitions } from './utils/statusHelpers';
+import { DeliveryStatusPill } from './components/DeliveryStatusPill';
+import { DeliveryDetailPanel } from './DeliveryDetailPanel';
 import { StatusChangeDialog } from './components/StatusChangeDialog';
+import { getDeliveryRef, getDeliveryDocumentId, getDeliveryStatusLabel } from './utils/statusHelpers';
+import { TrackingView } from './TrackingView';
 import type { Delivery } from './types';
-import { useToast } from '@/hooks/useToast';
 import { ApiError } from '@/types/api';
 
-/** Delivery detail (history) modal. /delivery/delivery/:id/history -> { timeline, trackingEvents, assignmentHistory }. */
-function HistoryModal({ delivery, open, onClose }: { delivery: Delivery | null; open: boolean; onClose: () => void }) {
-  const { showToast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [timeline, setTimeline] = useState<{ stage: string; label: string; timestamp: string | null; status: string; note: string }[]>([]);
-  const [trackingEvents, setTrackingEvents] = useState<{ stage: string; label: string; timestamp: string; note: string }[]>([]);
-  const [assignmentHistory, setAssignmentHistory] = useState<{ status: string; actorName?: string; at?: string }[]>([]);
+const LIMIT = 20;
 
-  useEffect(() => {
-    if (!delivery) return;
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await deliveryAdmin.getDeliveryHistory(delivery.id);
-        if (cancelled) return;
-        const ordered = (res.timeline ?? []).concat(res.trackingEvents ?? []);
-        setTimeline(ordered as typeof timeline);
-        setTrackingEvents(res.trackingEvents ?? []);
-        setAssignmentHistory(res.assignmentHistory ?? []);
-      } catch (err) {
-        if (!cancelled) {
-          showToast({
-            type: 'error',
-            message: err instanceof ApiError ? err.message : 'Failed to load delivery history',
-          });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [delivery]);
 
-  if (!open || !delivery) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delivery History: {delivery.orderId}</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
-        </div>
-        {loading ? (
-          <p className="text-sm text-gray-500">Loading…</p>
-        ) : (
-          <>
-            <Card className="mb-4">
-              <h4 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Operational timeline</h4>
-              <ul className="space-y-2">
-                {timeline.map((t, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <span className="w-24 shrink-0 text-xs text-gray-500">{t.timestamp ? formatDate(t.timestamp) : '—'}</span>
-                    <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-dark-800 dark:text-gray-300">
-                      {t.label}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">{t.note || '—'}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card className="mb-4">
-              <h4 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Tracking events</h4>
-              <ul className="space-y-2">
-                {trackingEvents.map((e, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <span className="w-24 shrink-0 text-xs text-gray-500">{formatDate(e.timestamp)}</span>
-                    <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">
-                      {e.label}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">{e.note || '—'}</span>
-                  </li>
-                ))}
-                {trackingEvents.length === 0 && <li className="text-sm text-gray-500">No tracking events</li>}
-              </ul>
-            </Card>
-            <Card>
-              <h4 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Assignment history</h4>
-              <ul className="space-y-2">
-                {assignmentHistory.map((h, i) => (
-                  <li key={i} className="flex gap-3 text-sm">
-                    <span className="w-24 shrink-0 text-xs text-gray-500">{h.at || '—'}</span>
-                    <span className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-dark-800 dark:text-gray-300">
-                      {h.status}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">{h.actorName || '—'}</span>
-                  </li>
-                ))}
-                {assignmentHistory.length === 0 && <li className="text-sm text-gray-500">No assignment history</li>}
-              </ul>
-            </Card>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+const place = (a?: Delivery['destinationAddress']) =>
+  [a?.cityName, a?.regionName].filter(Boolean).join(', ');
 
 export function DeliveriesPage() {
-  // Deep links (?status=, ?orderId=) from the Overview cards and the
-  // Requests page pre-filter this list on mount.
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState(() => searchParams.get('orderId') ?? '');
-  const [status, setStatus] = useState(() => searchParams.get('status') ?? '');
+  const [search, setSearch] = useState(searchParams.get('orderId') ?? '');
+  const [status, setStatus] = useState(searchParams.get('status') ?? '');
   const [serviceId, setServiceId] = useState('');
   const [zoneId, setZoneId] = useState('');
-  const [sectorId, setSectorId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [detail, setDetail] = useState<Delivery | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [changeReq, setChangeReq] = useState<{ row: Delivery; next: string } | null>(null);
-  const [changeError, setChangeError] = useState<string | null>(null);
-  const { showToast } = useToast();
 
-  const debouncedSearch = useDebounce(search, 300);
-  const isFiltered = !!(
-    debouncedSearch || status || serviceId || zoneId || sectorId || dateFrom || dateTo
+  // One operational screen: the delivery list and the tracking view are two
+  // views of the SAME records, not two pages with two copies of the state.
+  const [view, setView] = useState<'deliveries' | 'tracking'>(
+    searchParams.get('view') === 'tracking' ? 'tracking' : 'deliveries'
   );
 
-  // Filter options: service catalog, zones, sectors. Failures never break the list.
-  const { data: options } = useAsync(async () => {
-    const [services, zones, sectors] = await Promise.all([
-      deliveryServicesService.list({ page: 1, limit: 200 }).catch(() => null),
-      zonesService.list({ page: 1, limit: 200 }).catch(() => null),
-      locationsService.list({ type: 'sector', limit: 200 }).catch(() => null),
-    ]);
-    return {
-      services: services?.items ?? [],
-      zones: zones?.zones ?? [],
-      sectors: sectors ?? [],
-    };
-  }, []);
+  const [detail, setDetail] = useState<Delivery | null>(null);
+  const [changeReq, setChangeReq] = useState<{ row: Delivery; next: string } | null>(null);
+  const [changeError, setChangeError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const debouncedSearch = useDebounce(search, 300);
 
-  const limit = 20;
-  const { data, loading, error, refetch } = useAsync(
+  // One date picker covers a full day: [00:00, 23:59:59.999].
+  const from = dateFrom ? `${dateFrom}T00:00:00` : '';
+  const to = dateTo ? `${dateTo}T23:59:59.999` : '';
+
+  const {
+    data,
+    loading,
+    error,
+    refetch,
+  } = useAsync(
     async () => {
       const extra: Record<string, string> = {};
       if (serviceId) extra.serviceId = serviceId;
       if (zoneId) extra.zoneId = zoneId;
-      if (sectorId) extra.sectorId = sectorId;
-      // One date covers the whole day: [00:00, 23:59:59.999].
-      if (dateFrom) extra.dateFrom = `${dateFrom}T00:00:00`;
-      if (dateTo) extra.dateTo = `${dateTo}T23:59:59.999`;
-      return deliveryAdmin.listDeliveries(page, limit, status || '', debouncedSearch || '', extra);
+      if (from) extra.dateFrom = from;
+      if (to) extra.dateTo = to;
+      const res = await deliveryAdmin.listDeliveries(
+        page,
+        LIMIT,
+        status || '',
+        debouncedSearch || '',
+        extra
+      );
+      return res;
     },
-    [page, status, debouncedSearch, serviceId, zoneId, sectorId, dateFrom, dateTo]
+    [page, status, debouncedSearch, serviceId, zoneId, from, to]
   );
 
-  const columns: Column<Delivery>[] = [
-    {
-      key: 'orderId',
-      header: 'Order',
-      render: (row) => (
-        <span className="font-medium text-gray-800 dark:text-gray-100">{row.orderId || '—'}</span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => (
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getDeliveryStatusColor(row.status || '')}`}>
-          {(row.status || '—').replace(/_/g, ' ')}
-        </span>
-      ),
-    },
-    {
-      key: 'partnerName',
-      header: 'Rider',
-      render: (row) => (
-        <span className="text-sm text-gray-800 dark:text-gray-100">{row.providerName || row.partnerName || (row.providerId ? 'Assigned' : <span className="text-gray-400">Unassigned</span>)}</span>
-      ),
-    },
-    {
-      key: 'pickupAddress',
-      header: 'Pickup',
-      render: (row) => {
-        const addr = row.pickupAddress;
-        const location = [addr?.sectorName, addr?.cityName, addr?.regionName].filter(Boolean).join(', ');
-        return (
-          <div className="text-sm">
-            <p className="font-medium text-gray-800 dark:text-gray-100">{addr?.shopName || '—'}</p>
-            <p className="text-gray-500 dark:text-gray-400">{location || '—'}</p>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'destinationAddress',
-      header: 'Destination',
-      render: (row) => {
-        const addr = row.destinationAddress || row.deliveryAddress;
-        const location = [addr?.sectorName, addr?.areaName, addr?.cityName, addr?.regionName].filter(Boolean).join(', ');
-        return (
-          <div className="text-sm">
-            <p className="font-medium text-gray-800 dark:text-gray-100">{addr?.contactName || '—'}</p>
-            <p className="text-gray-500 dark:text-gray-400">{location || '—'}</p>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'createdAt',
-      header: 'Created',
-      render: (row) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(row.createdAt)}</span>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (row) => (
-        <div className="flex flex-wrap gap-1">
-          <Button size="sm" variant="ghost" onClick={() => { setDetail(row); setDetailOpen(true); }}>
-            History
-          </Button>
-          {row.status && getManualTransitions(row.status).map((t) => (
-            <Button
-              key={t}
-              size="sm"
-              variant="outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                setChangeError(null);
-                setChangeReq({ row, next: t });
-              }}
-              disabled={actionLoading}
-            >
-              {t.replace(/_/g, ' ')}
-            </Button>
-          ))}
-        </div>
-      ),
-    },
-  ];
+  /** Filter option sources; a failure here must not break the list. */
+  const { data: options } = useAsync(async () => {
+    const [services, zones, locations] = await Promise.all([
+      deliveryServicesService.list({ page: 1, limit: 200 }).catch(() => ({ items: [] })),
+      zonesService.list({ page: 1, limit: 200 }).catch(() => ({ zones: [] })),
+      locationsService.list({ limit: 200 }).catch(() => []),
+    ]);
+    return {
+      services: services?.items ?? [],
+      zones: zones?.zones ?? [],
+      locations: locations ?? [],
+    };
+  }, []);
 
-  /** Fire the requested transition with the payload the dialog collected. */
+  const rows = data?.items ?? [];
+  const isFiltered = !!(search || status || serviceId || zoneId || dateFrom || dateTo);
+
+  const reset = () => {
+    setSearch('');
+    setStatus('');
+    setServiceId('');
+    setZoneId('');
+    setDateFrom('');
+    setDateTo('');
+    setPage(1);
+  };
+
+  /** Fire a transition the panel already validated against the current state. */
   const confirmStatusChange = async (extra: Record<string, unknown>) => {
     if (!changeReq) return;
     setActionLoading(true);
     setChangeError(null);
     try {
       await deliveryAdmin.updateDeliveryStatus(changeReq.row.id, changeReq.next, extra);
-      setChangeReq(null);
-      refetch();
       showToast({
         type: 'success',
-        message: `Delivery ${changeReq.row.orderId} → ${changeReq.next.replace(/_/g, ' ')}`,
+        message: `Delivery ${changeReq.row.orderId} → ${getDeliveryStatusLabel(changeReq.next)}`,
       });
+      setChangeReq(null);
+      refetch();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to change delivery status';
       setChangeError(message);
@@ -284,102 +137,215 @@ export function DeliveriesPage() {
     }
   };
 
-  const resetFilters = () => {
-    setSearch('');
-    setStatus('');
-    setServiceId('');
-    setZoneId('');
-    setSectorId('');
-    setDateFrom('');
-    setDateTo('');
-    setPage(1);
-  };
+  const columns: Column<Delivery>[] = [
+    {
+      key: 'delivery',
+      header: 'Delivery',
+      render: (row) => (
+        <span className="text-sm text-gray-800 dark:text-gray-100" title={getDeliveryDocumentId(row)}>
+          {getDeliveryRef(row)}
+        </span>
+      ),
+    },
+    {
+      key: 'orderId',
+      header: 'Order ID',
+      render: (row) => (
+        <span className="font-medium text-gray-800 dark:text-gray-100">{row.orderId}</span>
+      ),
+    },
+    {
+      key: 'seller',
+      header: 'Seller / Shop',
+      accessor: (row) => row.shopName || row.sellerName || '—',
+    },
+    {
+      key: 'destination',
+      header: 'Buyer / Destination',
+      render: (row) => {
+        const text = place(row.destinationAddress ?? row.deliveryAddress);
+        return (
+          <span className="text-sm text-gray-600 dark:text-gray-400" title={text}>
+            {text || '—'}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'provider',
+      header: 'Provider / Rider',
+      render: (row) =>
+        row.providerName || row.partnerName ? (
+          <span className="text-sm text-gray-700 dark:text-gray-200">
+            {row.providerName || row.partnerName}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">Unassigned</span>
+        ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <DeliveryStatusPill status={row.status} />
+          {EXCEPTIONAL_DELIVERY_STATUSES.includes(row.status || '') && (
+            <span className="text-[11px] uppercase tracking-wide text-red-600 dark:text-red-400">
+              Exceptional
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Created time',
+      render: (row) => (
+        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(row.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'updatedAt',
+      header: 'Last update',
+      render: (row) => (
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {formatDateTime(row.updatedAt ?? row.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (row) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDetail(row);
+          }}
+          className="text-primary-dark hover:underline"
+        >
+          View
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div>
       <PageHeader
         title="Deliveries"
-        description="Operational deliveries, their status and live transitions"
+        description="Every delivery, its place in the lifecycle, and where it is right now."
       />
+
+      <Tabs
+        activeTab={view}
+        onChange={(id) => setView(id as 'deliveries' | 'tracking')}
+        tabs={[
+          { value: 'deliveries', label: 'Deliveries' },
+          { value: 'tracking', label: 'Tracking' },
+        ]}
+      />
+
+      {view === 'tracking' ? (
+        <TrackingView
+          onOpenRecord={(row) => {
+            // "Open delivery record" from the Track panel: switch to the
+            // Deliveries tab, narrow the list to this order and open its
+            // panel. A URL navigation could not do this — TrackingView is a
+            // tab of THIS page, so only a query string changed and nothing
+            // on screen reacted to it. Other filters are cleared so an
+            // active status/service filter cannot hide the row we jump to
+            // (the backend `search` matches orderId).
+            setView('deliveries');
+            setStatus('');
+            setServiceId('');
+            setZoneId('');
+            setDateFrom('');
+            setDateTo('');
+            setSearch(row.orderId ?? '');
+            setPage(1);
+            setDetail(row);
+          }}
+        />
+      ) : (
+        <>
 
       <FilterBar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
-        searchPlaceholder="Search order ID / address"
+        searchPlaceholder="Search order ID or address"
+        isFiltered={isFiltered}
+        onReset={reset}
+        resultSummary={
+          data?.total !== undefined
+            ? `${data.total} deliver${data.total === 1 ? 'y' : 'ies'}${isFiltered ? ' matching filters' : ''}`
+            : undefined
+        }
         filters={[
           {
             key: 'status',
             label: 'Status',
             value: status,
-            options: DELIVERY_STATUSES,
-            onChange: (v) => { setStatus(v); setPage(1); },
+            onChange: (v: string) => { setStatus(v); setPage(1); },
+            // Only the states the Admin actually operates on (MVP scope).
+            options: ADMIN_DELIVERY_STATUS_FILTERS.map((s) => ({ ...s })),
           },
           {
             key: 'service',
             label: 'Service',
             value: serviceId,
+            onChange: (v: string) => { setServiceId(v); setPage(1); },
             options: [
               { value: '', label: 'All Services' },
               ...(options?.services ?? []).map((s) => ({ value: s._id, label: s.name })),
             ],
-            onChange: (v) => { setServiceId(v); setPage(1); },
           },
           {
             key: 'zone',
             label: 'Zone',
             value: zoneId,
+            onChange: (v: string) => { setZoneId(v); setPage(1); },
             options: [
               { value: '', label: 'All Zones' },
               ...(options?.zones ?? []).map((z) => ({ value: z._id, label: z.name })),
             ],
-            onChange: (v) => { setZoneId(v); setPage(1); },
-          },
-          {
-            key: 'sector',
-            label: 'Sector',
-            value: sectorId,
-            options: [
-              { value: '', label: 'All Sectors' },
-              ...(options?.sectors ?? []).map((s) => ({ value: s._id, label: s.name })),
-            ],
-            onChange: (v) => { setSectorId(v); setPage(1); },
           },
           {
             key: 'dateFrom',
             label: 'From',
             value: dateFrom,
             type: 'date',
-            onChange: (v) => { setDateFrom(v); setPage(1); },
+            onChange: (v: string) => { setDateFrom(v); setPage(1); },
           },
           {
             key: 'dateTo',
             label: 'To',
             value: dateTo,
             type: 'date',
-            onChange: (v) => { setDateTo(v); setPage(1); },
+            onChange: (v: string) => { setDateTo(v); setPage(1); },
           },
         ]}
-        onReset={resetFilters}
-        isFiltered={isFiltered}
-        resultSummary={
-          data?.total !== undefined
-            ? `${data.total} deliver${data.total === 1 ? 'y' : 'ies'}${isFiltered ? ' matching filters' : ''}`
-            : undefined
-        }
       />
 
       <DataSection
         error={error}
         onRetry={refetch}
-        isEmpty={!loading && (data?.items ?? []).length === 0}
+        isEmpty={!loading && rows.length === 0}
         emptyTitle={isFiltered ? 'No deliveries match these filters' : 'No deliveries yet'}
-        emptyDescription="Deliveries appear here once delivery requests are handed over and materialize."
+        emptyDescription={
+          isFiltered
+            ? 'Try widening or resetting the filters above.'
+            : 'Deliveries appear here once delivery requests are materialized.'
+        }
       >
         <DataTable<Delivery>
           columns={columns}
-          rows={data?.items ?? []}
+          rows={rows}
           rowKey={(row) => row.id}
           loading={loading}
+          emptyTitle="No deliveries found"
+          onRowClick={(row) => setDetail(row)}
         />
         <Pagination
           className="mt-4"
@@ -390,8 +356,15 @@ export function DeliveriesPage() {
         />
       </DataSection>
 
-      <HistoryModal delivery={detail} open={detailOpen} onClose={() => { setDetailOpen(false); setDetail(null); }} />
+      {/* The delivery record: view + operate through valid actions only. */}
+      <DeliveryDetailPanel
+        delivery={detail}
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        onRequestTransition={(row, next) => { setChangeError(null); setChangeReq({ row, next }); }}
+      />
 
+      {/* Collects the reason / proof the transition needs, then confirms it. */}
       <StatusChangeDialog
         open={!!changeReq}
         delivery={changeReq?.row ?? null}
@@ -401,6 +374,8 @@ export function DeliveriesPage() {
         onClose={() => { setChangeReq(null); setChangeError(null); }}
         onConfirm={confirmStatusChange}
       />
+        </>
+      )}
     </div>
   );
 }

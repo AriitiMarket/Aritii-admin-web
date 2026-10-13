@@ -217,17 +217,10 @@ export const platformAdminService = {
       .then((res) => ({ business: res.business, shops: res.shops || [], shopCount: res.shopCount || 0 }));
   },
 
-  approveBusiness(businessId: string, notes?: string) {
-    return http
-      .post<{ success: boolean; business: unknown }>(`/admin/businesses/${businessId}/approve`, { notes })
-      .then((res) => res.business);
-  },
-
-  rejectBusiness(businessId: string, reason: string) {
-    return http
-      .post<{ success: boolean; business: unknown }>(`/admin/businesses/${businessId}/reject`, { reason })
-      .then((res) => res.business);
-  },
+  // The seller-application approve/reject wrappers that used to live here were
+  // removed: the console reviews applications through `businessesService`
+  // (POST /seller-application/:id/...), and the backend now runs the alternate
+  // /admin/businesses/:id/... path through that same implementation.
 
   /** Paged shop list lives on `adminApi.getShopsPaged` (/admin/shops). */
 

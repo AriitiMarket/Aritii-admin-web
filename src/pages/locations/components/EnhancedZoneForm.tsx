@@ -41,7 +41,7 @@ export function EnhancedZoneForm({
   
   // Operational Rules
   const [priority, setPriority] = useState(initial?.priority?.toString() ?? '5');
-  const [hubId, setHubId] = useState(initial?.hubId ?? '');
+  const [portId, setPortId] = useState(initial?.portId ?? '');
   
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -86,7 +86,7 @@ export function EnhancedZoneForm({
 
       const operationalRules: OperationalRules = {
         priority: priority ? parseInt(priority) : 5,
-        hubId: hubId || undefined,
+        portId: portId || undefined,
       };
 
       const zoneData = {
@@ -181,11 +181,11 @@ export function EnhancedZoneForm({
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Coverage Locations (Sectors)
+            Coverage Locations (Cities)
           </label>
           <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200 p-3 dark:border-dark-600">
             {locations.length === 0 ? (
-              <p className="text-sm text-gray-500">No sectors available</p>
+              <p className="text-sm text-gray-500">No cities available</p>
             ) : (
               locations.map((loc) => (
                 <label
@@ -291,12 +291,12 @@ export function EnhancedZoneForm({
         />
 
         <SelectField
-          label="Hub"
-          value={hubId}
-          onChange={(e) => setHubId(e.target.value)}
+          label="Port"
+          value={portId}
+          onChange={(e) => setPortId(e.target.value)}
           options={[
-            { value: '', label: 'No Hub' },
-            // Will be populated with actual hubs
+            { value: '', label: 'No Port' },
+            // Will be populated with actual ports
           ]}
         />
       </div>

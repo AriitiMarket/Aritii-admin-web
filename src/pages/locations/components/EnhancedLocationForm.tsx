@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { SelectField } from '@/components/forms/SelectField';
 import { TextField } from '@/components/forms/TextField';
 import { locationsService } from '@/services/locations.service';
-import type { Location, LocationServiceability, HubInfo, ExpansionStatus } from '../types';
+import type { Location, LocationServiceability, PortInfo, ExpansionStatus } from '../types';
 
 interface EnhancedLocationFormProps {
   initial?: Location;
@@ -16,16 +16,11 @@ interface EnhancedLocationFormProps {
 }
 
 const CHILDREN_BY_TYPE: Record<string, string[]> = {
-  country: ['region'],
-  region: ['city', 'area', 'sector'],
-  city: ['town', 'area', 'sector'],
-  town: ['area', 'sector'],
-  area: ['sector', 'community'],
-  sector: ['community', 'village'],
-  community: ['village'],
-  village: [],
-  rural: ['community', 'village'],
-  other: ['sector', 'community'],
+  // MVP geography: Region (optional) -> City. Zone and Port are separate models.
+  country: ['region', 'city', 'other'],
+  region: ['city', 'other'],
+  city: ['other'],
+  other: [],
 };
 
 function getSelectableTypes(parentType?: string): string[] {
@@ -59,12 +54,12 @@ export function EnhancedLocationForm({
   const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState(initial?.serviceability?.estimatedDeliveryTime ?? '');
   const [deliveryFee, setDeliveryFee] = useState(initial?.serviceability?.deliveryFee?.toString() ?? '');
   
-  // Hub
-  const [isHub, setIsHub] = useState(initial?.hub?.isHub ?? false);
-  const [hubName, setHubName] = useState(initial?.hub?.hubName ?? '');
-  const [hubCode, setHubCode] = useState(initial?.hub?.hubCode ?? '');
-  const [hubAddress, setHubAddress] = useState(initial?.hub?.hubAddress ?? '');
-  const [hubPhone, setHubPhone] = useState(initial?.hub?.contactInfo?.phone ?? '');
+  // Port
+  const [isPort, setIsPort] = useState(initial?.port?.isPort ?? false);
+  const [portName, setPortName] = useState(initial?.port?.portName ?? '');
+  const [portCode, setPortCode] = useState(initial?.port?.portCode ?? '');
+  const [portAddress, setPortAddress] = useState(initial?.port?.portAddress ?? '');
+  const [portPhone, setPortPhone] = useState(initial?.port?.contactInfo?.phone ?? '');
   
   // Expansion
   const [expansionStatus, setExpansionStatus] = useState<ExpansionStatus>(initial?.expansionStatus ?? 'active');
@@ -106,13 +101,13 @@ export function EnhancedLocationForm({
         deliveryFee: deliveryFee ? parseFloat(deliveryFee) : undefined,
       };
 
-      const hub: HubInfo = {
-        isHub,
-        hubName: isHub ? hubName : undefined,
-        hubCode: isHub ? hubCode : undefined,
-        hubAddress: isHub ? hubAddress : undefined,
-        contactInfo: isHub ? { phone: hubPhone } : undefined,
-        operatingStatus: isHub ? 'active' : 'inactive',
+      const port: PortInfo = {
+        isPort,
+        portName: isPort ? portName : undefined,
+        portCode: isPort ? portCode : undefined,
+        portAddress: isPort ? portAddress : undefined,
+        contactInfo: isPort ? { phone: portPhone } : undefined,
+        operatingStatus: isPort ? 'active' : 'inactive',
       };
 
       const coordinates = latitude && longitude ? {
@@ -129,7 +124,7 @@ export function EnhancedLocationForm({
         isActive,
         coordinates,
         serviceability,
-        hub,
+        port,
         expansionStatus,
       };
 
@@ -308,44 +303,44 @@ export function EnhancedLocationForm({
         />
       </div>
 
-      {/* Hub Configuration */}
+      {/* Port Configuration */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold dark:text-white">Hub Configuration</h3>
+        <h3 className="text-lg font-semibold dark:text-white">Port Configuration</h3>
         
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={isHub}
-            onChange={(e) => setIsHub(e.target.checked)}
+            checked={isPort}
+            onChange={(e) => setIsPort(e.target.checked)}
             className="h-4 w-4 rounded border-dark-border text-primary-dark focus:ring-primary-dark"
           />
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Is Hub</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Is Port</label>
         </div>
 
-        {isHub && (
+        {isPort && (
           <div className="space-y-4 pl-4 border-l-2 border-gray-200 dark:border-dark-600">
             <TextField
-              label="Hub Name"
-              value={hubName}
-              onChange={(e) => setHubName(e.target.value)}
-              placeholder="e.g. Harar Central Hub"
+              label="Port Name"
+              value={portName}
+              onChange={(e) => setPortName(e.target.value)}
+              placeholder="e.g. Harar Central Port"
             />
             <TextField
-              label="Hub Code"
-              value={hubCode}
-              onChange={(e) => setHubCode(e.target.value)}
+              label="Port Code"
+              value={portCode}
+              onChange={(e) => setPortCode(e.target.value)}
               placeholder="e.g. HHC-001"
             />
             <TextField
-              label="Hub Address"
-              value={hubAddress}
-              onChange={(e) => setHubAddress(e.target.value)}
+              label="Port Address"
+              value={portAddress}
+              onChange={(e) => setPortAddress(e.target.value)}
               placeholder="Physical address"
             />
             <TextField
               label="Contact Phone"
-              value={hubPhone}
-              onChange={(e) => setHubPhone(e.target.value)}
+              value={portPhone}
+              onChange={(e) => setPortPhone(e.target.value)}
               placeholder="e.g. +251 911 123 456"
             />
           </div>

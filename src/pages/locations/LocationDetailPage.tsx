@@ -18,7 +18,6 @@ const TYPE_LABELS: Record<string, string> = {
   city: '🏙️ City',
   town: '🏘️ Town',
   area: '🗺️ Area',
-  sector: '📐 Sector',
   community: '👥 Community',
   village: '🏡 Village',
   rural: '🌾 Rural',

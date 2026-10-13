@@ -58,10 +58,20 @@ export function OrderDetailPage() {
     if (typeof addr === 'string') return <p className="text-sm text-gray-700 dark:text-gray-300">{addr}</p>;
     return (
       <div className="text-sm space-y-1">
-        {addr.regionId && <p><span className="text-gray-500">Region:</span> {addr.regionId}</p>}
-        {addr.cityId && <p><span className="text-gray-500">City:</span> {addr.cityId}</p>}
-        {addr.areaId && <p><span className="text-gray-500">Area:</span> {addr.areaId}</p>}
-        {addr.sectorId && <p><span className="text-gray-500">Sector:</span> {addr.sectorId}</p>}
+        {/* Names first; the stored id is the fallback of the fallback — never
+            the primary label on a detail page. */}
+        {(addr.regionName || addr.regionId) && (
+          <p><span className="text-gray-500">Region:</span> {addr.regionName || addr.regionId}</p>
+        )}
+        {(addr.cityName || addr.cityId) && (
+          <p><span className="text-gray-500">City:</span> {addr.cityName || addr.cityId}</p>
+        )}
+        {(addr.areaName || addr.areaId) && (
+          <p><span className="text-gray-500">Area:</span> {addr.areaName || addr.areaId}</p>
+        )}
+        {(addr.sectorName || addr.sectorId) && (
+          <p><span className="text-gray-500">Sector:</span> {addr.sectorName || addr.sectorId}</p>
+        )}
         {addr.fullAddress && <p><span className="text-gray-500">Address:</span> {addr.fullAddress}</p>}
         {addr.landmark && <p><span className="text-gray-500">Landmark:</span> {addr.landmark}</p>}
         {addr.building && <p><span className="text-gray-500">Building:</span> {addr.building}</p>}
@@ -155,6 +165,13 @@ export function OrderDetailPage() {
             <Detail label={t('Amount')} value={`${(order.totalPrice || 0).toLocaleString()} ETB`} />
             <Detail label={t('Status')} value={order.status || '—'} />
             <Detail label={t('Payment Status')} value={order.paymentStatus || '—'} />
+            {(order.shopName || order.sellerName || order.businessName) && (
+              <>
+                <Detail label={t('Shop')} value={order.shopName || '—'} />
+                <Detail label={t('Business')} value={order.businessName || '—'} />
+                <Detail label={t('Seller')} value={order.sellerName || '—'} />
+              </>
+            )}
             {lifecycle.stageLabel && (
               <Detail label={t('Operational Stage')} value={lifecycle.stageLabel} />
             )}
@@ -170,7 +187,8 @@ export function OrderDetailPage() {
           {renderAddress(order.destination || dropOff?.address)}
           {order.buyerId && (
             <p className="text-xs text-gray-500 mt-2">
-              {t('Customer')}: {nameFor(order.buyerId) || order.buyerId}
+              {t('Customer')}: {order.buyerName || nameFor(order.buyerId) || order.buyerId}
+              {order.buyerEmail ? ` (${order.buyerEmail})` : ''}
             </p>
           )}
         </Card>
@@ -229,7 +247,20 @@ export function OrderDetailPage() {
               <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">
                   {t('Shipment')} {idx + 1}
-                  {shipment.shopId && <span className="text-gray-500 ml-2">Shop: {shipment.shopId}</span>}
+                  {shipment.shopName && (
+                    <button
+                      type="button"
+                      onClick={() => shipment.shopId && navigate(`/stores/${shipment.shopId}`)}
+                      className="text-primary-dark hover:underline ml-2"
+                    >
+                      {shipment.shopName}
+                    </button>
+                  )}
+                  {shipment.businessName && (
+                    <span className="text-gray-500 ml-2">
+                      {t('Business')}: {shipment.businessName}
+                    </span>
+                  )}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

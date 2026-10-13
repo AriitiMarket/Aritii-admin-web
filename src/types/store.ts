@@ -54,6 +54,11 @@ export interface Store {
   ownerId?: string;
   ownerName?: string;
   ownerEmail?: string;
+  ownerPhoneNumber?: string | null;
+  // Business the shop belongs to (a shop is always one business's outlet).
+  businessId?: string | null;
+  businessName?: string | null;
+  businessStatus?: string | null;
   // Location hierarchy from shop.locationSnapshot
   locationSnapshot?: {
     regionId?: string;
