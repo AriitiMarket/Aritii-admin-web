@@ -16,6 +16,8 @@ export interface NavigationItem {
 export interface NavigationGroup {
   labelKey: string;
   items: NavigationItem[];
+  /** Whether the group should be collapsed by default */
+  defaultCollapsed?: boolean;
 }
 
 const ALL_ADMINS: AdminRole[] = [
@@ -26,15 +28,14 @@ const ALL_ADMINS: AdminRole[] = [
 ];
 
 export const NAV_GROUPS: NavigationGroup[] = [
-  // Dashboard
+  // Dashboard - Single item, no collapse needed
   {
     labelKey: 'Dashboard',
     items: [
       { labelKey: 'Home', path: '/home', roles: ALL_ADMINS },
-
     ],
   },
-  
+
   // Users Management — ONE entry. The user types (All Users, Buyers, Sellers,
   // Customers, Admins) are tabs of the Users page, not separate pages; the tab
   // registry supplies the roles so the entry cannot drift from the tabs.
@@ -49,9 +50,10 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Businesses & Shops
+  // Businesses & Shops - Collapsible
   {
     labelKey: 'Businesses & Shops',
+    defaultCollapsed: false,
     items: [
       {
         labelKey: 'Businesses',
@@ -63,15 +65,13 @@ export const NAV_GROUPS: NavigationGroup[] = [
         path: '/stores',
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
-      // The pending-shops queue is the Shops page filtered by status
-      // (`/stores?status=PENDING_APPROVAL`), so a separate sidebar entry
-      // only duplicated the group.
     ],
   },
 
-  // Commerce
+  // Commerce - Collapsible (many items)
   {
     labelKey: 'Commerce',
+    defaultCollapsed: false,
     items: [
       {
         labelKey: 'Overview',
@@ -89,8 +89,6 @@ export const NAV_GROUPS: NavigationGroup[] = [
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
       },
       {
-        // Product review moderation queue (route: /reviews/pending). Previously
-        // had no sidebar entry, so the queue was unreachable except by URL.
         labelKey: 'Reviews',
         path: '/reviews/pending',
         roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
@@ -101,7 +99,6 @@ export const NAV_GROUPS: NavigationGroup[] = [
         roles: ['SUPER_ADMIN'],
       },
       {
-        // Buyer ↔ seller negotiation pipeline (create → negotiate → convert).
         labelKey: 'Requests',
         path: '/requests',
         roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
@@ -119,27 +116,23 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery & Logistics — MVP: one page per core responsibility. Deliveries
-  // is the single operational screen (assignment happens inside each delivery);
-  // there are no Assignments / Operations / Shipments / Consolidation entries —
-  // their old routes redirect there.
+  // Delivery & Logistics - Collapsible
   {
     labelKey: 'Delivery & Logistics',
+    defaultCollapsed: false,
     items: [
       { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
       { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      // Deliveries is the ONE operational screen: its second tab is Tracking.
       { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
     ],
   },
 
-
-
-  // Disputes
+  // Disputes - Collapsible
   {
     labelKey: 'Disputes',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'Pending Reviews',
@@ -164,9 +157,10 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Reports & Analytics
+  // Reports & Analytics - Collapsible
   {
     labelKey: 'Reports & Analytics',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'Analytics',
@@ -181,7 +175,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Audit Logs
+  // Audit Logs - Single item, no collapse needed
   {
     labelKey: 'Audit Logs',
     items: [
@@ -193,9 +187,10 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Platform Settings
+  // Platform Settings - Collapsible
   {
     labelKey: 'Platform Settings',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'General Settings',
@@ -215,7 +210,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Admin Roles & Permissions
+  // Admin Roles & Permissions - Single item, no collapse needed
   {
     labelKey: 'Admin Roles & Permissions',
     items: [

@@ -8,14 +8,12 @@ import { useSector } from '@/hooks/useSector';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
-import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
-import { SelectField } from '@/components/forms/SelectField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { FilterBar, type FilterDef } from '@/components/workspace/FilterBar';
 import { apiErrorMessage } from '@/utils/error';
 import type { Store } from '@/types';
 
@@ -157,6 +155,7 @@ export function StoresManagementPage() {
     {
       key: 'name',
       header: t('Shop'),
+      width: '200px',
       render: (row) => (
         <div>
           <p className="font-medium text-gray-900 dark:text-white">{row.name}</p>
@@ -167,19 +166,21 @@ export function StoresManagementPage() {
     {
       key: 'owner',
       header: t('Owner'),
+      width: '180px',
       render: (row) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
           {row.ownerId ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/sellers/${row.ownerId}`);
               }}
-              className="text-primary-dark hover:underline dark:text-primary-color"
+              className="text-primary-dark hover:underline dark:text-primary-color p-0 h-auto"
             >
               {row.ownerName || row.ownerEmail || '—'}
-            </button>
+            </Button>
           ) : (
             row.ownerName || row.ownerEmail || '—'
           )}
@@ -189,19 +190,21 @@ export function StoresManagementPage() {
     {
       key: 'business',
       header: t('Business'),
+      width: '180px',
       render: (row) => (
         <div>
           {row.businessId ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/businesses/${row.businessId}`);
               }}
-              className="text-sm text-primary-dark hover:underline dark:text-primary-color"
+              className="text-sm text-primary-dark hover:underline dark:text-primary-color p-0 h-auto"
             >
               {row.businessName || '—'}
-            </button>
+            </Button>
           ) : (
             <span className="text-sm text-gray-700 dark:text-gray-300">
               {row.businessName || '—'}
@@ -216,6 +219,7 @@ export function StoresManagementPage() {
     {
       key: 'location',
       header: t('Location'),
+      width: '200px',
       render: (row) => (
         <div className="text-sm text-gray-700 dark:text-gray-300">
           <div>{getLocationDisplay(row)}</div>
@@ -226,6 +230,7 @@ export function StoresManagementPage() {
     {
       key: 'region',
       header: t('Region'),
+      width: '120px',
       render: (row) => (
         <span className="text-xs text-gray-500">{getRegionDisplay(row)}</span>
       ),
@@ -233,6 +238,7 @@ export function StoresManagementPage() {
     {
       key: 'city',
       header: t('City'),
+      width: '120px',
       render: (row) => (
         <span className="text-xs text-gray-500">{getCityDisplay(row)}</span>
       ),
@@ -242,6 +248,7 @@ export function StoresManagementPage() {
       // filter uses. Blank on shops registered before the field existed.
       key: 'category',
       header: t('Category'),
+      width: '120px',
       render: (row) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">{row.category || '—'}</span>
       ),
@@ -249,6 +256,7 @@ export function StoresManagementPage() {
     {
       key: 'status',
       header: t('Status'),
+      width: '150px',
       render: (row) => <StatusBadge label={row.status} />,
     },
     {
@@ -256,19 +264,21 @@ export function StoresManagementPage() {
       // appears in any guest/public view. Click toggles in place.
       key: 'showOnPublic',
       header: t('Public'),
+      width: '100px',
       render: (row) => {
         const allowed = row.showOnPublic !== false;
         return (
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant={allowed ? 'outline' : 'ghost'}
             onClick={(e) => {
               e.stopPropagation(); // don't trigger the row's navigation
               handleTogglePublic(row);
             }}
-            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+            className={`text-xs ${
               allowed
-                ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                : 'text-gray-500 hover:bg-gray-100'
             }`}
             title={
               allowed
@@ -277,7 +287,7 @@ export function StoresManagementPage() {
             }
           >
             {allowed ? t('Public') : t('Hidden')}
-          </button>
+          </Button>
         );
       },
     },
@@ -287,6 +297,7 @@ export function StoresManagementPage() {
       // suspended/inactive → Activate/Reject.
       key: 'actions',
       header: t('Actions'),
+      width: '200px',
       render: (row) => {
         const isBusy = busyId === row.id;
         return (
@@ -351,6 +362,8 @@ export function StoresManagementPage() {
     {
       key: 'ratings',
       header: t('Rating'),
+      width: '80px',
+      numeric: true,
       accessor: (row) =>
         row.ratings != null && Number(row.ratings) > 0
           ? Number(row.ratings).toFixed(1)
@@ -361,6 +374,7 @@ export function StoresManagementPage() {
     {
       key: 'createdAt',
       header: t('Created'),
+      width: '120px',
       accessor: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
     },
   ];
@@ -379,69 +393,70 @@ export function StoresManagementPage() {
     ...sectors.map((item) => ({ value: item.id, label: item.name })),
   ];
 
+  const handleResetFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setStatusParam('all');
+    setSector('all');
+    setBusinessId('');
+    setOwnerEmail('');
+    setPage(1);
+  };
+
+  const hasActiveFilters =
+    search !== '' ||
+    status !== 'all' ||
+    sector !== 'all' ||
+    businessId !== '' ||
+    ownerEmail !== '';
+
+  const filters: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('Status'),
+      value: status,
+      options: statusOptions,
+      onChange: (v) => { setStatus(v); setStatusParam(v); setPage(1); },
+    },
+    {
+      key: 'sector',
+      label: t('Sector'),
+      value: sector,
+      options: sectorOptions,
+      onChange: (v) => { setSector(v); setPage(1); },
+    },
+    {
+      key: 'businessId',
+      label: t('Business'),
+      value: businessId,
+      options: businessOptions,
+      onChange: (v) => { setBusinessId(v); setPage(1); },
+    },
+    {
+      key: 'ownerEmail',
+      label: t('Owner Email'),
+      value: ownerEmail,
+      type: 'text',
+      onChange: (v) => { setOwnerEmail(v); setPage(1); },
+    },
+  ];
+
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         title={t('Stores')}
         description={t('Manage marketplace stores')}
       />
 
-      {/* Filters */}
-      <Card className="mb-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={t('Search by shop name or owner...')}
-            aria-label={t('Search stores')}
-          />
-          <SelectField
-            value={status}
-            options={statusOptions}
-            onChange={(e) => { setStatus(e.target.value); setStatusParam(e.target.value); setPage(1); }}
-            label={t('Status')}
-          />
-          <SelectField
-            value={sector}
-            options={sectorOptions}
-            onChange={(e) => { setSector(e.target.value); setPage(1); }}
-            label={t('Sector')}
-          />
-          <SelectField
-            value={businessId}
-            options={businessOptions}
-            onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
-            label={t('Business')}
-          />
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Owner Email')}</label>
-            <input
-              type="email"
-              value={ownerEmail}
-              onChange={(e) => { setOwnerEmail(e.target.value); setPage(1); }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-dark-800 dark:text-white text-sm"
-              placeholder={t('Filter by owner')}
-            />
-          </div>
-        </div>
-        {(search || status !== 'all' || sector !== 'all' || businessId || ownerEmail) && (
-          <div className="mt-3 flex justify-end">
-            <button
-              onClick={() => {
-                setSearch('');
-                setStatus('all');
-                setSector('all');
-                setBusinessId('');
-                setOwnerEmail('');
-                setPage(1);
-              }}
-              className="text-sm text-primary-dark hover:underline dark:text-primary-color"
-            >
-              {t('Clear Filters')}
-            </button>
-          </div>
-        )}
-      </Card>
+      <FilterBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('Search by shop name or owner...')}
+        filters={filters}
+        onReset={handleResetFilters}
+        isFiltered={hasActiveFilters}
+        resultSummary={data?.total ? `${t('Showing')} ${data?.total} ${t('stores')}` : undefined}
+      />
 
       {error ? (
         <ErrorState message={error} onRetry={refetch} />

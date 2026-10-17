@@ -19,10 +19,10 @@ export interface FilterDef {
   key: string;
   label: string;
   value: string;
-  /** Choices for a select filter — omitted for `type: 'date'`. */
+  /** Choices for a select filter — omitted for `type: 'date'` or `type: 'text'`. */
   options?: SelectOption[];
-  /** `select` (default) or `date` for date-range pickers. */
-  type?: 'select' | 'date';
+  /** `select` (default), `date` for date-range pickers, or `text` for text input. */
+  type?: 'select' | 'date' | 'text';
   onChange: (value: string) => void;
 }
 
@@ -42,6 +42,15 @@ function InlineFilter({ label, value, options = [], type = 'select', onChange }:
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label={label}
+          className={INLINE_CONTROL_CLASS}
+        />
+      ) : type === 'text' ? (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          placeholder={label}
           className={INLINE_CONTROL_CLASS}
         />
       ) : (
@@ -84,7 +93,7 @@ export function FilterBar({
   return (
     <div className="mb-4 rounded-lg border border-gray-200 bg-white dark:border-dark-600 dark:bg-dark-900">
       {/* Filters: one horizontal, non-wrapping, scrollable row. */}
-      <div className="flex items-center gap-3 overflow-x-auto px-3 py-2.5">
+      <div className="flex items-center gap-3 overflow-x-auto px-3 py-2.5 scrollbar-thin">
         <div className="w-48 shrink-0 sm:w-56">
           <SearchInput
             value={searchValue}
@@ -100,15 +109,15 @@ export function FilterBar({
 
       {/* Consistent action row. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-3 py-2 dark:border-dark-600">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <Button variant="ghost" size="sm" onClick={onReset} disabled={!isFiltered}>
             Reset Filters
           </Button>
           {resultSummary && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">{resultSummary}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{resultSummary}</span>
           )}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
       </div>
     </div>
   );

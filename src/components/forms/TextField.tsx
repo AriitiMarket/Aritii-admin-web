@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -8,14 +8,15 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const baseInput =
-  'h-10 w-full rounded-md border bg-white px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:bg-dark-900 dark:text-white';
+  'h-11 w-full rounded-lg border bg-white px-3 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 transition-[border-color,box-shadow] focus:outline-none focus:ring-2 focus:ring-primary-dark/30 dark:bg-dark-900 dark:text-white';
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   function TextField(
     { label, error, hint, className, id: idProp, ...rest },
     ref
   ) {
-    const generatedId = idProp ?? rest.name ?? 'text-field';
+    const reactId = useId();
+    const generatedId = idProp ?? `text-field-${reactId}`;
     return (
       <div className="w-full">
         {label && (
@@ -35,7 +36,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             baseInput,
             error
               ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:border-primary-dark dark:border-dark-600',
+              : 'border-gray-300 hover:border-primary-dark/60 focus:border-primary-dark dark:border-dark-600',
             className
           )}
           {...rest}
