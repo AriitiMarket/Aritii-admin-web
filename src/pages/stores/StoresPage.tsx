@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storesService } from '@/services/stores.service';
 import { businessesService } from '@/services/businesses.service';
+import { locationsService } from '@/services/locations.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSector } from '@/hooks/useSector';
@@ -41,6 +42,10 @@ export function StoresManagementPage() {
   const [sector, setSector] = useState('all');
   const [businessId, setBusinessId] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
+  const [zoneId, setZoneId] = useState('');
+  const [coverageEditShop, setCoverageEditShop] = useState<Store | null>(null);
+  const [coverageDialogOpen, setCoverageDialogOpen] = useState(false);
+  const [coverageBusy, setCoverageBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
@@ -54,8 +59,9 @@ export function StoresManagementPage() {
         sectorId: sector !== 'all' ? sector : undefined,
         businessId: businessId || undefined,
         ownerEmail: ownerEmail || undefined,
+        zoneId: zoneId || undefined,
       }),
-    [page, debouncedSearch, status, sector, businessId, ownerEmail]
+    [page, debouncedSearch, status, sector, businessId, ownerEmail, zoneId]
   );
 
   // Business filter picks by NAME — the console must never ask for a raw
@@ -73,6 +79,18 @@ export function StoresManagementPage() {
         business.businessName ||
         business.shopInformation?.shopName ||
         business.id,
+    })),
+  ];
+
+  const { data: zones } = useAsync(
+    () => locationsService.listZones({ limit: 200 }),
+    []
+  );
+  const zoneOptions = [
+    { value: '', label: t('All Zones') },
+    ...(zones?.zones ?? zones ?? []).map((z: any) => ({
+      value: z._id || z.id,
+      label: `${z.name}${z.cityName ? ` (${z.cityName})` : ''}`,
     })),
   ];
 
@@ -149,6 +167,33 @@ export function StoresManagementPage() {
       });
     } finally {
       setBusyId(null);
+      refetch();
+    }
+  };
+
+  const handleSaveCoverage = async (
+    shopId: string,
+    zoneIds: string[],
+    status: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED'
+  ) => {
+    setCoverageBusy(true);
+    try {
+      await storesService.setCoverage(shopId, { zoneIds, status });
+      showToast({
+        type: 'success',
+        message: status === 'UNCONFIGURED'
+          ? t('Coverage cleared')
+          : t('Coverage updated'),
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        message: apiErrorMessage(err, t('Could not update coverage')),
+      });
+    } finally {
+      setCoverageBusy(false);
+      setCoverageDialogOpen(false);
+      setCoverageEditShop(null);
       refetch();
     }
   };
@@ -282,6 +327,42 @@ export function StoresManagementPage() {
       },
     },
     {
+      key: 'coverage',
+      header: t('Coverage'),
+      render: (row) => {
+        const cov = row.deliveryCoverage;
+        if (!cov) {
+          return (
+            <span className="text-xs text-gray-400 dark:text-gray-500">{t('Not configured')}</span>
+          );
+        }
+        const active = cov.status === 'ACTIVE';
+        const zoneCount = cov.zoneIds?.length ?? 0;
+        const zoneNames = cov.zoneNames?.map((z) => z.name).filter(Boolean).join(', ');
+        return (
+          <div className="text-sm">
+            <span
+              className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
+                active ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+              }`}
+            >
+              {active ? t('Active') : t('Paused')}
+            </span>
+            {zoneCount > 0 && (
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                {zoneCount} zone{zoneCount > 1 ? 's' : ''}
+              </span>
+            )}
+            {zoneNames && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {zoneNames}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       // Lifecycle decisions, contextual to the row's current status:
       // pending → Approve/Reject · approved/active → Suspend ·
       // suspended/inactive → Activate/Reject.
@@ -344,6 +425,16 @@ export function StoresManagementPage() {
                 </Button>
               </>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isBusy}
+              onClick={() => {
+                setCoverageEditShop(row);
+              }}
+            >
+              {t('Manage Coverage')}
+            </Button>
           </div>
         );
       },
@@ -413,6 +504,12 @@ export function StoresManagementPage() {
             onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
             label={t('Business')}
           />
+          <SelectField
+            value={zoneId}
+            options={zoneOptions}
+            onChange={(e) => { setZoneId(e.target.value); setPage(1); }}
+            label={t('Delivery Zone')}
+          />
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Owner Email')}</label>
             <input
@@ -424,7 +521,7 @@ export function StoresManagementPage() {
             />
           </div>
         </div>
-        {(search || status !== 'all' || sector !== 'all' || businessId || ownerEmail) && (
+        {(search || status !== 'all' || sector !== 'all' || businessId || zoneId || ownerEmail) && (
           <div className="mt-3 flex justify-end">
             <button
               onClick={() => {
@@ -432,6 +529,7 @@ export function StoresManagementPage() {
                 setStatus('all');
                 setSector('all');
                 setBusinessId('');
+                setZoneId('');
                 setOwnerEmail('');
                 setPage(1);
               }}
@@ -465,6 +563,97 @@ export function StoresManagementPage() {
             />
           )}
         </>
+      )}
+      {/* Coverage editor dialog */}
+      {coverageEditShop && coverageDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setCoverageDialogOpen(false)}>
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-dark-700" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {t('Manage Delivery Coverage')} — {coverageEditShop.name}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Status')}</label>
+                <select
+                  value={coverageEditShop.deliveryCoverage?.status || 'UNCONFIGURED'}
+                  onChange={(e) => {
+                    const s = e.target.value as 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED';
+                    coverageEditShop.deliveryCoverage = {
+                      ...coverageEditShop.deliveryCoverage,
+                      status: s,
+                    };
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded dark:bg-dark-800 dark:text-white text-sm"
+                >
+                  <option value="ACTIVE">{t('Active')}</option>
+                  <option value="PAUSED">{t('Paused')}</option>
+                  <option value="UNCONFIGURED">{t('Unconfigured')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Zones')}</label>
+                {zoneOptions.map((z) => {
+                  const current = coverageEditShop.deliveryCoverage?.zoneIds ?? [];
+                  const checked = current.includes(z.value);
+                  return (
+                    <label key={z.value} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-dark-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = [...current];
+                          if (e.target.checked) {
+                            if (!next.includes(z.value)) next.push(z.value);
+                          } else {
+                            const idx = next.indexOf(z.value);
+                            if (idx >= 0) next.splice(idx, 1);
+                          }
+                          coverageEditShop.deliveryCoverage = {
+                            ...coverageEditShop.deliveryCoverage,
+                            zoneIds: next,
+                          };
+                        }}
+                        className="accent-primary"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{z.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {t('Only shops with ACTIVE coverage can receive orders for that zone.')}
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setCoverageDialogOpen(false);
+                  setCoverageEditShop(null);
+                }}
+                disabled={coverageBusy}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                size="sm"
+                disabled={coverageBusy}
+                onClick={() => {
+                  const cov = coverageEditShop.deliveryCoverage;
+                  if (!cov) return;
+                  handleSaveCoverage(
+                    coverageEditShop.id,
+                    cov.zoneIds ?? [],
+                    cov.status
+                  );
+                }}
+              >
+                {coverageBusy ? t('Saving...') : t('Save Coverage')}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

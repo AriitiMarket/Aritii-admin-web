@@ -442,6 +442,13 @@ export function BusinessDetailPage() {
                           )}
                         </div>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{shopLocation(shop)}</p>
+                        {shop.deliveryCoverage && (
+                          <p className="mt-0.5 text-xs font-medium ${
+                            shop.deliveryCoverage.status === 'ACTIVE' ? 'text-green-700 dark:text-green-500' : 'text-amber-700 dark:text-amber-500'
+                          }">
+                            {shop.deliveryCoverage.status} • {shop.deliveryCoverage.zoneIds?.length ?? 0} zone{shop.deliveryCoverage.zoneIds?.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-sm">
                         <div className="text-center">

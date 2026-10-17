@@ -18,6 +18,9 @@ export interface StoreListFilter {
   ownerEmail?: string;
   dateFrom?: string;
   dateTo?: string;
+  /** Delivery zone filter — only shops whose coverage includes this zone. */
+  zoneId?: string;
+  zoneName?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +37,7 @@ function mapShopToStore(shop: any): Store {
     businessStatus: shop.businessStatus || null,
     locationSnapshot: shop.locationSnapshot || undefined,
     sectorId: shop.sectorId || (typeof shop.sector === 'string' ? shop.sector : shop.sector?.id),
+    deliveryCoverage: shop.deliveryCoverage || undefined,
   };
 }
 
@@ -52,6 +56,8 @@ export const storesService = {
     // The backend resolves the email to an owner id (Identity lookup) and
     // answers "no match" for an unknown address — it is no longer ignored.
     if (filter.ownerEmail) params.ownerEmail = filter.ownerEmail;
+    if (filter.zoneId) params.zoneId = filter.zoneId;
+    if (filter.zoneName) params.zoneName = filter.zoneName;
 
     const result = await adminApi.getShopsPaged(params);
     return {
@@ -93,6 +99,11 @@ export const storesService = {
    */
   setShowOnPublic(id: string, showOnPublic: boolean) {
     return adminApi.setShopShowOnPublic(id, showOnPublic);
+  },
+
+  /** Set a shop's delivery coverage. Admin only. */
+  async setCoverage(id: string, payload: { zoneIds: string[]; status: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED' }) {
+    return commerceAdmin.setShopCoverage(id, payload);
   },
 
   /** Temporarily take a shop off the platform (status → SUSPENDED). */

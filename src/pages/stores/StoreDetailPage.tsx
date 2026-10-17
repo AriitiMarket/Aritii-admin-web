@@ -344,6 +344,48 @@ export function StoreDetailPage() {
         </dl>
       </Card>
 
+      {/* Delivery Coverage */}
+      <Card>
+        <p className="card-h2 mb-4 dark:text-white">{t('Delivery Coverage')}</p>
+        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+          <dt className="text-gray-500 dark:text-gray-400">{t('Status')}</dt>
+          <dd className={`text-sm font-semibold ${
+            (store as any).deliveryCoverage?.status === 'ACTIVE'
+              ? 'text-green-700 dark:text-green-500'
+              : 'text-amber-700 dark:text-amber-500'
+          }`}>
+            {(store as any).deliveryCoverage?.status || t('Not configured')}
+          </dd>
+          <dt className="text-gray-500 dark:text-gray-400">{t('Zones Served')}</dt>
+          <dd className="text-sm text-gray-900 dark:text-white">
+            {(store as any).deliveryCoverage?.zoneNames?.map((z: any) => z.name).join(', ') || '—'}
+          </dd>
+          <dt className="text-gray-500 dark:text-gray-400">{t('Zone IDs')}</dt>
+          <dd className="text-sm text-gray-900 dark:text-white font-mono">
+            {(store as any).deliveryCoverage?.zoneIds?.join(', ') || '—'}
+          </dd>
+          <dt className="text-gray-500 dark:text-gray-400">{t('Source')}</dt>
+          <dd className="text-sm text-gray-900 dark:text-white">
+            {(store as any).deliveryCoverage?.source || '—'}
+          </dd>
+          <dt className="text-gray-500 dark:text-gray-400">{t('Verified')}</dt>
+          <dd className="text-sm text-gray-900 dark:text-white">
+            {(store as any).deliveryCoverage?.verifiedAt
+              ? formatDate((store as any).deliveryCoverage.verifiedAt)
+              : '—'}
+          </dd>
+        </dl>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            window.alert(t('Use the Stores page to manage delivery coverage.'));
+          }}
+        >
+          {t('Manage Coverage')}
+        </Button>
+      </Card>
+
       {/* Approval Information */}
       {(store as any).approvalMetadata && (
         <Card>
