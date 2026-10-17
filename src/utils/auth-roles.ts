@@ -25,7 +25,7 @@ export function mapUserTypeToRole(userType: LegacyUserType): AdminRole {
     case 'RESTAURANT':
       return 'SELLER_ADMIN';
     default:
-      return 'SUPER_ADMIN';
+      throw new Error('Unsupported administrator role');
   }
 }
 

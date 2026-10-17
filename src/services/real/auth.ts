@@ -17,6 +17,7 @@ import {
   getRefreshToken,
   setAuthTokens,
   clearAuthTokens,
+  clearStoredSessionState,
 } from '@/utils/auth-storage';
 import type {
   AdminRole,
@@ -33,7 +34,7 @@ interface BackendUser {
   email: string;
   name?: string;
   phoneNumber?: string;
-  role: string;
+  role?: unknown;
   avatar?: { public_id?: string | null; url?: string | null };
   status?: string;
   /** Data scope (which locations/services this admin may act on). Identity-owned. */
@@ -42,9 +43,16 @@ interface BackendUser {
    * Effective admin roles resolved by the Identity Service from the RBAC tables
    * (SUPER_ADMIN / SELLER_ADMIN / RIDER_ADMIN / CUSTOMER_ADMIN). Identity-owned.
    */
-  adminRoles?: string[];
+  adminRoles?: unknown;
   /** Effective permission keys resolved by the Identity Service. Identity-owned. */
   permissions?: string[];
+}
+
+export class UnsupportedAdminRoleError extends Error {
+  constructor() {
+    super('Unsupported administrator role');
+    this.name = 'UnsupportedAdminRoleError';
+  }
 }
 
 interface BackendCodeResponse {
@@ -98,6 +106,9 @@ const ROLE_MAP: Record<string, AdminRole> = {
  * permission list and must never be used as one.
  */
 const toAdminUser = (raw: BackendUser): AdminUser => {
+  if (typeof raw !== 'object' || raw === null) {
+    throw new UnsupportedAdminRoleError();
+  }
   const role = resolveAdminRole(raw);
   return {
     userId: raw.id,
@@ -112,7 +123,8 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
         : 'ADMIN',
     // Identity already returns the wildcard for an unrestricted admin, so an
     // absent list means "older backend" rather than "no permissions".
-    permissions: Array.isArray(raw.permissions)
+    permissions: Array.isArray(raw.permissions) &&
+      raw.permissions.every((permission): permission is string => typeof permission === 'string')
       ? raw.permissions
       : (role === 'SUPER_ADMIN' ? ['*'] : []),
     sectors: [],
@@ -122,11 +134,25 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
 
 /** Prefers the RBAC role from Identity; falls back to mapping the coarse role. */
 function resolveAdminRole(raw: BackendUser): AdminRole {
-  const fromRbac = (raw.adminRoles || []).find((name) =>
-    ADMIN_ROLES.includes(name as AdminRole)
+  if (raw.adminRoles !== undefined && !Array.isArray(raw.adminRoles)) {
+    throw new UnsupportedAdminRoleError();
+  }
+
+  const fromRbac = (raw.adminRoles as unknown[] | undefined)?.find(
+    (name): name is AdminRole =>
+      typeof name === 'string' && ADMIN_ROLES.includes(name as AdminRole)
   );
   if (fromRbac) return fromRbac as AdminRole;
-  return ROLE_MAP[raw.role] ?? 'SUPER_ADMIN';
+
+  if (typeof raw.role !== 'string') {
+    throw new UnsupportedAdminRoleError();
+  }
+
+  const mappedRole = ROLE_MAP[raw.role];
+  if (!mappedRole) {
+    throw new UnsupportedAdminRoleError();
+  }
+  return mappedRole;
 }
 
 function toAuthTokens(res: BackendTokenResponse): AuthTokens {
@@ -189,11 +215,16 @@ export async function realLogin(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function realGetCurrentAdmin(): Promise<AdminUser> {
-    assertGatewayConfigured();
-    const token = getAccessToken();
-    if (!token) throw new Error('No access token available');
-    const res = await http.get<BackendMeResponse>('/user/getuser');
+  assertGatewayConfigured();
+  const token = getAccessToken();
+  if (!token) throw new Error('No access token available');
+  const res = await http.get<BackendMeResponse>('/user/getuser');
+  try {
     return toAdminUser(res.user);
+  } catch (error) {
+    clearStoredSessionState();
+    throw error;
+  }
 }
 
 export async function realRefreshSession(): Promise<boolean> {
