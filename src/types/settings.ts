@@ -71,3 +71,15 @@ export interface SystemSettings {
   requireEmailVerification: boolean;
   requirePhoneVerification: boolean;
 }
+
+export interface ReportingSettings {
+  defaultReportingPeriod: string;
+  defaultTimezone: string;
+  defaultCurrency: string;
+  supportedCurrencies: string[];
+  exportFormat: 'csv' | 'pdf';
+  availableFilters: string[];
+  reportRefreshMinutes: number;
+  dataFreshnessWarningMinutes: number;
+  reportAccessPermissions: string[];
+}
