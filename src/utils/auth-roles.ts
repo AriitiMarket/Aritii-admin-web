@@ -3,6 +3,7 @@ import type { AdminRole, LegacyUserType } from '@/types/auth';
 
 export const ADMIN_ROLES: AdminRole[] = [
   'SUPER_ADMIN',
+  'OPERATIONAL_ADMIN',
   'RIDER_ADMIN',
   'SELLER_ADMIN',
   'CUSTOMER_ADMIN',
@@ -10,6 +11,7 @@ export const ADMIN_ROLES: AdminRole[] = [
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   SUPER_ADMIN: 'Super Admin',
+  OPERATIONAL_ADMIN: 'Operational Admin',
   RIDER_ADMIN: 'Rider Admin',
   SELLER_ADMIN: 'Seller Admin',
   CUSTOMER_ADMIN: 'Customer Admin',

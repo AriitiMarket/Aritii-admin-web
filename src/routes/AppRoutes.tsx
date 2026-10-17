@@ -196,12 +196,13 @@ const RouteDetailPage = lazy(() =>
 );
 // Role constants
 const SUPER: AdminRole[] = ['SUPER_ADMIN'];
-const SELLER: AdminRole[] = ['SUPER_ADMIN', 'SELLER_ADMIN'];
-const RIDER: AdminRole[] = ['SUPER_ADMIN', 'RIDER_ADMIN'];
-const CUSTOMER: AdminRole[] = ['SUPER_ADMIN', 'CUSTOMER_ADMIN'];
+const OPERATIONAL: AdminRole[] = ['SUPER_ADMIN', 'OPERATIONAL_ADMIN'];
+const SELLER: AdminRole[] = ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'SELLER_ADMIN'];
+const RIDER: AdminRole[] = ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'];
+const CUSTOMER: AdminRole[] = ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'];
 // Every role that may reach at least one user type — the union of the Users
 // page tabs (see src/pages/users/usersTabs.ts).
-const USERS: AdminRole[] = USERS_TAB_ROLES;
+const USERS: AdminRole[] = [...USERS_TAB_ROLES, 'OPERATIONAL_ADMIN'];
 
 function Suspend({ children, roles }: { children: React.ReactElement; roles: AdminRole[] }) {
   return (
@@ -274,8 +275,8 @@ export function AppRoutes() {
         { path: 'admin-roles', element: <Suspend roles={SUPER}><AdminRolesPage /></Suspend> },
         { path: 'categories', element: <Suspend roles={SELLER}><CategoriesPage /></Suspend> },
         { path: 'reviews/pending', element: <Suspend roles={SELLER}><PendingReviewsPage /></Suspend> },
-        { path: 'orders', element: <Suspend roles={SUPER}><OrdersPage /></Suspend> },
-        { path: 'orders/:orderId', element: <Suspend roles={SUPER}><OrderDetailPage /></Suspend> },
+        { path: 'orders', element: <Suspend roles={OPERATIONAL}><OrdersPage /></Suspend> },
+        { path: 'orders/:orderId', element: <Suspend roles={OPERATIONAL}><OrderDetailPage /></Suspend> },
         { path: 'analytics', element: <Suspend roles={CUSTOMER}><AnalyticsPage /></Suspend> },
         { path: 'audit-logs', element: <Suspend roles={SUPER}><AuditLogsPage /></Suspend> },
         { path: 'settings/platform', element: <Suspend roles={SUPER}><PlatformSettingsPage /></Suspend> },
