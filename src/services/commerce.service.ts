@@ -134,7 +134,7 @@ export interface PaymentRecord {
   paymentMethod?: string;
   amount: number;
   currency?: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  status: 'PENDING' | 'SETTLING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   transactionId?: string;
   metadata?: Record<string, unknown>;
   createdAt?: string;
@@ -198,6 +198,39 @@ export interface ReconciliationRow {
 export interface PaginatedPayments {
   items: PaymentRecord[];
   total: number;
+  totalPages: number;
+}
+
+// ── Seller Allocations ──
+export interface SellerAllocationRecord {
+  id: string;
+  _id?: string;
+  orderId: string;
+  orderGroupId?: string | null;
+  sellerId: string;
+  shopId?: string | null;
+  grossSubtotal: number;
+  shippingFee: number;
+  taxAmount: number;
+  discountAmount: number;
+  platformCommission: number;
+  netPayable: number;
+  refundAmount: number;
+  adjustmentAmount: number;
+  settledAmount: number;
+  pendingAmount: number;
+  currency: string;
+  status: 'PENDING' | 'PARTIALLY_SETTLED' | 'SETTLED' | 'REFUNDED';
+  computationSource?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PaginatedSellerAllocations {
+  items: SellerAllocationRecord[];
+  total: number;
+  page: number;
+  limit: number;
   totalPages: number;
 }
 
@@ -603,6 +636,55 @@ export const commerceService = {
   async getReconciliation(): Promise<ReconciliationRow[]> {
     const res = await http.get<{ rows?: ReconciliationRow[] }>('/payment/admin/reconciliation');
     return res.rows || [];
+  },
+
+  // ── Seller Allocations ──
+  async listSellerAllocations(sellerId: string, params?: { status?: string; orderId?: string; page?: number; limit?: number }): Promise<PaginatedSellerAllocations> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.orderId) query.set('orderId', params.orderId);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const res = await http.get<{ allocations?: SellerAllocationRecord[]; total?: number; page?: number; limit?: number; totalPages?: number }>(
+      `/payment/seller-allocations/${sellerId}?${query}`
+    );
+    return {
+      items: (res.allocations || []).map((a) => ({ ...a, id: String(a._id || a.id) })),
+      total: res.total || 0,
+      page: res.page || 1,
+      limit: res.limit || 50,
+      totalPages: res.totalPages || 1,
+    };
+  },
+  async listAdminAllocations(params?: { sellerId?: string; orderId?: string; orderGroupId?: string; status?: string; search?: string; from?: string; to?: string; page?: number; limit?: number }): Promise<PaginatedSellerAllocations> {
+    const query = new URLSearchParams();
+    if (params?.sellerId) query.set('sellerId', params.sellerId);
+    if (params?.orderId) query.set('orderId', params.orderId);
+    if (params?.orderGroupId) query.set('orderGroupId', params.orderGroupId);
+    if (params?.status) query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+    if (params?.from) query.set('from', params.from);
+    if (params?.to) query.set('to', params.to);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const res = await http.get<{ allocations?: SellerAllocationRecord[]; total?: number; page?: number; limit?: number; totalPages?: number }>(
+      `/payment/admin/allocations?${query}`
+    );
+    return {
+      items: (res.allocations || []).map((a) => ({ ...a, id: String(a._id || a.id) })),
+      total: res.total || 0,
+      page: res.page || 1,
+      limit: res.limit || 50,
+      totalPages: res.totalPages || 1,
+    };
+  },
+  async settleAllocation(allocationId: string, data: { amount: number; reference?: string; provider?: string; reason?: string }): Promise<{ allocation: SellerAllocationRecord }> {
+    const res = await http.post<{ allocation: SellerAllocationRecord }>(`/payment/admin/settlements/${allocationId}`, data);
+    return { allocation: { ...res.allocation, id: res.allocation._id || res.allocation.id } };
+  },
+  async refundAllocation(allocationId: string, data: { amount: number; reason?: string }): Promise<{ allocation: SellerAllocationRecord }> {
+    const res = await http.post<{ allocation: SellerAllocationRecord }>(`/payment/admin/allocations/${allocationId}/refund`, data);
+    return { allocation: { ...res.allocation, id: res.allocation._id || res.allocation.id } };
   },
 
   // ── Coupons ──

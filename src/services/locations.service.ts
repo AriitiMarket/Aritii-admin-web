@@ -529,4 +529,15 @@ export const routesService = {
         routesRequiringReview: res.routesRequiringReview,
       }));
   },
+
+  /** List all public delivery zones (for shop coverage assignment). */
+  async listZones(params?: { cityId?: string; limit?: number }): Promise<{ zones: any[]; count: number }> {
+    const query = new URLSearchParams();
+    if (params?.cityId) query.set('cityId', params.cityId);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const res = await http.get<{ success: boolean; zones: any[]; count: number }>(
+      `/delivery/zone/public?${query}`
+    );
+    return { zones: res.zones || [], count: res.count || 0 };
+  },
 };

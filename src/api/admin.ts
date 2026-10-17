@@ -272,6 +272,15 @@ export const commerceAdmin = {
     };
   },
 
+  /** Set a shop's delivery coverage (service areas). Admin only. */
+  async setShopCoverage(id: string, payload: { zoneIds: string[]; status: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED' }) {
+    const res = await http.put<{ success: boolean; shop: any }>(
+      `/shop/admin/shops/${id}/coverage`,
+      payload
+    );
+    return res.shop;
+  },
+
   async approveShop(id: string) {
     const res = await http.post<{ success: boolean; shop: any }>(
       `/shop/admin/shops/${id}/approve`,
@@ -1407,98 +1416,110 @@ export const requestsAdmin = {
 // ── Extended Analytics APIs ──
 
 export const reportsAdmin = {
-  async getStats(startDate?: string, endDate?: string) {
+  async getStats(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; stats: any }>('/analytics/stats', { params });
     return res.stats;
   },
 
-  async getGrowth(startDate?: string, endDate?: string) {
+  async getGrowth(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; growth: any }>('/analytics/growth', { params });
     return res.growth;
   },
 
-  async getSalesOverTime(startDate?: string, endDate?: string) {
+  async getSalesOverTime(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any[] }>('/analytics/sales-over-time', { params });
     return res.data || [];
   },
 
-  async getOrdersByStatus(startDate?: string, endDate?: string) {
+  async getOrdersByStatus(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any[] }>('/analytics/orders-by-status', { params });
     return res.data || [];
   },
 
-  async getCategoryActivity(startDate?: string, endDate?: string) {
+  async getCategoryActivity(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any[] }>('/analytics/category-activity', { params });
     return res.data || [];
   },
 
-  async getProductStats(startDate?: string, endDate?: string) {
+  async getProductStats(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any }>('/analytics/product-stats', { params });
     return res.data;
   },
 
-  async getDisputeStats(startDate?: string, endDate?: string) {
+  async getDisputeStats(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any }>('/analytics/dispute-stats', { params });
     return res.data;
   },
 
-  async getDeliveryStats(startDate?: string, endDate?: string) {
+  async getDeliveryStats(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any }>('/analytics/delivery-stats', { params });
     return res.data;
   },
 
-  async getRiderPerformance(startDate?: string, endDate?: string) {
+  async getRiderPerformance(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any[] }>('/analytics/rider-performance', { params });
     return res.data || [];
   },
 
-  async getShopStats(startDate?: string, endDate?: string) {
+  async getShopStats(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; data: any }>('/analytics/shop-stats', { params });
     return res.data;
   },
 
-  async getOrdersByType(startDate?: string, endDate?: string) {
+  async getOrdersByType(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; slices: any[] }>('/analytics/orders-by-type', { params });
     return res.slices || [];
   },
 
-  async getSalesByType(startDate?: string, endDate?: string) {
+  async getSalesByType(startDate?: string, endDate?: string, businessId?: string) {
     const params: Record<string, string> = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (businessId) params.businessId = businessId;
     const res = await http.get<{ success: boolean; sales: any }>('/analytics/sales-by-type', { params });
     return res.sales;
   },

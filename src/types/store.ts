@@ -76,6 +76,14 @@ export interface Store {
     /** Matches Shop.locationSnapshot.coordinates. */
     coordinates?: { latitude?: number | null; longitude?: number | null };
   };
+  /** Delivery coverage — which delivery zones this shop serves. */
+  deliveryCoverage?: {
+    zoneIds?: string[];
+    zoneNames?: { id?: string; name?: string }[];
+    status?: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED';
+    source?: string;
+    verifiedAt?: string;
+  };
   approvalMetadata?: {
     approvedBy?: string;
     approvedAt?: string;
