@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { analyticsService } from '@/services/analytics.service';
+import { businessesService, type SellerApplication } from '@/services/businesses.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -112,36 +113,90 @@ function DataTable<T extends Record<string, unknown>>({
   );
 }
 
+function BusinessSelector({
+  businesses,
+  loading,
+  selectedBusinessId,
+  onChange,
+}: {
+  businesses: SellerApplication[];
+  loading: boolean;
+  selectedBusinessId: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Business</label>
+      <select
+        value={selectedBusinessId}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        disabled={loading}
+      >
+        <option value="">All businesses (platform-wide)</option>
+        {businesses.map((b) => (
+          <option key={b.id} value={b.id}>
+            {b.businessInformation?.businessName || b.businessName || 'Unnamed business'}
+            {b.ownerEmail ? ` (${b.ownerEmail})` : ''}
+          </option>
+        ))}
+      </select>
+      {selectedBusinessId && (
+        <button
+          onClick={() => onChange('')}
+          className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function GrowthAnalyticsPage() {
   const { t } = useLocalization();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedBusinessId, setSelectedBusinessId] = useState('');
 
   const handleDateChange = useCallback((s: string, e: string) => {
     setStartDate(s);
     setEndDate(e);
   }, []);
 
-  const dateKey = `${startDate}-${endDate}`;
+  const dateKey = `${startDate}-${endDate}-${selectedBusinessId}`;
 
-  const stats = useAsync(() => analyticsService.getStats(startDate || undefined, endDate || undefined), [dateKey]);
-  const growth = useAsync(() => analyticsService.getUsersGrowth(startDate || undefined, endDate || undefined), [dateKey]);
-  const ordersByType = useAsync(() => analyticsService.getOrdersByType(startDate || undefined, endDate || undefined), [dateKey]);
-  const salesByType = useAsync(() => analyticsService.getSalesByType(startDate || undefined, endDate || undefined), [dateKey]);
-  const salesOverTime = useAsync(() => analyticsService.getSalesOverTime(startDate || undefined, endDate || undefined), [dateKey]);
-  const ordersByStatus = useAsync(() => analyticsService.getOrdersByStatus(startDate || undefined, endDate || undefined), [dateKey]);
-  const categoryActivity = useAsync(() => analyticsService.getCategoryActivity(startDate || undefined, endDate || undefined), [dateKey]);
-  const productStats = useAsync(() => analyticsService.getProductStats(startDate || undefined, endDate || undefined), [dateKey]);
-  const disputeStats = useAsync(() => analyticsService.getDisputeStats(startDate || undefined, endDate || undefined), [dateKey]);
-  const deliveryStats = useAsync(() => analyticsService.getDeliveryStats(startDate || undefined, endDate || undefined), [dateKey]);
-  const shopStats = useAsync(() => analyticsService.getShopStats(startDate || undefined, endDate || undefined), [dateKey]);
+  const { data: businessesData, loading: businessesLoading, error: businessesError, refetch: refetchBusinesses } = useAsync(
+    () => businessesService.listApplications({ page: 1, limit: 100 }),
+    []
+  );
 
-  const anyError = stats.error ?? growth.error ?? ordersByType.error;
-  const anyLoading = stats.loading || growth.loading;
+  const businesses: SellerApplication[] = businessesData?.items ?? [];
+
+  const scope = useMemo(() => ({
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+    businessId: selectedBusinessId || undefined,
+  }), [startDate, endDate, selectedBusinessId]);
+
+  const stats = useAsync(() => analyticsService.getStats(scope), [dateKey]);
+  const growth = useAsync(() => analyticsService.getUsersGrowth(scope), [dateKey]);
+  const ordersByType = useAsync(() => analyticsService.getOrdersByType(scope), [dateKey]);
+  const salesByType = useAsync(() => analyticsService.getSalesByType(scope), [dateKey]);
+  const salesOverTime = useAsync(() => analyticsService.getSalesOverTime(scope), [dateKey]);
+  const ordersByStatus = useAsync(() => analyticsService.getOrdersByStatus(scope), [dateKey]);
+  const categoryActivity = useAsync(() => analyticsService.getCategoryActivity(scope), [dateKey]);
+  const productStats = useAsync(() => analyticsService.getProductStats(scope), [dateKey]);
+  const disputeStats = useAsync(() => analyticsService.getDisputeStats(scope), [dateKey]);
+  const deliveryStats = useAsync(() => analyticsService.getDeliveryStats(scope), [dateKey]);
+  const shopStats = useAsync(() => analyticsService.getShopStats(scope.startDate, scope.endDate, scope.businessId), [dateKey]);
+
+  const anyError = stats.error ?? growth.error ?? ordersByType.error ?? businessesError;
+  const anyLoading = stats.loading || growth.loading || businessesLoading;
 
   if (anyLoading && !anyError) return <PageLoader />;
-  if (anyError) return <ErrorState message={anyError} onRetry={stats.refetch} />;
+  if (anyError) return <ErrorState message={String(anyError)} onRetry={() => { refetchBusinesses(); stats.refetch(); }} />;
 
   const s = stats.data as DashboardStats | null;
   const g = growth.data as UsersGrowthSeries | null;
@@ -154,6 +209,12 @@ export function GrowthAnalyticsPage() {
   const dStats = disputeStats.data as DisputeStats | null;
   const dlStats = deliveryStats.data as DeliveryStatsData | null;
   const shStats = shopStats.data as ShopStats | null;
+
+  const scopeLabel = selectedBusinessId
+    ? businesses?.find((b) => b.id === selectedBusinessId)?.businessInformation?.businessName || businesses?.find((b) => b.id === selectedBusinessId)?.businessName || 'Selected business'
+    : 'Platform-wide';
+
+  const isScoped = Boolean(selectedBusinessId);
 
   const growthData = g ? {
     labels: g.labels || [],
@@ -196,9 +257,38 @@ export function GrowthAnalyticsPage() {
       <PageHeader
         title={t('Reports & Analytics')}
         description={t('Comprehensive marketplace performance overview')}
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedBusinessId('')}
+              className={`text-sm font-medium transition ${isScoped ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              {t('View platform-wide')}
+            </button>
+          </div>
+        }
       />
 
-      <DateRangePicker startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+      {/* Scope selector row */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <BusinessSelector
+            businesses={businesses || []}
+            loading={businessesLoading}
+            selectedBusinessId={selectedBusinessId}
+            onChange={setSelectedBusinessId}
+          />
+          <DateRangePicker startDate={startDate} endDate={endDate} onChange={handleDateChange} />
+          <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+            Scope: <span className="font-medium">{isScoped ? `Business: ${scopeLabel}` : 'Platform-wide'}</span>
+          </span>
+        </div>
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          {isScoped
+            ? `Showing authorized report data for business “${scopeLabel}”. Platform-wide totals are not mixed with business totals.`
+            : t('Showing platform-wide totals across all businesses.')}
+        </p>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
