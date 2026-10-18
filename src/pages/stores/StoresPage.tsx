@@ -18,13 +18,17 @@ import { SelectField } from '@/components/forms/SelectField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { apiErrorMessage } from '@/utils/error';
+import { hasPermission } from '@/utils/auth-roles';
+import { useAuth } from '@/hooks/useAuth';
 import type { Store } from '@/types';
 
 export function StoresManagementPage() {
   const { t } = useLocalization();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { sectors } = useSector();
   const { showToast } = useToast();
+  const canManageShops = hasPermission(user?.permissions ?? [], 'shops.manage');
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -86,9 +90,10 @@ export function StoresManagementPage() {
     () => locationsService.listZones({ limit: 200 }),
     []
   );
+  const zoneList = Array.isArray(zones) ? zones : zones?.zones ?? [];
   const zoneOptions = [
     { value: '', label: t('All Zones') },
-    ...(zones?.zones ?? zones ?? []).map((z: any) => ({
+    ...zoneList.map((z: any) => ({
       value: z._id || z.id,
       label: `${z.name}${z.cityName ? ` (${z.cityName})` : ''}`,
     })),
@@ -303,6 +308,13 @@ export function StoresManagementPage() {
       header: t('Public'),
       render: (row) => {
         const allowed = row.showOnPublic !== false;
+        if (!canManageShops) {
+          return (
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+              {allowed ? t('Public') : t('Hidden')}
+            </span>
+          );
+        }
         return (
           <button
             type="button"
@@ -369,6 +381,9 @@ export function StoresManagementPage() {
       key: 'actions',
       header: t('Actions'),
       render: (row) => {
+        if (!canManageShops) {
+          return <span className="text-xs text-gray-500">{t('View only')}</span>;
+        }
         const isBusy = busyId === row.id;
         return (
           <div
@@ -645,7 +660,7 @@ export function StoresManagementPage() {
                   handleSaveCoverage(
                     coverageEditShop.id,
                     cov.zoneIds ?? [],
-                    cov.status
+                    cov.status ?? 'UNCONFIGURED'
                   );
                 }}
               >

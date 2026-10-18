@@ -20,6 +20,7 @@ export interface NavigationGroup {
 
 const ALL_ADMINS: AdminRole[] = [
   'SUPER_ADMIN',
+  'OPERATIONAL_ADMIN',
   'SELLER_ADMIN',
   'RIDER_ADMIN',
   'CUSTOMER_ADMIN',
@@ -44,7 +45,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Users',
         path: '/users',
-        roles: USERS_TAB_ROLES,
+        roles: [...USERS_TAB_ROLES, 'OPERATIONAL_ADMIN'],
       },
     ],
   },
@@ -56,12 +57,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Businesses',
         path: '/businesses',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'SELLER_ADMIN'],
       },
       {
         labelKey: 'Shops',
         path: '/stores',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'SELLER_ADMIN'],
       },
       // The pending-shops queue is the Shops page filtered by status
       // (`/stores?status=PENDING_APPROVAL`), so a separate sidebar entry
@@ -126,12 +127,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
   {
     labelKey: 'Delivery & Logistics',
     items: [
-      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
       // Deliveries is the ONE operational screen: its second tab is Tracking.
-      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
     ],
   },
 
@@ -144,22 +145,22 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Pending Reviews',
         path: '/disputes?status=open',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'],
       },
       {
         labelKey: 'Active Disputes',
         path: '/disputes?status=in_progress',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'],
       },
       {
         labelKey: 'Resolved',
         path: '/disputes?status=resolved',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'],
       },
       {
         labelKey: 'Complaints',
         path: '/disputes',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'],
       },
     ],
   },
@@ -171,7 +172,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Analytics',
         path: '/analytics',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'],
       },
       {
         labelKey: 'Shop Analytics',
