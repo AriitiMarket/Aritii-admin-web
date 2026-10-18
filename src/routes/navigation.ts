@@ -22,9 +22,7 @@ export interface NavigationGroup {
 
 const ALL_ADMINS: AdminRole[] = [
   'SUPER_ADMIN',
-  'SELLER_ADMIN',
-  'RIDER_ADMIN',
-  'CUSTOMER_ADMIN',
+  'OPERATIONS_ADMIN',
 ];
 
 export const NAV_GROUPS: NavigationGroup[] = [
@@ -50,7 +48,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Businesses & Shops - Collapsible
+  // Businesses & Shops - Collapsible (both roles)
   {
     labelKey: 'Businesses & Shops',
     defaultCollapsed: false,
@@ -58,12 +56,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Businesses',
         path: '/businesses',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Shops',
         path: '/stores',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
     ],
   },
@@ -86,22 +84,22 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Categories',
         path: '/categories',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Reviews',
         path: '/reviews/pending',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Orders',
         path: '/orders',
-        roles: ['SUPER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Requests',
         path: '/requests',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Transactions / Payments',
@@ -116,20 +114,20 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery & Logistics - Collapsible
+  // Delivery & Logistics - Collapsible (both roles)
   {
     labelKey: 'Delivery & Logistics',
     defaultCollapsed: false,
     items: [
-      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
     ],
   },
 
-  // Disputes - Collapsible
+  // Disputes - Collapsible (both roles)
   {
     labelKey: 'Disputes',
     defaultCollapsed: true,
@@ -137,27 +135,27 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Pending Reviews',
         path: '/disputes?status=open',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Active Disputes',
         path: '/disputes?status=in_progress',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Resolved',
         path: '/disputes?status=resolved',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Complaints',
         path: '/disputes',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
     ],
   },
 
-  // Reports & Analytics - Collapsible
+  // Reports & Analytics - Collapsible (both roles)
   {
     labelKey: 'Reports & Analytics',
     defaultCollapsed: true,
@@ -165,17 +163,17 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Analytics',
         path: '/analytics',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Shop Analytics',
         path: '/stores/analytics',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
     ],
   },
 
-  // Audit Logs - Single item, no collapse needed
+  // Audit Logs - Single item (SUPER_ADMIN only)
   {
     labelKey: 'Audit Logs',
     items: [
@@ -187,7 +185,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Platform Settings - Collapsible
+  // Platform Settings - Collapsible (SUPER_ADMIN only)
   {
     labelKey: 'Platform Settings',
     defaultCollapsed: true,

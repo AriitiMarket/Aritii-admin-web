@@ -82,16 +82,15 @@ interface BackendMeResponse {
 const ROLE_MAP: Record<string, AdminRole> = {
   ADMIN: 'SUPER_ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN',
-  SELLER: 'SELLER_ADMIN',
-  SELLER_ADMIN: 'SELLER_ADMIN',
-  RIDER: 'RIDER_ADMIN',
-  RIDER_ADMIN: 'RIDER_ADMIN',
-  // Buy-side role: canonical `BUYER`, plus the legacy `CUSTOMER` spelling that
-  // older rows/payloads still carry (both resolve to the same console role).
-  BUYER: 'CUSTOMER_ADMIN',
-  CUSTOMER: 'CUSTOMER_ADMIN',
-  CUSTOMER_ADMIN: 'CUSTOMER_ADMIN',
   STAFF: 'SUPER_ADMIN',
+  // Legacy roles → map to OPERATIONS_ADMIN
+  SELLER: 'OPERATIONS_ADMIN',
+  SELLER_ADMIN: 'OPERATIONS_ADMIN',
+  RIDER: 'OPERATIONS_ADMIN',
+  RIDER_ADMIN: 'OPERATIONS_ADMIN',
+  BUYER: 'OPERATIONS_ADMIN',
+  CUSTOMER: 'OPERATIONS_ADMIN',
+  CUSTOMER_ADMIN: 'OPERATIONS_ADMIN',
 };
 
 /**

@@ -3,16 +3,12 @@ import type { AdminRole, LegacyUserType } from '@/types/auth';
 
 export const ADMIN_ROLES: AdminRole[] = [
   'SUPER_ADMIN',
-  'RIDER_ADMIN',
-  'SELLER_ADMIN',
-  'CUSTOMER_ADMIN',
+  'OPERATIONS_ADMIN',
 ];
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  RIDER_ADMIN: 'Rider Admin',
-  SELLER_ADMIN: 'Seller Admin',
-  CUSTOMER_ADMIN: 'Customer Admin',
+  SUPER_ADMIN: 'Super Administrator',
+  OPERATIONS_ADMIN: 'Operations Administrator',
 };
 
 /** Maps the legacy userType to an Aritii admin role. */
@@ -23,9 +19,8 @@ export function mapUserTypeToRole(userType: LegacyUserType): AdminRole {
       return 'SUPER_ADMIN';
     case 'VENDOR':
     case 'RESTAURANT':
-      return 'SELLER_ADMIN';
     default:
-      throw new Error('Unsupported administrator role');
+      return 'OPERATIONS_ADMIN';
   }
 }
 
