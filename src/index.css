@@ -7,10 +7,10 @@
   Design tokens preserved from the previous admin shell (see legacy/).
 */
 :root {
-  /* Modern Blue Palette - Professional & Timeless */
-  --primary-color: #3b82f6;      /* Bright Blue - main brand color */
-  --primary-dark: #1e40af;       /* Dark Blue - strong actions */
-  --secondary-color: #06b6d4;    /* Cyan - highlights & accents */
+  /* Grass Green Palette - Vibrant & Modern */
+  --primary-color: #7CFC00;      /* Bright Grass Green - main brand color */
+  --primary-dark: #32CD32;       /* Lime Green - strong actions */
+  --secondary-color: #00FF7F;    /* Spring Green - highlights & accents */
   --accent-color: #ec4899;       /* Pink - alerts & errors */
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;

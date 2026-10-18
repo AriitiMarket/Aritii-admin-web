@@ -114,7 +114,7 @@ export function NavList({
                         twMerge(
                           'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
+                            ? 'bg-lime-100 text-lime-900 font-semibold shadow-sm border-l-4 border-lime-500 dark:bg-lime-900/30 dark:text-lime-400 dark:border-lime-400'
                             : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
@@ -125,7 +125,7 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-blue-900 dark:text-blue-400'
+                                ? 'text-lime-900 dark:text-lime-400'
                                 : 'text-gray-400 dark:text-gray-500'
                             }
                           >
@@ -172,7 +172,7 @@ export function NavList({
                         twMerge(
                           'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
+                            ? 'bg-lime-100 text-lime-900 font-semibold shadow-sm border-l-4 border-lime-500 dark:bg-lime-900/30 dark:text-lime-400 dark:border-lime-400'
                             : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
@@ -183,7 +183,7 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-blue-900 dark:text-blue-400'
+                                ? 'text-lime-900 dark:text-lime-400'
                                 : 'text-gray-400 dark:text-gray-500'
                             }
                           >
