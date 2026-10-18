@@ -19,13 +19,13 @@ import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { useToast } from '@/hooks/useToast';
-import { SearchInput } from '@/components/common/SearchInput';
 import { Button } from '@/components/common/Button';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Avatar } from '@/components/common/Avatar';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Pagination } from '@/components/common/Pagination';
 import { DataTable, type Column } from '@/components/tables/DataTable';
+import { TableToolbar } from '@/components/tables/TableToolbar';
 import { Card } from '@/components/common/Card';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatDate, formatNumber } from '@/utils/format';
@@ -216,44 +216,45 @@ export function UsersListPanel({ role: pinnedRole }: { role?: UsersRoleFilter })
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="mr-auto text-sm text-gray-500 dark:text-gray-400">
-          {formatNumber(data?.total ?? 0)} {t('Users')}
-        </span>
-        {!pinnedRole && (
-          <select
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value as UsersRoleFilter);
-              setPage(1);
-            }}
-            aria-label={t('Role')}
-            className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white"
+      <TableToolbar
+        resultCount={formatNumber(data?.total ?? 0)}
+        resultLabel={t('Users')}
+        search={search}
+        onSearchChange={(next) => {
+          setSearch(next);
+          setPage(1);
+        }}
+        searchPlaceholder={t('Search by name or email...')}
+        searchLabel={t('Search')}
+        filters={
+          !pinnedRole ? (
+            <select
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value as UsersRoleFilter);
+                setPage(1);
+              }}
+              aria-label={t('Role')}
+              className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 dark:border-dark-600 dark:bg-dark-800 dark:text-white"
+            >
+              {USER_ROLE_FILTERS.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          ) : undefined
+        }
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => exportUsersToCSV(data?.items || [])}
+            title={t('Export users as CSV')}
           >
-            {USER_ROLE_FILTERS.map(f => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-        )}
-        <SearchInput
-          value={search}
-          onChange={(next) => {
-            setSearch(next);
-            setPage(1);
-          }}
-          placeholder={t('Search by name or email...')}
-          aria-label={t('Search')}
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => exportUsersToCSV(data?.items || [])}
-          title={t('Export users as CSV')}
-        >
-          <FontAwesomeIcon icon={faDownload} className="mr-2" />
-          {t('Export')}
-        </Button>
-      </div>
+            <FontAwesomeIcon icon={faDownload} className="mr-2" />
+            {t('Export')}
+          </Button>
+        }
+      />
 
       {selectedUsers.size > 0 && (
         <Card className="flex items-center justify-between gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500">

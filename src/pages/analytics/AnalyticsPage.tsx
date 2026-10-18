@@ -23,6 +23,10 @@ import type {
   ShopStats,
 } from '@/types';
 
+const BRAND_PRIMARY = '#b1c748';
+const BRAND_PRIMARY_DARK = '#5ac12f';
+const BRAND_SECONDARY = '#bac973';
+
 function DateRangePicker({
   startDate,
   endDate,
@@ -39,19 +43,19 @@ function DateRangePicker({
         type="date"
         value={startDate}
         onChange={(e) => onChange(e.target.value, endDate)}
-        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        className="h-9 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       />
       <label className="text-sm font-medium text-gray-600 dark:text-gray-300">To</label>
       <input
         type="date"
         value={endDate}
         onChange={(e) => onChange(startDate, e.target.value)}
-        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        className="h-9 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
       />
       {(startDate || endDate) && (
         <button
           onClick={() => onChange('', '')}
-          className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+          className="text-sm text-primary-dark hover:underline dark:text-primary-color"
         >
           Clear
         </button>
@@ -154,9 +158,9 @@ export function GrowthAnalyticsPage() {
   const growthData = g ? {
     labels: g.labels || [],
     datasets: [
-      { label: t('Orders'), data: g.ordersCount || [], backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
-      { label: t('Revenue'), data: g.revenueCount || [], backgroundColor: '#10b981', borderColor: '#10b981' },
-      { label: t('Shops'), data: g.storesCount || [], backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
+      { label: t('Orders'), data: g.ordersCount || [], backgroundColor: BRAND_PRIMARY, borderColor: BRAND_PRIMARY },
+      { label: t('Revenue'), data: g.revenueCount || [], backgroundColor: BRAND_PRIMARY_DARK, borderColor: BRAND_PRIMARY_DARK },
+      { label: t('Shops'), data: g.storesCount || [], backgroundColor: BRAND_SECONDARY, borderColor: BRAND_SECONDARY },
     ],
   } : { labels: [], datasets: [] };
 
@@ -165,8 +169,8 @@ export function GrowthAnalyticsPage() {
     datasets: [{
       label: t('Revenue'),
       data: salesTime.map((d) => d.revenue),
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59,130,246,0.1)',
+      borderColor: BRAND_PRIMARY_DARK,
+      backgroundColor: 'rgba(90,193,47,0.12)',
       fill: true,
     }],
   } : { labels: [], datasets: [] };
@@ -175,7 +179,7 @@ export function GrowthAnalyticsPage() {
     labels: [t('Delivery'), t('Pickup')],
     datasets: [{
       data: [sales?.delivery ?? 0, sales?.pickup ?? 0],
-      backgroundColor: ['#3b82f6', '#8b5cf6'],
+      backgroundColor: [BRAND_PRIMARY, BRAND_SECONDARY],
     }],
   };
 
@@ -183,7 +187,7 @@ export function GrowthAnalyticsPage() {
     labels: orderStatus.map((d) => d.label),
     datasets: [{
       data: orderStatus.map((d) => d.value),
-      backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+      backgroundColor: [BRAND_PRIMARY, BRAND_PRIMARY_DARK, BRAND_SECONDARY, '#ef4444', BRAND_PRIMARY, BRAND_SECONDARY],
     }],
   } : null;
 
@@ -274,15 +278,15 @@ export function GrowthAnalyticsPage() {
                 <div className="text-sm text-gray-500">{t('Total Products')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{pStats.newProducts}</div>
+                <div className="text-2xl font-bold text-primary-dark">{pStats.newProducts}</div>
                 <div className="text-sm text-gray-500">{t('New Products')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{pStats.lowStock}</div>
+                <div className="text-2xl font-bold text-secondary-color">{pStats.lowStock}</div>
                 <div className="text-sm text-gray-500">{t('Low Stock')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{pStats.outOfStock}</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-300">{pStats.outOfStock}</div>
                 <div className="text-sm text-gray-500">{t('Out of Stock')}</div>
               </div>
             </div>
@@ -297,15 +301,15 @@ export function GrowthAnalyticsPage() {
                 <div className="text-sm text-gray-500">{t('Total Shops')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{shStats.approved}</div>
+                <div className="text-2xl font-bold text-primary-dark">{shStats.approved}</div>
                 <div className="text-sm text-gray-500">{t('Approved')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{shStats.pending}</div>
+                <div className="text-2xl font-bold text-secondary-color">{shStats.pending}</div>
                 <div className="text-sm text-gray-500">{t('Pending')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{shStats.suspended}</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-300">{shStats.suspended}</div>
                 <div className="text-sm text-gray-500">{t('Suspended')}</div>
               </div>
             </div>
@@ -340,15 +344,15 @@ export function GrowthAnalyticsPage() {
                 <div className="text-sm text-gray-500">{t('Total Riders')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{dlStats.activeRiders}</div>
+                <div className="text-2xl font-bold text-primary-dark">{dlStats.activeRiders}</div>
                 <div className="text-sm text-gray-500">{t('Active Riders')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{dlStats.completedDeliveries}</div>
+                <div className="text-2xl font-bold text-primary-dark">{dlStats.completedDeliveries}</div>
                 <div className="text-sm text-gray-500">{t('Completed')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{dlStats.failedDeliveries}</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-300">{dlStats.failedDeliveries}</div>
                 <div className="text-sm text-gray-500">{t('Failed')}</div>
               </div>
             </div>
@@ -363,15 +367,15 @@ export function GrowthAnalyticsPage() {
                 <div className="text-sm text-gray-500">{t('Total Disputes')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{dStats.open}</div>
+                <div className="text-2xl font-bold text-secondary-color">{dStats.open}</div>
                 <div className="text-sm text-gray-500">{t('Open')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{dStats.inProgress}</div>
+                <div className="text-2xl font-bold text-primary-dark">{dStats.inProgress}</div>
                 <div className="text-sm text-gray-500">{t('In Progress')}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{dStats.resolved}</div>
+                <div className="text-2xl font-bold text-primary-dark">{dStats.resolved}</div>
                 <div className="text-sm text-gray-500">{t('Resolved')}</div>
               </div>
             </div>

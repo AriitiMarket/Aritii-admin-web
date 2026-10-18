@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 import { authService } from '@/services/auth.service';
+import { UnsupportedAdminRoleError } from '@/services/real/auth';
 import type { AdminUser, LoginCredentials } from '@/types';
 import {
   clearStoredSessionState,
@@ -46,6 +47,9 @@ const isAuthFailure = (error: unknown): boolean => {
   return false;
 };
 
+const isSessionInvalidationFailure = (error: unknown): boolean =>
+  error instanceof UnsupportedAdminRoleError || isAuthFailure(error);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(() => getStoredUser());
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
       return currentUser;
     } catch (error) {
-      if (isAuthFailure(error)) {
+      if (isSessionInvalidationFailure(error)) {
         await logout();
       }
       return null;
@@ -163,14 +167,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<AdminUser> => {
-      const result = await authService.login(credentials);
-      persistUserSession(result.user, {
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-        expiresAt: result.tokens.expiresAt,
-      });
-      setUser(result.user);
-      return result.user;
+      try {
+        const result = await authService.login(credentials);
+        persistUserSession(result.user, {
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+          expiresAt: result.tokens.expiresAt,
+        });
+        setUser(result.user);
+        return result.user;
+      } catch (error) {
+        clearStoredSessionState();
+        setUser(null);
+        throw error;
+      }
     },
     []
   );

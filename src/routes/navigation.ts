@@ -16,25 +16,24 @@ export interface NavigationItem {
 export interface NavigationGroup {
   labelKey: string;
   items: NavigationItem[];
+  /** Whether the group should be collapsed by default */
+  defaultCollapsed?: boolean;
 }
 
 const ALL_ADMINS: AdminRole[] = [
   'SUPER_ADMIN',
-  'SELLER_ADMIN',
-  'RIDER_ADMIN',
-  'CUSTOMER_ADMIN',
+  'OPERATIONS_ADMIN',
 ];
 
 export const NAV_GROUPS: NavigationGroup[] = [
-  // Dashboard
+  // Dashboard - Single item, no collapse needed
   {
     labelKey: 'Dashboard',
     items: [
       { labelKey: 'Home', path: '/home', roles: ALL_ADMINS },
-
     ],
   },
-  
+
   // Users Management — ONE entry. The user types (All Users, Buyers, Sellers,
   // Customers, Admins) are tabs of the Users page, not separate pages; the tab
   // registry supplies the roles so the entry cannot drift from the tabs.
@@ -49,29 +48,28 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Businesses & Shops
+  // Businesses & Shops - Collapsible (both roles)
   {
     labelKey: 'Businesses & Shops',
+    defaultCollapsed: false,
     items: [
       {
         labelKey: 'Businesses',
         path: '/businesses',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Shops',
         path: '/stores',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
-      // The pending-shops queue is the Shops page filtered by status
-      // (`/stores?status=PENDING_APPROVAL`), so a separate sidebar entry
-      // only duplicated the group.
     ],
   },
 
-  // Commerce
+  // Commerce - Collapsible (many items)
   {
     labelKey: 'Commerce',
+    defaultCollapsed: false,
     items: [
       {
         labelKey: 'Overview',
@@ -86,25 +84,22 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Categories',
         path: '/categories',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
-        // Product review moderation queue (route: /reviews/pending). Previously
-        // had no sidebar entry, so the queue was unreachable except by URL.
         labelKey: 'Reviews',
         path: '/reviews/pending',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Orders',
         path: '/orders',
-        roles: ['SUPER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
-        // Buyer ↔ seller negotiation pipeline (create → negotiate → convert).
         labelKey: 'Requests',
         path: '/requests',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Transactions / Payments',
@@ -119,69 +114,66 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Delivery & Logistics — MVP: one page per core responsibility. Deliveries
-  // is the single operational screen (assignment happens inside each delivery);
-  // there are no Assignments / Operations / Shipments / Consolidation entries —
-  // their old routes redirect there.
+  // Delivery & Logistics - Collapsible (both roles)
   {
     labelKey: 'Delivery & Logistics',
+    defaultCollapsed: false,
     items: [
-      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
-      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
-      // Deliveries is the ONE operational screen: its second tab is Tracking.
-      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
     ],
   },
 
-
-
-  // Disputes
+  // Disputes - Collapsible (both roles)
   {
     labelKey: 'Disputes',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'Pending Reviews',
         path: '/disputes?status=open',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Active Disputes',
         path: '/disputes?status=in_progress',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Resolved',
         path: '/disputes?status=resolved',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Complaints',
         path: '/disputes',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
     ],
   },
 
-  // Reports & Analytics
+  // Reports & Analytics - Collapsible (both roles)
   {
     labelKey: 'Reports & Analytics',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'Analytics',
         path: '/analytics',
-        roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Shop Analytics',
         path: '/stores/analytics',
-        roles: ['SUPER_ADMIN', 'SELLER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
     ],
   },
 
-  // Audit Logs
+  // Audit Logs - Single item (SUPER_ADMIN only)
   {
     labelKey: 'Audit Logs',
     items: [
@@ -193,9 +185,10 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Platform Settings
+  // Platform Settings - Collapsible (SUPER_ADMIN only)
   {
     labelKey: 'Platform Settings',
+    defaultCollapsed: true,
     items: [
       {
         labelKey: 'General Settings',
@@ -215,7 +208,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
-  // Admin Roles & Permissions
+  // Admin Roles & Permissions - Single item, no collapse needed
   {
     labelKey: 'Admin Roles & Permissions',
     items: [

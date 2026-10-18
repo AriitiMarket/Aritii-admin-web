@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/useToast';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Tabs } from '@/components/common/Tabs';
 import { Pagination } from '@/components/common/Pagination';
+import { Button } from '@/components/common/Button';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { FilterBar } from '@/components/workspace/FilterBar';
 import { DataSection } from '@/components/workspace/DataSection';
@@ -217,22 +218,23 @@ export function DeliveriesPage() {
       key: 'actions',
       header: '',
       render: (row) => (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             setDetail(row);
           }}
-          className="text-primary-dark hover:underline"
+          className="text-primary-dark hover:underline p-0 h-auto"
         >
           View
-        </button>
+        </Button>
       ),
     },
   ];
 
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         title="Deliveries"
         description="Every delivery, its place in the lifecycle, and where it is right now."

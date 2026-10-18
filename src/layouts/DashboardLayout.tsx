@@ -14,7 +14,7 @@ export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="layout-main flex h-screen flex-col bg-gray-50 dark:bg-dark-950 dark:text-white">
+    <div className="layout-main flex h-screen flex-col bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-white">
       <Header
         onToggleSidebar={() => setDesktopOpen((prev) => !prev)}
         onToggleMobile={() => setMobileOpen(true)}
@@ -22,8 +22,8 @@ export function DashboardLayout() {
       <div className="layout-main-container">
         <Sidebar open={desktopOpen} />
         <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 lg:p-8">
             <Breadcrumbs />
             <Outlet />
           </div>

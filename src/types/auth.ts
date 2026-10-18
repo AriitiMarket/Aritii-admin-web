@@ -5,11 +5,7 @@
  */
 
 /** Aritii admin roles used for route/UI authorization (frontend only — the backend stays the source of truth). */
-export type AdminRole =
-  | 'SUPER_ADMIN'
-  | 'RIDER_ADMIN'
-  | 'SELLER_ADMIN'
-  | 'CUSTOMER_ADMIN';
+export type AdminRole = 'SUPER_ADMIN' | 'OPERATIONS_ADMIN';
 
 /** Legacy user-type codes emitted by the current identity/mock backend. */
 export type LegacyUserType = 'ADMIN' | 'STAFF' | 'VENDOR' | 'RESTAURANT';
