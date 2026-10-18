@@ -48,20 +48,7 @@ interface ReviewDto {
  * `id` MUST be the review id: the page uses it as the row key and passes it to
  * approve/reject, so mapping the product id here would moderate the wrong record.
  */
-function toUiReview(review: ReviewDto): Review {
-  return {
-    id: String(review.reviewId || ''),
-    storeId: String(review.productId || ''),
-    storeName: review.productName || '—',
-    rating: Number(review.rating) || 0,
-    description: review.comment,
-    status: String(review.status || 'pending').toUpperCase() as Review['status'],
-    createdAt: review.createdAt || '',
-    isPublished: String(review.status).toLowerCase() === 'approved',
-    productId: review.productId,
-    reviewerName: toReviewerName(review.user),
-  };
-}
+
 
 // ── Order DTO mapping (Commerce -> console contract) ─────────────────────────
 
