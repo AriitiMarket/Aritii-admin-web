@@ -7,9 +7,11 @@
   Design tokens preserved from the previous admin shell (see legacy/).
 */
 :root {
-  --primary-color: #b1c748;
-  --primary-dark: #5ac12f;
-  --secondary-color: #bac973;
+  /* Modern Blue Palette - Professional & Timeless */
+  --primary-color: #3b82f6;      /* Bright Blue - main brand color */
+  --primary-dark: #1e40af;       /* Dark Blue - strong actions */
+  --secondary-color: #06b6d4;    /* Cyan - highlights & accents */
+  --accent-color: #ec4899;       /* Pink - alerts & errors */
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;
   --background-end-rgb: 255, 255, 255;

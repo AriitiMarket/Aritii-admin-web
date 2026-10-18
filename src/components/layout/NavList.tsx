@@ -112,10 +112,10 @@ export function NavList({
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         twMerge(
-                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
+                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-primary-color/15 text-primary-dark shadow-sm dark:bg-primary-dark/20 dark:text-primary-color'
-                            : 'text-gray-600 hover:bg-slate-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
+                            ? 'bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
+                            : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
                     >
@@ -125,7 +125,7 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-primary-dark dark:text-primary-color'
+                                ? 'text-blue-900 dark:text-blue-400'
                                 : 'text-gray-400 dark:text-gray-500'
                             }
                           >
@@ -151,7 +151,7 @@ export function NavList({
             <button
               type="button"
               onClick={() => toggleGroup(group.labelKey)}
-              className="flex w-full items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+              className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-semibold capitalize text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-900 dark:hover:text-white transition-all rounded-lg"
               aria-expanded={isExpanded}
             >
               <span>{t(group.labelKey)}</span>
@@ -170,10 +170,10 @@ export function NavList({
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         twMerge(
-                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
+                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-primary-color/15 text-primary-dark shadow-sm dark:bg-primary-dark/20 dark:text-primary-color'
-                            : 'text-gray-600 hover:bg-slate-100 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
+                            ? 'bg-blue-100 text-blue-900 font-semibold shadow-sm border-l-4 border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-400'
+                            : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
                     >
@@ -183,7 +183,7 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-primary-dark dark:text-primary-color'
+                                ? 'text-blue-900 dark:text-blue-400'
                                 : 'text-gray-400 dark:text-gray-500'
                             }
                           >
