@@ -42,12 +42,7 @@ interface ReviewDto {
   createdAt?: string | null;
 }
 
-/**
- * Maps the backend review DTO onto the flat UI `Review` model.
- *
- * `id` MUST be the review id: the page uses it as the row key and passes it to
- * approve/reject, so mapping the product id here would moderate the wrong record.
- */
+
 function toUiReview(review: ReviewDto): Review {
   return {
     id: String(review.reviewId || ''),
