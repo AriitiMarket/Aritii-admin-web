@@ -208,6 +208,19 @@ export const NAV_GROUPS: NavigationGroup[] = [
     ],
   },
 
+  // Account Security - Collapsible (All admins)
+  {
+    labelKey: 'Account Security',
+    defaultCollapsed: true,
+    items: [
+      {
+        labelKey: 'Security Settings',
+        path: '/settings/security',
+        roles: ALL_ADMINS,
+      },
+    ],
+  },
+
   // Admin Roles & Permissions - Single item, no collapse needed
   {
     labelKey: 'Admin Roles & Permissions',
