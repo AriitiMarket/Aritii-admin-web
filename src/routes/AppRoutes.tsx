@@ -150,6 +150,11 @@ const SystemSettingsPage = lazy(() =>
     default: m.SystemSettingsPage,
   }))
 );
+const SecuritySettingsPage = lazy(() =>
+  import('@/pages/settings/SecuritySettingsPage').then((m) => ({
+    default: m.SecuritySettingsPage,
+  }))
+);
 const ShopsAnalyticsPage = lazy(() =>
   import('@/pages/stores/ShopsAnalyticsPage').then((m) => ({
     default: m.ShopsAnalyticsPage,
@@ -279,6 +284,7 @@ export function AppRoutes() {
         { path: 'settings/platform', element: <Suspend roles={SUPER}><PlatformSettingsPage /></Suspend> },
         { path: 'settings/notifications', element: <Suspend roles={SUPER}><NotificationsSettingsPage /></Suspend> },
         { path: 'settings/system', element: <Suspend roles={SUPER}><SystemSettingsPage /></Suspend> },
+        { path: 'settings/security', element: <Suspend roles={OPS}><SecuritySettingsPage /></Suspend> },
         { path: 'commerce', element: <Suspend roles={SUPER}><CommerceOverviewPage /></Suspend> },
         { path: 'commerce/products', element: <Suspend roles={SUPER}><ProductsPage /></Suspend> },
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
