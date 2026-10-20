@@ -8,6 +8,7 @@ import { TextField } from '@/components/forms/TextField';
 import { PasswordField } from '@/components/forms/PasswordField';
 import { isEmail, isRequired } from '@/utils/validation';
 import { TwoFactorVerify } from '@/components/TwoFactorVerify';
+import { setAuthTokens } from '@/utils/auth-storage';
 
 interface LoginFormState {
   email: string;
@@ -46,6 +47,13 @@ export function LoginPage() {
 
   const handleTwoFASuccess = async (_data: Record<string, unknown>) => {
     try {
+      if (data.access_token && data.refresh_token) {
+        setAuthTokens({
+          accessToken: data.access_token as string,
+          refreshToken: data.refresh_token as string,
+          expiresAt: String(data.expires_in ?? ''),
+        });
+      }
       showToast({
         type: 'success',
         title: t('Login'),

@@ -37,6 +37,7 @@ export function TwoFactorSetup() {
   const [step, setStep] = useState<'choose-method' | 'setup' | 'verify' | 'backup' | 'success'>('choose-method');
   const [method, setMethod] = useState<'EMAIL' | 'SMS' | 'TOTP' | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [emailDest, setEmailDest] = useState('');
   const [qrCode, setQrCode] = useState<string | undefined>();
   const [code, setCode] = useState('');
   const [backupCodes, setBackupCodes] = useState<BackupCode[]>([]);
@@ -56,6 +57,10 @@ export function TwoFactorSetup() {
       setError('Please enter a phone number');
       return;
     }
+    if (selectedMethod === 'EMAIL' && !emailDest.trim()) {
+      setError('Please enter an email address');
+      return;
+    }
 
     setMethod(selectedMethod);
     setLoading(true);
@@ -71,7 +76,7 @@ export function TwoFactorSetup() {
 
       const response = await http.post<SetupResponse>(
         '/user/2fa/setup',
-        { method: selectedMethod, phoneNumber: phoneNumber || undefined },
+        { method: selectedMethod, phoneNumber: phoneNumber || undefined, email: emailDest || undefined },
         { authenticated: true }
       );
 
@@ -184,7 +189,7 @@ export function TwoFactorSetup() {
               return (
                 <div
                   key={m}
-                  onClick={() => handleChooseMethod(m)}
+                  onClick={() => setMethod(m)}
                   className={`
                     cursor-pointer p-6 rounded-xl border transition-all
                     ${isSelected
@@ -225,10 +230,26 @@ export function TwoFactorSetup() {
             </div>
           )}
 
+          {method === 'EMAIL' && (
+            <div className="mt-6">
+              <TextField
+                label="Email Address"
+                placeholder="you@example.com"
+                value={emailDest}
+                onChange={(e) => setEmailDest(e.target.value)}
+                error={
+                  method === 'EMAIL' && !emailDest.trim()
+                    ? 'Email is required for Email OTP'
+                    : undefined
+                }
+              />
+            </div>
+          )}
+
           <div className="mt-8 flex gap-3">
             <Button
               variant="primary"
-              disabled={loading || !method || (method === 'SMS' && !phoneNumber.trim())}
+              disabled={loading || !method || (method === 'SMS' && !phoneNumber.trim()) || (method === 'EMAIL' && !emailDest.trim())}
               onClick={() => method && handleChooseMethod(method)}
               loading={loading}
             >
