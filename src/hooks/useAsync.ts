@@ -25,8 +25,11 @@ export function useAsync<T>(
     setLoading(true);
     setError(null);
 
-    fnRef
-      .current()
+    Promise.resolve()
+      .then(() => {
+        const result = fnRef.current();
+        return result instanceof Promise ? result : Promise.resolve(result);
+      })
       .then((result) => {
         if (cancelled) return;
         setData(result);

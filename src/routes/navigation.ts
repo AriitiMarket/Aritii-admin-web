@@ -117,6 +117,36 @@ export const NAV_GROUPS: NavigationGroup[] = [
         path: '/commerce/promotions',
         roles: ['SUPER_ADMIN'],
       },
+      {
+        // Priority queue (VIP/urgent orders) — Phase-1 fulfilment ops.
+        labelKey: 'Priority Queue',
+        path: '/commerce/priority',
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN'],
+      },
+      {
+        // SLA breach dashboard — Phase-1 fulfilment ops.
+        labelKey: 'SLA Dashboard',
+        path: '/commerce/sla',
+        roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN'],
+      },
+      {
+        // Payment reconciliation — Phase-1 financial ops.
+        labelKey: 'Reconciliation',
+        path: '/commerce/reconciliation',
+        roles: ['SUPER_ADMIN'],
+      },
+      {
+        // Commission audit — Phase-1 financial ops.
+        labelKey: 'Commission Audit',
+        path: '/commerce/commission-audit',
+        roles: ['SUPER_ADMIN'],
+      },
+      {
+        // Payment ledger audit — Phase-1 financial ops.
+        labelKey: 'Payment Ledger',
+        path: '/commerce/payment-ledger',
+        roles: ['SUPER_ADMIN'],
+      },
     ],
   },
 
@@ -128,11 +158,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
     labelKey: 'Delivery & Logistics',
     items: [
       { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
-      { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN'] },
+      { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN'] },
       { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
       { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
       // Deliveries is the ONE operational screen: its second tab is Tracking.
       { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'RIDER_ADMIN'] },
+      { labelKey: 'Deliverer payouts', path: '/delivery/payouts', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN'] },
     ],
   },
 

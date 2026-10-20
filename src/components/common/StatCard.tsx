@@ -2,19 +2,25 @@ import type { ReactNode } from 'react';
 import { Card } from '@/components/common/Card';
 import { twMerge } from 'tailwind-merge';
 
+export interface StatCardProps {
+  label?: string;
+  value: string;
+  icon?: ReactNode;
+  hint?: string;
+  className?: string;
+  /** Accepted for callers that use the legacy card API. */
+  title?: string;
+  subtitle?: string;
+  variant?: string;
+}
+
 export function StatCard({
   label,
   value,
   icon,
   hint,
   className,
-}: {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-  hint?: string;
-  className?: string;
-}) {
+}: StatCardProps) {
   return (
     <Card className={twMerge('flex flex-col gap-2', className)}>
       <div className="flex items-center justify-between">

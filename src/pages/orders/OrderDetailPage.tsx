@@ -9,6 +9,8 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
 import { formatDate } from '@/utils/format';
 import { commerceService } from '@/services/commerce.service';
+import { OrderNotesTab } from '@/components/OrderNotesTab';
+import { OrderHoldStatus } from '@/components/OrderHoldStatus';
 
 const OPERATIONAL_TIMELINE: Array<{ stage: string; label: string }> = [
   { stage: 'new', label: 'Order Created' },
@@ -330,6 +332,12 @@ export function OrderDetailPage() {
           </div>
         </Card>
       )}
+
+      {/* Order Hold controls (pause / release before fulfillment) */}
+      {orderId && <OrderHoldStatus orderId={orderId} />}
+
+      {/* Buyer↔seller note thread, visible to admins for moderation context */}
+      {orderId && <OrderNotesTab orderId={orderId} />}
 
       {/* Action Buttons */}
       <div className="flex gap-2 pt-4">

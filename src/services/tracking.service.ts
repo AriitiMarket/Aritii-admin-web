@@ -44,6 +44,8 @@ export interface TrackingResponse {
   events?: TrackingEvent[];
   count?: number;
   location?: TrackingLocation;
+  /** Batch read: the latest position of each requested delivery, keyed by id. */
+  locations?: Record<string, TrackingLocation | null>;
 }
 
 export const trackingService = {
@@ -62,6 +64,25 @@ export const trackingService = {
   async getLatestLocation(deliveryId: string): Promise<TrackingLocation | null> {
     const res = await http.get<{ success: boolean; location?: TrackingLocation }>(`/delivery/tracking/${deliveryId}/latest`);
     return res?.location ?? null;
+  },
+
+  /**
+   * The latest position of MANY deliveries in ONE request
+   * (backend: GET /delivery/tracking/latest?deliveryIds=a,b,c).
+   *
+   * A tracking list renders the position of every row. Fetching them one by
+   * one turned a 25-row page into 25 round trips; this answers them all at
+   * once. A delivery the caller may not read is simply absent from the map.
+   */
+  async getLatestLocations(deliveryIds: string[]): Promise<Map<string, TrackingLocation | null>> {
+    const ids = deliveryIds.filter(Boolean);
+    if (!ids.length) return new Map();
+    const res = await http.get<{ success: boolean; locations?: Record<string, TrackingLocation | null> }>(
+      '/delivery/tracking/latest',
+      { params: { deliveryIds: ids.join(',') } }
+    );
+    const locations = res?.locations ?? {};
+    return new Map(Object.entries(locations));
   },
 
   /** Nearby events for a live location (backend: GET /delivery/tracking/nearby) — best effort. */

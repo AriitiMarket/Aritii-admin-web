@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/tables/DataTable';
-import { Modal, Button, Textarea, Select } from '@/components/common';
-import { returnsService, Return, ReturnsResponse } from '@/services/returns.service';
+import { Modal } from '@/components/common/Modal';
+import { Button } from '@/components/common/Button';
+import { Textarea } from '@/components/common/Textarea';
+import { SelectField as Select } from '@/components/common/SelectField';
+import { returnsService, type Return } from '@/services/returns.service';
 import { useToast } from '@/hooks/useToast';
 
 export const ReturnsManagementPage = () => {
@@ -13,7 +16,7 @@ export const ReturnsManagementPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [notes, setNotes] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | 'refund' | null>(null);
-  const { toast } = useToast();
+  const { showToast: toast } = useToast();
 
   const limit = 20;
 
@@ -78,7 +81,7 @@ export const ReturnsManagementPage = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       REQUESTED: 'bg-yellow-100 text-yellow-800',
       APPROVED: 'bg-blue-100 text-blue-800',
       REJECTED: 'bg-red-100 text-red-800',

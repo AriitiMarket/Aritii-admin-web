@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/tables/DataTable';
-import { Modal, Button, Input, Textarea } from '@/components/common';
-import { reviewsService, Review } from '@/services/reviews.service';
+import { Modal } from '@/components/common/Modal';
+import { Button } from '@/components/common/Button';
+import { Textarea } from '@/components/common/Textarea';
+import { reviewsService, type Review } from '@/services/reviews.service';
 import { useToast } from '@/hooks/useToast';
 
 export const ReviewsModerationPage = () => {
@@ -12,7 +14,7 @@ export const ReviewsModerationPage = () => {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
-  const { toast } = useToast();
+  const { showToast: toast } = useToast();
 
   const limit = 20;
 

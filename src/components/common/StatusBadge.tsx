@@ -52,15 +52,19 @@ export function statusVariantFor(input: string | undefined): StatusVariant {
   return 'neutral';
 }
 
+export interface StatusBadgeProps {
+  label?: string;
+  variant?: StatusVariant;
+  className?: string;
+  /** Accepted for callers that use the legacy badge API. */
+  status?: string;
+}
+
 export function StatusBadge({
   label,
   variant,
   className,
-}: {
-  label?: string;
-  variant?: StatusVariant;
-  className?: string;
-}) {
+}: StatusBadgeProps) {
   const resolved = variant ?? statusVariantFor(label);
   return (
     <span

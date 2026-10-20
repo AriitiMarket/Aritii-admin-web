@@ -17,6 +17,7 @@ import { formatDate } from '@/utils/format';
 import { commerceService } from '@/services/commerce.service';
 import { storesService } from '@/services/stores.service';
 import { businessesService } from '@/services/businesses.service';
+import { OrderExportButton } from '@/components/OrderExportButton';
 import type { AdminOrderRow } from '@/services/commerce.service';
 import type { OrderStatus } from '@/types';
 
@@ -269,6 +270,17 @@ export function OrdersMonitoringPage() {
           >
             {showFilters ? '✕ ' : '⊕ '}{t('Filters')}
           </button>
+          <OrderExportButton
+            filters={{
+              status: status || undefined,
+              paymentStatus: paymentStatus || undefined,
+              startDate: startDate || undefined,
+              endDate: endDate || undefined,
+              shopId: shopId || undefined,
+              businessId: businessId || undefined,
+              stage: stage || undefined,
+            }}
+          />
         </div>
       </div>
 

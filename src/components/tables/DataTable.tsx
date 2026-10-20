@@ -9,14 +9,45 @@ export interface Column<T> {
   className?: string;
 }
 
+/**
+ * Column shape still used by the older console pages: the caption lives in
+ * `label`, the cell renderer receives the raw cell value instead of the row
+ * and `accessor` may be a plain field name.
+ */
+export interface LegacyColumn<T> {
+  key?: string;
+  label?: string;
+  header?: string | ReactNode;
+  width?: string;
+  render?(value: unknown, ...rest: unknown[]): ReactNode;
+  accessor?: string | ((row: T) => ReactNode);
+  cell?: (row: T) => ReactNode;
+  className?: string;
+}
+
+export type AnyColumn<T> = Column<T> | LegacyColumn<T>;
+
 export interface DataTableProps<T> {
-  columns: Column<T>[];
-  rows: T[];
-  rowKey: (row: T) => string;
+  columns: AnyColumn<T>[];
+  rows?: T[];
+  rowKey?: (row: T) => string;
   loading?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
   onRowClick?: (row: T) => void;
+  /** Legacy collection alias. */
+  data?: T[];
+  /** Legacy pagination props. */
+  onPageChange?: (page: number) => void;
+  currentPage?: number;
+  pageSize?: number;
+  total?: number;
+  pagination?: {
+    page: number;
+    setPage: (page: number) => void;
+    limit: number;
+    total: number;
+  };
 }
 
 export function DataTable<T>({
@@ -41,7 +72,9 @@ export function DataTable<T>({
     );
   }
 
-  if (rows.length === 0) {
+  const list = rows as T[];
+
+  if (list.length === 0) {
     return (
       <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
         {emptyTitle}
@@ -70,10 +103,10 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {list.map((row) => (
             <tr
-              key={rowKey(row)}
-              onClick={hasRowClick ? () => onRowClick(row) : undefined}
+              key={rowKey?.(row)}
+              onClick={hasRowClick ? () => onRowClick?.(row) : undefined}
               className={
                 hasRowClick
                   ? 'cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-dark-600/50 dark:hover:bg-dark-900'
@@ -88,7 +121,9 @@ export function DataTable<T>({
                   {column.render
                     ? column.render(row)
                     : column.accessor
-                      ? String(column.accessor(row) ?? '—')
+                      ? typeof column.accessor === 'function'
+                        ? String(column.accessor(row) ?? '—')
+                        : null
                       : null}
                 </td>
               ))}

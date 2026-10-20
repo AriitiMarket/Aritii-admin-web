@@ -123,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Set a safety timeout to prevent infinite loading
+        // Use a longer timeout than the HTTP client default (15s) to avoid race conditions
         timeoutId = setTimeout(() => {
           if (mounted) {
             console.warn('Auth bootstrap timeout - clearing session');
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setLoading(false);
           }
-        }, 5000); // 5 second timeout
+        }, 20000); // 20 second timeout (longer than HTTP client's 15s)
 
         // Token exists, try to refresh and get current user
         try {
