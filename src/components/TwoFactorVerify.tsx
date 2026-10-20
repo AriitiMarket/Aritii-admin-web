@@ -80,10 +80,11 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
           'Authorization': `Bearer ${tempToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          code: useBackupCode ? code.trim() : cleanCode,
-          isBackupCode: useBackupCode,
-        }),
+        body: JSON.stringify(
+          useBackupCode
+            ? { backupCode: code.trim() }
+            : { code: cleanCode }
+        ),
       });
 
       const data = await response.json();

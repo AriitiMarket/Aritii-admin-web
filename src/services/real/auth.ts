@@ -168,7 +168,7 @@ async function requestAuthorizationCode(credentials: LoginCredentials): Promise<
   codeVerifier: string;
 }> {
   const pkce = await createPkcePair();
-  const res = await http.post<BackendCodeResponse>(
+  const res = await http.post<BackendCodeResponse & { requires2fa?: boolean; method?: string; tempToken?: string }>(
     '/auth/authorize',
     {
       email: credentials.email,
@@ -180,6 +180,12 @@ async function requestAuthorizationCode(credentials: LoginCredentials): Promise<
     },
     { authenticated: false }
   );
+  if (res.requires2fa) {
+    const err = new Error('2FA verification required');
+    (err as any).method = res.method;
+    (err as any).tempToken = res.tempToken;
+    throw err;
+  }
   if (!res.code) throw new Error('Authorization code was not issued');
   return { code: res.code, codeVerifier: pkce.codeVerifier };
 }
