@@ -13,18 +13,12 @@ export function AdminMobileConsole() {
   }, []);
 
   const fetchDashboard = async () => {
-    try {
-      const response = await fetch('/api/admin/mobile/dashboard', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const data = await response.json();
-      setDashboard(data.data);
-    } catch (error) {
-      console.error('Failed to fetch dashboard:', error);
-    }
+    // The backend does not expose the mobile dashboard endpoint yet.
   };
 
-  if (!dashboard) return <div className="loading">Loading...</div>;
+  if (!dashboard) return <div className="admin-mobile-console" role="status">
+    Mobile admin actions are unavailable because the backend does not expose the mobile console endpoints yet.
+  </div>;
 
   return (
     <div className="admin-mobile-console">
@@ -120,19 +114,7 @@ function QuickActionModal({ action, onClose }) {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/mobile/operation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ operation: action, data: formData })
-      });
-
-      if (response.ok) {
-        alert('Action completed successfully');
-        onClose();
-      }
+      throw new Error('Mobile admin operations are not available in the backend yet.');
     } catch (error) {
       alert('Action failed: ' + error.message);
     } finally {

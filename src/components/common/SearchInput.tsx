@@ -23,7 +23,7 @@ export function SearchInput({
         aria-label={ariaLabel ?? placeholder}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full rounded-md border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-primary-dark focus:outline-none dark:border-dark-600 dark:bg-dark-900 dark:text-white sm:w-64"
+        className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 text-sm text-gray-800 shadow-sm placeholder:text-gray-400 transition-[border-color,box-shadow] focus:border-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark/20 dark:border-dark-600 dark:bg-dark-900 dark:text-white sm:w-72"
       />
     </div>
   );

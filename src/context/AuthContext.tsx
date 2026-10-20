@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from 'react';
 import { authService } from '@/services/auth.service';
+import { UnsupportedAdminRoleError } from '@/services/real/auth';
 import type { AdminUser, LoginCredentials } from '@/types';
 import {
   clearStoredSessionState,
@@ -46,6 +47,9 @@ const isAuthFailure = (error: unknown): boolean => {
   return false;
 };
 
+const isSessionInvalidationFailure = (error: unknown): boolean =>
+  error instanceof UnsupportedAdminRoleError || isAuthFailure(error);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(() => getStoredUser());
   const [loading, setLoading] = useState(true);
@@ -74,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
       return currentUser;
     } catch (error) {
-      if (isAuthFailure(error)) {
+      if (isSessionInvalidationFailure(error)) {
         await logout();
       }
       return null;
@@ -119,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Set a safety timeout to prevent infinite loading
+        // Use a longer timeout than the HTTP client default (15s) to avoid race conditions
         timeoutId = setTimeout(() => {
           if (mounted) {
             console.warn('Auth bootstrap timeout - clearing session');
@@ -126,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setLoading(false);
           }
-        }, 5000); // 5 second timeout
+        }, 20000); // 20 second timeout (longer than HTTP client's 15s)
 
         // Token exists, try to refresh and get current user
         try {
@@ -163,14 +168,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<AdminUser> => {
-      const result = await authService.login(credentials);
-      persistUserSession(result.user, {
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-        expiresAt: result.tokens.expiresAt,
-      });
-      setUser(result.user);
-      return result.user;
+      try {
+        const result = await authService.login(credentials);
+        persistUserSession(result.user, {
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+          expiresAt: result.tokens.expiresAt,
+        });
+        setUser(result.user);
+        return result.user;
+      } catch (error) {
+        clearStoredSessionState();
+        setUser(null);
+        throw error;
+      }
     },
     []
   );

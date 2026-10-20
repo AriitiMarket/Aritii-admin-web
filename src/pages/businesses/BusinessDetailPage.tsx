@@ -34,6 +34,10 @@ interface BusinessShopRow {
   orders?: number;
   showOnPublic?: boolean;
   createdAt?: string;
+  deliveryCoverage?: {
+    zoneIds?: string[];
+    status?: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED';
+  };
 }
 
 const locationParts = (loc?: Record<string, any> | null) => {

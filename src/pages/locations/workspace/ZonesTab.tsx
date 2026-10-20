@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/common/Button';
@@ -14,6 +14,8 @@ import { Facts } from '@/components/workspace/DetailList';
 import { RecordDrawer, type DetailTab } from '@/components/workspace/RecordDrawer';
 import { NetworkMapPanel } from './NetworkMapPanel';
 import { useMapData } from './useMapData';
+import { useAuth } from '@/hooks/useAuth';
+import { apiErrorMessage } from '@/utils/error';
 
 const LIMIT = 20;
 const STATUS_OPTIONS = [
@@ -30,6 +32,8 @@ const SERVICEABILITY_OPTIONS = [
 
 /** Delivery Zones tab. */
 export function ZonesTab() {
+  const { user } = useAuth();
+  const canManage = Boolean(user?.permissions?.includes('*') || user?.permissions?.includes('locations.manage'));
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -92,8 +96,8 @@ export function ZonesTab() {
       render: (r) => (
         <RowActions
           onView={() => { setDetail(r); setDetailTab('overview'); }}
-          onEdit={() => setEditing(r)}
-          onManage={() => void toggleStatus(r)}
+          onEdit={canManage ? () => setEditing(r) : undefined}
+          onManage={canManage ? () => void toggleStatus(r) : undefined}
         />
       ),
     },
@@ -136,6 +140,7 @@ const z = detail;
           <Facts items={[
             ['Serviceable', String(rules?.serviceable ?? false)],
             ['Delivery fee', rules?.deliveryFee ?? '—'],
+            ['Quantity fee bands', rules?.quantityFees?.length ? rules.quantityFees.map((band) => `${band.minQty}–${band.maxQty ?? '∞'} items: ${Number(band.fee).toFixed(2)} ETB${band.enabled === false ? ' (disabled)' : ''}`).join('; ') : 'Flat zone fee'],
             ['Free delivery over', rules?.freeDeliveryThreshold ?? '—'],
             ['Estimated time', rules?.estimatedDeliveryTime ?? '—'],
             ['COD available', String(rules?.codAvailable ?? false)],
@@ -157,6 +162,7 @@ const z = detail;
 
   return (
     <>
+      <DeliveryFeeSettingsPanel canManage={canManage} />
       <FilterBar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
@@ -167,7 +173,7 @@ const z = detail;
         actions={
           <>
             <ViewToggle mode={view} onChange={setView} showMap />
-            <Button variant="primary" onClick={() => setCreating(true)}>Add Zone</Button>
+            {canManage && <Button variant="primary" onClick={() => setCreating(true)}>Add Zone</Button>}
           </>
         }
         filters={[
@@ -192,7 +198,7 @@ const z = detail;
           isEmpty={!loading && zones.length === 0}
           emptyTitle={isFiltered ? 'No zones match these filters' : 'No delivery zones yet'}
           emptyDescription={isFiltered ? 'Try widening or resetting the filters above.' : 'Create a zone to group locations into a deliverable area.'}
-          emptyAction={isFiltered ? undefined : { label: 'Add Zone', onClick: () => setCreating(true) }}
+          emptyAction={isFiltered || !canManage ? undefined : { label: 'Add Zone', onClick: () => setCreating(true) }}
         >
           <DataTable columns={columns} rows={zones} rowKey={(r) => r._id} loading={loading} emptyTitle="No zones found" />
           <Pagination className="mt-4" page={page} totalPages={data?.totalPages ?? 1} total={data?.total} onPageChange={setPage} />
@@ -216,14 +222,14 @@ const z = detail;
         title={detail?.name ?? ''}
         subtitle={detail?.code}
         statusLabel={detail?.status}
-        actions={
+        actions={canManage ? (
           <>
             <Button variant="outline" size="sm" onClick={() => detail && setEditing(detail)}>Edit</Button>
             <Button variant="secondary" size="sm" onClick={() => detail && void toggleStatus(detail)}>
               {detail?.status === 'active' ? 'Deactivate' : 'Activate'}
             </Button>
           </>
-        }
+        ) : undefined}
         summary={[
           { label: 'Serviceable', value: detail?.deliveryRules?.serviceable ? 'Yes' : 'No' },
           { label: 'Locations', value: detail?.locationIds?.length ?? 0 },
@@ -234,5 +240,45 @@ const z = detail;
         onTabChange={setDetailTab}
       />
     </>
+  );
+}
+
+function DeliveryFeeSettingsPanel({ canManage }: { canManage: boolean }) {
+  const [settings, setSettings] = useState<{ defaultFee: number; delivererShareRate: number; minimumPayout: number; holdHours: number } | null>(null);
+  const [draft, setDraft] = useState({ defaultFee: '', delivererShareRate: '', minimumPayout: '', holdHours: '' });
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    zonesService.getFeeSettings().then((value) => {
+      setSettings(value);
+      setDraft({ defaultFee: String(value.defaultFee), delivererShareRate: String(value.delivererShareRate), minimumPayout: String(value.minimumPayout), holdHours: String(value.holdHours) });
+    }).catch((err) => setError(err?.message || 'Could not load platform delivery settings'));
+  }, []);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault(); setError('');
+    const next = { defaultFee: Number(draft.defaultFee), delivererShareRate: Number(draft.delivererShareRate), minimumPayout: Number(draft.minimumPayout), holdHours: Number(draft.holdHours) };
+    if (Object.values(next).some((value) => !Number.isFinite(value) || value < 0) || next.delivererShareRate > 100) { setError('Fees and hold settings must be nonnegative; deliverer share must be 0–100%.'); return; }
+    if (!window.confirm(`Apply default delivery fee ${settings?.defaultFee.toFixed(2)} → ${next.defaultFee.toFixed(2)} ETB and deliverer share ${settings?.delivererShareRate}% → ${next.delivererShareRate}% to new deliveries?`)) return;
+    setSaving(true);
+    try {
+      const updated = await zonesService.updateFeeSettings({ ...next, reason: reason.trim() || undefined });
+      setSettings(updated);
+    } catch (err) { setError(apiErrorMessage(err, 'Could not save delivery settings')); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <form onSubmit={save} className="mb-5 rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-600 dark:bg-dark-800">
+      <div className="mb-3"><h2 className="font-semibold text-gray-900 dark:text-white">Platform delivery settings</h2><p className="text-sm text-gray-500">Fallback fee and provider payout rules for new orders.</p></div>
+      {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {([
+          ['defaultFee', 'Default delivery fee (ETB)'], ['delivererShareRate', 'Deliverer share (%)'], ['minimumPayout', 'Minimum payout (ETB)'], ['holdHours', 'Earnings hold (hours)'],
+        ] as const).map(([key, label]) => <label key={key} className="text-sm text-gray-700 dark:text-gray-200">{label}<input aria-label={label} disabled={!canManage} type="number" min="0" max={key === 'delivererShareRate' ? 100 : undefined} step="0.01" value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:opacity-60 dark:border-dark-600 dark:bg-dark-900" /></label>)}
+      </div>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row"><input aria-label="Change reason" disabled={!canManage} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (optional)" className="flex-1 rounded-md border border-gray-300 px-3 py-2 disabled:opacity-60 dark:border-dark-600 dark:bg-dark-900" /><Button type="submit" loading={saving} disabled={!settings || !canManage}>Save delivery settings</Button></div>
+    </form>
   );
 }

@@ -96,6 +96,7 @@ export interface ZoneCoverage {
 export interface DeliveryRules {
   serviceable: boolean;
   deliveryFee: number;
+  quantityFees?: { minQty: number; maxQty: number | null; fee: number; enabled?: boolean }[];
   freeDeliveryThreshold?: number;
   estimatedDeliveryTime: string;
   minimumOrder?: number;

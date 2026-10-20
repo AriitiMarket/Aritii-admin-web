@@ -167,6 +167,7 @@ export interface PaymentMethodRecord {
   verificationRequired?: boolean;
   settlementSettings?: Record<string, unknown>;
   createdAt?: string;
+  sortOrder?: number;
 }
 
 export interface SellerPaymentAccount {
@@ -628,6 +629,10 @@ export const commerceService = {
       ? await http.put<{ method: PaymentMethodRecord }>(`/payment/admin/methods/${id}`, body)
       : await http.post<{ method: PaymentMethodRecord }>('/payment/admin/methods', body);
     return res.method || null;
+  },
+  async testConnection(methodId: string): Promise<{ success: boolean; message: string; provider?: string; environment?: string }> {
+    const res = await http.post<{ result: { success: boolean; message: string; provider?: string; environment?: string } }>(`/payment/admin/methods/${methodId}/test`);
+    return res.result || { success: false, message: 'Test connection failed' };
   },
   async listSellerPaymentAccounts(): Promise<SellerPaymentAccount[]> {
     const res = await http.get<{ accounts?: SellerPaymentAccount[] }>('/payment/admin/seller-accounts');

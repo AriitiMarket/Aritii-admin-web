@@ -1,88 +1,46 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { SelectField } from '@/components/forms/SelectField';
+import { ErrorState } from '@/components/common/ErrorState';
+import { PageLoader } from '@/components/common/PageLoader';
+import { useAsync } from '@/hooks/useAsync';
+import { analyticsService } from '@/services/analytics.service';
 
-interface LocationMetrics {
-  name: string;
-  activeShops: number;
-  suspendedShops: number;
-  pendingShops: number;
-  totalGMV: number;
-  avgRating: number;
-  topShops: Array<{ name: string; gmv: number; rating: number }>;
+function dateRange(days: string): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(end.getDate() - Number(days) + 1);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
 }
 
 export function ShopsAnalyticsPage() {
   const { t } = useLocalization();
   const navigate = useNavigate();
-  const [timeRange, setTimeRange] = useState('30'); // days
-  const [groupBy, setGroupBy] = useState('location'); // location or sector
+  const [timeRange, setTimeRange] = useState('30');
+  const range = useMemo(() => dateRange(timeRange), [timeRange]);
+  const stats = useAsync(
+    () => analyticsService.getShopStats(range.startDate, range.endDate),
+    [range.startDate, range.endDate]
+  );
 
-  // Mock data
-  const mockMetrics: LocationMetrics[] = [
-    {
-      name: 'Addis Ababa',
-      activeShops: 1250,
-      suspendedShops: 45,
-      pendingShops: 23,
-      totalGMV: 125400000,
-      avgRating: 4.5,
-      topShops: [
-        { name: 'Supreme Electronics', gmv: 2500000, rating: 4.8 },
-        { name: 'Fashion World', gmv: 1800000, rating: 4.6 },
-        { name: 'Food Paradise', gmv: 1500000, rating: 4.4 },
-      ],
-    },
-    {
-      name: 'Dire Dawa',
-      activeShops: 420,
-      suspendedShops: 12,
-      pendingShops: 8,
-      totalGMV: 28500000,
-      avgRating: 4.3,
-      topShops: [
-        { name: 'City Mall', gmv: 850000, rating: 4.7 },
-        { name: 'Local Store', gmv: 620000, rating: 4.2 },
-        { name: 'Quick Mart', gmv: 450000, rating: 4.1 },
-      ],
-    },
-    {
-      name: 'Hawassa',
-      activeShops: 280,
-      suspendedShops: 8,
-      pendingShops: 5,
-      totalGMV: 15200000,
-      avgRating: 4.2,
-      topShops: [
-        { name: 'Market Plus', gmv: 450000, rating: 4.5 },
-        { name: 'Trading Port', gmv: 380000, rating: 4.0 },
-        { name: 'Tech Store', gmv: 320000, rating: 4.3 },
-      ],
-    },
-  ];
-
-  const StatCard = ({ label, value, subtext }: { label: string; value: string | number; subtext?: string }) => (
+  const StatCard = ({ label, value }: { label: string; value: string | number }) => (
     <Card className="text-center">
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{label}</p>
       <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
-      {subtext && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtext}</p>}
     </Card>
   );
 
-  const totalMetrics = mockMetrics.reduce(
-    (acc, m) => ({
-      activeShops: acc.activeShops + m.activeShops,
-      suspendedShops: acc.suspendedShops + m.suspendedShops,
-      pendingShops: acc.pendingShops + m.pendingShops,
-      totalGMV: acc.totalGMV + m.totalGMV,
-      avgRating: (acc.avgRating + m.avgRating) / 2,
-    }),
-    { activeShops: 0, suspendedShops: 0, pendingShops: 0, totalGMV: 0, avgRating: 0 }
-  );
+  if (stats.loading) return <PageLoader label={t('Loading')} />;
+  if (stats.error) return <ErrorState message={stats.error} onRetry={stats.refetch} />;
+
+  const shopStats = stats.data;
 
   return (
     <div>
@@ -102,15 +60,6 @@ export function ShopsAnalyticsPage() {
               onChange={(e) => setTimeRange(e.target.value)}
               className="w-40"
             />
-            <SelectField
-              value={groupBy}
-              options={[
-                { value: 'location', label: 'Group by Location' },
-                { value: 'sector', label: 'Group by Sector' },
-              ]}
-              onChange={(e) => setGroupBy(e.target.value)}
-              className="w-40"
-            />
             <Button onClick={() => navigate('/stores')} variant="outline">
               {t('Back')}
             </Button>
@@ -120,68 +69,21 @@ export function ShopsAnalyticsPage() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-6">
-        <StatCard label="Active Shops" value={totalMetrics.activeShops.toLocaleString()} />
-        <StatCard label="Pending Approval" value={totalMetrics.pendingShops} />
-        <StatCard label="Suspended" value={totalMetrics.suspendedShops} />
-        <StatCard
-          label="Total GMV"
-          value={`${(totalMetrics.totalGMV / 1000000).toFixed(1)}M`}
-          subtext="ETB"
-        />
+        <StatCard label="Total Shops" value={shopStats?.total.toLocaleString() ?? '—'} />
+        <StatCard label="New Shops" value={shopStats?.newShops.toLocaleString() ?? '—'} />
+        <StatCard label="Approved" value={shopStats?.approved.toLocaleString() ?? '—'} />
+        <StatCard label="Pending Approval" value={shopStats?.pending.toLocaleString() ?? '—'} />
       </div>
 
-      {/* By Location/Sector */}
-      <div className="space-y-4">
-        {mockMetrics.map((metric) => (
-          <Card key={metric.name}>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('Location')}</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{metric.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('Active Shops')}</p>
-                <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                  {metric.activeShops}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('Pending')}</p>
-                <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
-                  {metric.pendingShops}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('Total GMV')}</p>
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                  {(metric.totalGMV / 1000000).toFixed(1)}M
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('Avg Rating')}</p>
-                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                  {metric.avgRating.toFixed(1)} ★
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('Top Shops')}</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {metric.topShops.map((shop, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    <p className="font-medium text-gray-800 dark:text-gray-100 truncate">{shop.name}</p>
-                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      <span>{(shop.gmv / 1000000).toFixed(1)}M ETB</span>
-                      <span>{shop.rating} ★</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          {t('These figures come from the verified aggregate shop-statistics consumer. Location, sector, GMV, rating, and top-shop breakdowns are not displayed because no matching DTO was verified.')}
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatCard label="Suspended" value={shopStats?.suspended.toLocaleString() ?? '—'} />
+          <StatCard label="Inactive" value={shopStats?.inactive.toLocaleString() ?? '—'} />
+        </div>
+      </Card>
     </div>
   );
 }

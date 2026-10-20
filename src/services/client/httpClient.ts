@@ -21,6 +21,13 @@ export interface HttpRequestOptions {
   signal?: AbortSignal;
   /** Attach the bearer token. Defaults to true. */
   authenticated?: boolean;
+  /**
+   * How to read a successful (2xx) response body.
+   *  - 'json'   (default) parse as JSON when the content-type says so, else text
+   *  - 'text'   always read as a UTF-8 string
+   *  - 'blob'   always read as a Blob (file downloads: CSV / PDF exports)
+   */
+  responseType?: 'json' | 'text' | 'blob';
 }
 
 type HttpBody =
@@ -218,6 +225,14 @@ async function doFetch<T>(
 
     if (response.ok) {
       if (response.status === 204) return undefined as T;
+      // Honour an explicit responseType before falling back to content-type
+      // sniffing — file downloads (CSV/PDF exports) need the raw bytes.
+      if (options.responseType === 'blob') {
+        return (await response.blob()) as T;
+      }
+      if (options.responseType === 'text') {
+        return (await response.text()) as T;
+      }
       const type = response.headers.get('content-type') ?? '';
       return (type.includes('application/json')
         ? await response.json()

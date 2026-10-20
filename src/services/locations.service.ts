@@ -110,7 +110,7 @@ export interface Zone {
     includedAreas?: string[];
     excludedAreas?: string[];
   };
-  deliveryRules?: { serviceable: boolean; deliveryFee: number; freeDeliveryThreshold?: number; estimatedDeliveryTime: string; minimumOrder?: number; codAvailable: boolean; pickupAvailable: boolean };
+  deliveryRules?: { serviceable: boolean; deliveryFee: number; quantityFees?: { _id?: string; minQty: number; maxQty: number | null; fee: number; enabled?: boolean }[]; freeDeliveryThreshold?: number; estimatedDeliveryTime: string; minimumOrder?: number; codAvailable: boolean; pickupAvailable: boolean };
   operationalRules?: { allowedProviders?: string[]; allowedRiders?: string[]; priority: number; operatingHours?: { open: string; close: string; days: string[] } };
   priority?: number;
   portId?: string;
@@ -336,11 +336,30 @@ export const locationsService = {
   }[]): Promise<BulkImportResult> {
     return http.post<BulkImportResult>('/delivery/location/bulk', { rows });
   },
+
+  /** List all public delivery zones for shop coverage assignment. */
+  async listZones(params?: { cityId?: string; limit?: number }): Promise<{ zones: any[]; count: number }> {
+    const query = new URLSearchParams();
+    if (params?.cityId) query.set('cityId', params.cityId);
+    if (params?.limit) query.set('limit', String(params.limit));
+    const res = await http.get<{ success: boolean; zones: any[]; count: number }>(
+      `/delivery/zone/public?${query}`
+    );
+    return { zones: res.zones || [], count: res.count || 0 };
+  },
 };
 
 // --- Zone API ---
 
 export const zonesService = {
+  getFeeSettings(): Promise<{ defaultFee: number; delivererShareRate: number; minimumPayout: number; holdHours: number }> {
+    return http.get<{ settings: { defaultFee: number; delivererShareRate: number; minimumPayout: number; holdHours: number } }>('/delivery/zone/fee-settings').then((res) => res.settings);
+  },
+
+  updateFeeSettings(data: { defaultFee?: number; delivererShareRate?: number; minimumPayout?: number; holdHours?: number; reason?: string }) {
+    return http.put<{ settings: { defaultFee: number; delivererShareRate: number; minimumPayout: number; holdHours: number } }>('/delivery/zone/fee-settings', data).then((res) => res.settings);
+  },
+
   /** List zones with optional filters. */
   list(params?: { status?: string; search?: string; page?: number; limit?: number }): Promise<{ zones: Zone[]; total: number; page: number; limit: number; totalPages: number }> {
     return http
@@ -530,14 +549,4 @@ export const routesService = {
       }));
   },
 
-  /** List all public delivery zones (for shop coverage assignment). */
-  async listZones(params?: { cityId?: string; limit?: number }): Promise<{ zones: any[]; count: number }> {
-    const query = new URLSearchParams();
-    if (params?.cityId) query.set('cityId', params.cityId);
-    if (params?.limit) query.set('limit', String(params.limit));
-    const res = await http.get<{ success: boolean; zones: any[]; count: number }>(
-      `/delivery/zone/public?${query}`
-    );
-    return { zones: res.zones || [], count: res.count || 0 };
-  },
 };

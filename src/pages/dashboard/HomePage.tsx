@@ -49,6 +49,7 @@ import { Button } from '@/components/common/Button';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { DataTable, type Column } from '@/components/tables/DataTable';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { BarChart } from '@/components/charts/BarChart';
 import { DonutChart } from '@/components/charts/DonutChart';
 import { formatNumber, formatDateTime } from '@/utils/format';
@@ -135,15 +136,18 @@ export function AdminDashboardPage() {
   }, [paymentRows]);
 
   const sellerColumns: Column<SellerActivity>[] = [
-    { key: 'business', header: t('Business / Seller'), accessor: (row) => row.name },
+    { key: 'business', header: t('Business / Seller'), width: '250px', accessor: (row) => row.name },
     {
       key: 'transactions',
       header: t('Transactions'),
+      width: '140px',
+      numeric: true,
       render: (row) => formatNumber(row.transactions),
     },
     {
       key: 'latest',
       header: t('Latest transaction'),
+      width: '180px',
       render: (row) => (row.latest ? formatDateTime(row.latest) : '—'),
     },
   ];
@@ -257,20 +261,23 @@ export function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Pending Approvals Alert */}
         {pending.total > 0 && (
-          <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500">
+          <Card className="border-l-4 border-secondary-color/70 bg-secondary-color/10 dark:bg-secondary-color/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                   {t('Pending Approvals')}
                 </p>
-                <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mt-1">
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                   {pending.total}
                 </p>
-                <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
                   {pending.pendingStores} stores • {pending.pendingRiders} riders • {pending.pendingSellers} sellers
                 </p>
               </div>
-              <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl text-yellow-500 opacity-20" />
+              <div className="flex flex-col items-end gap-2">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl text-secondary-color opacity-70" />
+                <StatusBadge label={t('Pending')} variant="warning" />
+              </div>
             </div>
             <Button
               onClick={() => navigate('/stores')}
@@ -296,7 +303,7 @@ export function AdminDashboardPage() {
                 {formatNumber(s.deliveredOrders || 0)} delivered
               </p>
             </div>
-            <FontAwesomeIcon icon={faReceipt} className="text-3xl text-blue-500 opacity-20" />
+            <FontAwesomeIcon icon={faReceipt} className="text-3xl text-primary-dark opacity-30" />
           </div>
         </Card>
 
@@ -316,7 +323,7 @@ export function AdminDashboardPage() {
                 {t('Failed')} {formatNumber(todayRows.filter((p) => p.status === 'FAILED').length)}
               </p>
             </div>
-            <FontAwesomeIcon icon={faReceipt} className="text-3xl text-blue-500 opacity-20" />
+            <FontAwesomeIcon icon={faReceipt} className="text-3xl text-primary-dark opacity-30" />
           </div>
           <Button
             onClick={() => navigate('/commerce/transactions')}
@@ -332,7 +339,7 @@ export function AdminDashboardPage() {
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="card-h1 dark:text-white">{t('Transactions by Business')}</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('Transactions by Business')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t('Every seller that has payments, ranked by transaction volume. Amounts live in Commerce.')}
             </p>
@@ -353,7 +360,7 @@ export function AdminDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <p className="card-h1 mb-3 dark:text-white">
+          <p className="mb-3 text-base font-semibold text-slate-900 dark:text-white">
             {t('Orders & shops growth')} — {new Date().getFullYear()}
           </p>
           {growthChartData ? (
@@ -366,7 +373,7 @@ export function AdminDashboardPage() {
         </Card>
 
         <Card>
-          <p className="card-h1 mb-3 dark:text-white">
+          <p className="mb-3 text-base font-semibold text-slate-900 dark:text-white">
             {t('Orders by type')}
           </p>
           {donutData ? (
@@ -389,7 +396,7 @@ export function AdminDashboardPage() {
 
       {/* Quick Actions */}
       <Card>
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
           {t('Quick Actions')}
         </h3>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

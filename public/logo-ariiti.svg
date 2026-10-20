@@ -1,0 +1,27 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle (light) -->
+  <circle cx="100" cy="100" r="95" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Main "A" with gradient -->
+  <defs>
+    <linearGradient id="gradientA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Letter "A" - geometric style -->
+  <g>
+    <!-- Left diagonal -->
+    <line x1="60" y1="150" x2="100" y2="40" stroke="url(#gradientA)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Right diagonal -->
+    <line x1="140" y1="150" x2="100" y2="40" stroke="url(#gradientA)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Horizontal bar (crossbar) -->
+    <line x1="75" y1="105" x2="125" y2="105" stroke="url(#gradientA)" stroke-width="14" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Accent dot (top right of A) - upward trend indicator -->
+  <circle cx="145" cy="50" r="6" fill="#06b6d4" opacity="0.7"/>
+</svg>

@@ -3,21 +3,33 @@ import { twMerge } from 'tailwind-merge';
 import { Spinner } from '@/components/common/Spinner';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'ghost'
+    | 'danger'
+    | 'destructive'
+    | 'success';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 }
 
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'bg-primary-dark text-white hover:opacity-90 disabled:opacity-50',
+    'bg-primary-dark text-white shadow-sm hover:-translate-y-px hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
   secondary:
-    'bg-dark-900 text-white hover:bg-dark-600 disabled:opacity-50',
+    'bg-dark-900 text-white shadow-sm hover:-translate-y-px hover:bg-dark-600 disabled:pointer-events-none disabled:opacity-50',
   outline:
-    'border border-dark-600 bg-transparent hover:bg-gray-100 dark:hover:bg-dark-900 disabled:opacity-50',
+    'border border-slate-300 bg-white hover:bg-slate-50 dark:border-dark-600 dark:bg-transparent dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
   ghost:
-    'bg-transparent hover:bg-gray-100 dark:hover:bg-dark-900 disabled:opacity-50',
-  danger: 'bg-red-600 text-white hover:bg-red-500 disabled:opacity-50',
+    'bg-transparent hover:bg-slate-100 dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
+  danger:
+    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+  destructive:
+    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+  success:
+    'bg-green-600 text-white shadow-sm hover:-translate-y-px hover:bg-green-500 disabled:pointer-events-none disabled:opacity-50',
 };
 
 const SIZE_CLASSES: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -45,7 +57,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       type={type}
       disabled={disabled || loading}
       className={twMerge(
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-[background-color,box-shadow,transform] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className
