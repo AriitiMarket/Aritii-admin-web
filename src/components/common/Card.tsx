@@ -7,7 +7,13 @@ export function Card({
   ...rest
 }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={twMerge('card', className)} {...rest}>
+    <div
+      className={twMerge(
+        'rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-700/50 dark:bg-slate-900 dark:shadow-md',
+        className
+      )}
+      {...rest}
+    >
       {children}
     </div>
   );

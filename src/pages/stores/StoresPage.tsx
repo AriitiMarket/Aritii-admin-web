@@ -2,33 +2,26 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storesService } from '@/services/stores.service';
 import { businessesService } from '@/services/businesses.service';
-import { locationsService } from '@/services/locations.service';
 import { useAsync } from '@/hooks/useAsync';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSector } from '@/hooks/useSector';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { PageHeader } from '@/components/common/PageHeader';
-import { SearchInput } from '@/components/common/SearchInput';
 import { ErrorState } from '@/components/common/ErrorState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
-import { SelectField } from '@/components/forms/SelectField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { Pagination } from '@/components/common/Pagination';
+import { FilterBar, type FilterDef } from '@/components/workspace/FilterBar';
 import { apiErrorMessage } from '@/utils/error';
-import { hasPermission } from '@/utils/auth-roles';
-import { useAuth } from '@/hooks/useAuth';
 import type { Store } from '@/types';
 
 export function StoresManagementPage() {
   const { t } = useLocalization();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { sectors } = useSector();
   const { showToast } = useToast();
-  const canManageShops = hasPermission(user?.permissions ?? [], 'shops.manage');
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -46,10 +39,6 @@ export function StoresManagementPage() {
   const [sector, setSector] = useState('all');
   const [businessId, setBusinessId] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
-  const [zoneId, setZoneId] = useState('');
-  const [coverageEditShop, setCoverageEditShop] = useState<Store | null>(null);
-  const [coverageDialogOpen, setCoverageDialogOpen] = useState(false);
-  const [coverageBusy, setCoverageBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
@@ -63,9 +52,8 @@ export function StoresManagementPage() {
         sectorId: sector !== 'all' ? sector : undefined,
         businessId: businessId || undefined,
         ownerEmail: ownerEmail || undefined,
-        zoneId: zoneId || undefined,
       }),
-    [page, debouncedSearch, status, sector, businessId, ownerEmail, zoneId]
+    [page, debouncedSearch, status, sector, businessId, ownerEmail]
   );
 
   // Business filter picks by NAME — the console must never ask for a raw
@@ -83,19 +71,6 @@ export function StoresManagementPage() {
         business.businessName ||
         business.shopInformation?.shopName ||
         business.id,
-    })),
-  ];
-
-  const { data: zones } = useAsync(
-    () => locationsService.listZones({ limit: 200 }),
-    []
-  );
-  const zoneList = Array.isArray(zones) ? zones : zones?.zones ?? [];
-  const zoneOptions = [
-    { value: '', label: t('All Zones') },
-    ...zoneList.map((z: any) => ({
-      value: z._id || z.id,
-      label: `${z.name}${z.cityName ? ` (${z.cityName})` : ''}`,
     })),
   ];
 
@@ -176,37 +151,11 @@ export function StoresManagementPage() {
     }
   };
 
-  const handleSaveCoverage = async (
-    shopId: string,
-    zoneIds: string[],
-    status: 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED'
-  ) => {
-    setCoverageBusy(true);
-    try {
-      await storesService.setCoverage(shopId, { zoneIds, status });
-      showToast({
-        type: 'success',
-        message: status === 'UNCONFIGURED'
-          ? t('Coverage cleared')
-          : t('Coverage updated'),
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        message: apiErrorMessage(err, t('Could not update coverage')),
-      });
-    } finally {
-      setCoverageBusy(false);
-      setCoverageDialogOpen(false);
-      setCoverageEditShop(null);
-      refetch();
-    }
-  };
-
   const columns: Column<Store>[] = [
     {
       key: 'name',
       header: t('Shop'),
+      width: '200px',
       render: (row) => (
         <div>
           <p className="font-medium text-gray-900 dark:text-white">{row.name}</p>
@@ -217,19 +166,21 @@ export function StoresManagementPage() {
     {
       key: 'owner',
       header: t('Owner'),
+      width: '180px',
       render: (row) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">
           {row.ownerId ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/sellers/${row.ownerId}`);
               }}
-              className="text-primary-dark hover:underline dark:text-primary-color"
+              className="text-primary-dark hover:underline dark:text-primary-color p-0 h-auto"
             >
               {row.ownerName || row.ownerEmail || '—'}
-            </button>
+            </Button>
           ) : (
             row.ownerName || row.ownerEmail || '—'
           )}
@@ -239,19 +190,21 @@ export function StoresManagementPage() {
     {
       key: 'business',
       header: t('Business'),
+      width: '180px',
       render: (row) => (
         <div>
           {row.businessId ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/businesses/${row.businessId}`);
               }}
-              className="text-sm text-primary-dark hover:underline dark:text-primary-color"
+              className="text-sm text-primary-dark hover:underline dark:text-primary-color p-0 h-auto"
             >
               {row.businessName || '—'}
-            </button>
+            </Button>
           ) : (
             <span className="text-sm text-gray-700 dark:text-gray-300">
               {row.businessName || '—'}
@@ -266,6 +219,7 @@ export function StoresManagementPage() {
     {
       key: 'location',
       header: t('Location'),
+      width: '200px',
       render: (row) => (
         <div className="text-sm text-gray-700 dark:text-gray-300">
           <div>{getLocationDisplay(row)}</div>
@@ -276,6 +230,7 @@ export function StoresManagementPage() {
     {
       key: 'region',
       header: t('Region'),
+      width: '120px',
       render: (row) => (
         <span className="text-xs text-gray-500">{getRegionDisplay(row)}</span>
       ),
@@ -283,6 +238,7 @@ export function StoresManagementPage() {
     {
       key: 'city',
       header: t('City'),
+      width: '120px',
       render: (row) => (
         <span className="text-xs text-gray-500">{getCityDisplay(row)}</span>
       ),
@@ -292,6 +248,7 @@ export function StoresManagementPage() {
       // filter uses. Blank on shops registered before the field existed.
       key: 'category',
       header: t('Category'),
+      width: '120px',
       render: (row) => (
         <span className="text-sm text-gray-700 dark:text-gray-300">{row.category || '—'}</span>
       ),
@@ -299,6 +256,7 @@ export function StoresManagementPage() {
     {
       key: 'status',
       header: t('Status'),
+      width: '150px',
       render: (row) => <StatusBadge label={row.status} />,
     },
     {
@@ -306,26 +264,21 @@ export function StoresManagementPage() {
       // appears in any guest/public view. Click toggles in place.
       key: 'showOnPublic',
       header: t('Public'),
+      width: '100px',
       render: (row) => {
         const allowed = row.showOnPublic !== false;
-        if (!canManageShops) {
-          return (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-              {allowed ? t('Public') : t('Hidden')}
-            </span>
-          );
-        }
         return (
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant={allowed ? 'outline' : 'ghost'}
             onClick={(e) => {
               e.stopPropagation(); // don't trigger the row's navigation
               handleTogglePublic(row);
             }}
-            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+            className={`text-xs ${
               allowed
-                ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100'
+                : 'text-gray-500 hover:bg-gray-100'
             }`}
             title={
               allowed
@@ -334,43 +287,7 @@ export function StoresManagementPage() {
             }
           >
             {allowed ? t('Public') : t('Hidden')}
-          </button>
-        );
-      },
-    },
-    {
-      key: 'coverage',
-      header: t('Coverage'),
-      render: (row) => {
-        const cov = row.deliveryCoverage;
-        if (!cov) {
-          return (
-            <span className="text-xs text-gray-400 dark:text-gray-500">{t('Not configured')}</span>
-          );
-        }
-        const active = cov.status === 'ACTIVE';
-        const zoneCount = cov.zoneIds?.length ?? 0;
-        const zoneNames = cov.zoneNames?.map((z) => z.name).filter(Boolean).join(', ');
-        return (
-          <div className="text-sm">
-            <span
-              className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
-                active ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-              }`}
-            >
-              {active ? t('Active') : t('Paused')}
-            </span>
-            {zoneCount > 0 && (
-              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                {zoneCount} zone{zoneCount > 1 ? 's' : ''}
-              </span>
-            )}
-            {zoneNames && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {zoneNames}
-              </div>
-            )}
-          </div>
+          </Button>
         );
       },
     },
@@ -380,10 +297,8 @@ export function StoresManagementPage() {
       // suspended/inactive → Activate/Reject.
       key: 'actions',
       header: t('Actions'),
+      width: '200px',
       render: (row) => {
-        if (!canManageShops) {
-          return <span className="text-xs text-gray-500">{t('View only')}</span>;
-        }
         const isBusy = busyId === row.id;
         return (
           <div
@@ -440,16 +355,6 @@ export function StoresManagementPage() {
                 </Button>
               </>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={isBusy}
-              onClick={() => {
-                setCoverageEditShop(row);
-              }}
-            >
-              {t('Manage Coverage')}
-            </Button>
           </div>
         );
       },
@@ -457,6 +362,8 @@ export function StoresManagementPage() {
     {
       key: 'ratings',
       header: t('Rating'),
+      width: '80px',
+      numeric: true,
       accessor: (row) =>
         row.ratings != null && Number(row.ratings) > 0
           ? Number(row.ratings).toFixed(1)
@@ -467,6 +374,7 @@ export function StoresManagementPage() {
     {
       key: 'createdAt',
       header: t('Created'),
+      width: '120px',
       accessor: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
     },
   ];
@@ -485,76 +393,70 @@ export function StoresManagementPage() {
     ...sectors.map((item) => ({ value: item.id, label: item.name })),
   ];
 
+  const handleResetFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setStatusParam('all');
+    setSector('all');
+    setBusinessId('');
+    setOwnerEmail('');
+    setPage(1);
+  };
+
+  const hasActiveFilters =
+    search !== '' ||
+    status !== 'all' ||
+    sector !== 'all' ||
+    businessId !== '' ||
+    ownerEmail !== '';
+
+  const filters: FilterDef[] = [
+    {
+      key: 'status',
+      label: t('Status'),
+      value: status,
+      options: statusOptions,
+      onChange: (v) => { setStatus(v); setStatusParam(v); setPage(1); },
+    },
+    {
+      key: 'sector',
+      label: t('Sector'),
+      value: sector,
+      options: sectorOptions,
+      onChange: (v) => { setSector(v); setPage(1); },
+    },
+    {
+      key: 'businessId',
+      label: t('Business'),
+      value: businessId,
+      options: businessOptions,
+      onChange: (v) => { setBusinessId(v); setPage(1); },
+    },
+    {
+      key: 'ownerEmail',
+      label: t('Owner Email'),
+      value: ownerEmail,
+      type: 'text',
+      onChange: (v) => { setOwnerEmail(v); setPage(1); },
+    },
+  ];
+
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         title={t('Stores')}
         description={t('Manage marketplace stores')}
       />
 
-      {/* Filters */}
-      <Card className="mb-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={t('Search by shop name or owner...')}
-            aria-label={t('Search stores')}
-          />
-          <SelectField
-            value={status}
-            options={statusOptions}
-            onChange={(e) => { setStatus(e.target.value); setStatusParam(e.target.value); setPage(1); }}
-            label={t('Status')}
-          />
-          <SelectField
-            value={sector}
-            options={sectorOptions}
-            onChange={(e) => { setSector(e.target.value); setPage(1); }}
-            label={t('Sector')}
-          />
-          <SelectField
-            value={businessId}
-            options={businessOptions}
-            onChange={(e) => { setBusinessId(e.target.value); setPage(1); }}
-            label={t('Business')}
-          />
-          <SelectField
-            value={zoneId}
-            options={zoneOptions}
-            onChange={(e) => { setZoneId(e.target.value); setPage(1); }}
-            label={t('Delivery Zone')}
-          />
-          <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('Owner Email')}</label>
-            <input
-              type="email"
-              value={ownerEmail}
-              onChange={(e) => { setOwnerEmail(e.target.value); setPage(1); }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-dark-800 dark:text-white text-sm"
-              placeholder={t('Filter by owner')}
-            />
-          </div>
-        </div>
-        {(search || status !== 'all' || sector !== 'all' || businessId || zoneId || ownerEmail) && (
-          <div className="mt-3 flex justify-end">
-            <button
-              onClick={() => {
-                setSearch('');
-                setStatus('all');
-                setSector('all');
-                setBusinessId('');
-                setZoneId('');
-                setOwnerEmail('');
-                setPage(1);
-              }}
-              className="text-sm text-primary-dark hover:underline dark:text-primary-color"
-            >
-              {t('Clear Filters')}
-            </button>
-          </div>
-        )}
-      </Card>
+      <FilterBar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('Search by shop name or owner...')}
+        filters={filters}
+        onReset={handleResetFilters}
+        isFiltered={hasActiveFilters}
+        resultSummary={data?.total ? `${t('Showing')} ${data?.total} ${t('stores')}` : undefined}
+      />
 
       {error ? (
         <ErrorState message={error} onRetry={refetch} />
@@ -578,97 +480,6 @@ export function StoresManagementPage() {
             />
           )}
         </>
-      )}
-      {/* Coverage editor dialog */}
-      {coverageEditShop && coverageDialogOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setCoverageDialogOpen(false)}>
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-dark-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('Manage Delivery Coverage')} — {coverageEditShop.name}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Status')}</label>
-                <select
-                  value={coverageEditShop.deliveryCoverage?.status || 'UNCONFIGURED'}
-                  onChange={(e) => {
-                    const s = e.target.value as 'UNCONFIGURED' | 'ACTIVE' | 'PAUSED';
-                    coverageEditShop.deliveryCoverage = {
-                      ...coverageEditShop.deliveryCoverage,
-                      status: s,
-                    };
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded dark:bg-dark-800 dark:text-white text-sm"
-                >
-                  <option value="ACTIVE">{t('Active')}</option>
-                  <option value="PAUSED">{t('Paused')}</option>
-                  <option value="UNCONFIGURED">{t('Unconfigured')}</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('Zones')}</label>
-                {zoneOptions.map((z) => {
-                  const current = coverageEditShop.deliveryCoverage?.zoneIds ?? [];
-                  const checked = current.includes(z.value);
-                  return (
-                    <label key={z.value} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 dark:hover:bg-dark-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = [...current];
-                          if (e.target.checked) {
-                            if (!next.includes(z.value)) next.push(z.value);
-                          } else {
-                            const idx = next.indexOf(z.value);
-                            if (idx >= 0) next.splice(idx, 1);
-                          }
-                          coverageEditShop.deliveryCoverage = {
-                            ...coverageEditShop.deliveryCoverage,
-                            zoneIds: next,
-                          };
-                        }}
-                        className="accent-primary"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{z.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('Only shops with ACTIVE coverage can receive orders for that zone.')}
-              </p>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setCoverageDialogOpen(false);
-                  setCoverageEditShop(null);
-                }}
-                disabled={coverageBusy}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                size="sm"
-                disabled={coverageBusy}
-                onClick={() => {
-                  const cov = coverageEditShop.deliveryCoverage;
-                  if (!cov) return;
-                  handleSaveCoverage(
-                    coverageEditShop.id,
-                    cov.zoneIds ?? [],
-                    cov.status ?? 'UNCONFIGURED'
-                  );
-                }}
-              >
-                {coverageBusy ? t('Saving...') : t('Save Coverage')}
-              </Button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

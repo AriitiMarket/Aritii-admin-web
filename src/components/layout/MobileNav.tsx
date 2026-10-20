@@ -29,14 +29,14 @@ export function MobileNav({
         aria-hidden="true"
         onClick={onClose}
       />
-      <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-white pb-4 shadow-xl dark:bg-dark-900 dark:text-white">
-        <div className="flex items-center justify-between px-5 py-4">
+      <div className="absolute left-0 top-0 flex h-full w-[min(19rem,88vw)] flex-col bg-white pb-4 shadow-2xl dark:bg-dark-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-dark-600/70">
           <Logo />
           <button
             type="button"
             onClick={onClose}
             aria-label="Close navigation"
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-950"
+            className="icon-button rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-950"
           >
             <FontAwesomeIcon icon={faXmark} />
           </button>

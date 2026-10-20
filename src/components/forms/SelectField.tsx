@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useId,
   type SelectHTMLAttributes,
 } from 'react';
 
@@ -21,7 +22,8 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
     { label, options, placeholder, error, className, id: idProp, ...rest },
     ref
   ) {
-    const generatedId = idProp ?? rest.name ?? 'select-field';
+    const reactId = useId();
+    const generatedId = idProp ?? `select-field-${reactId}`;
     return (
       <div className="w-full">
         {label && (
@@ -36,10 +38,11 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
           ref={ref}
           id={generatedId}
           aria-invalid={Boolean(error)}
-          className={`h-10 w-full rounded-md border bg-white px-3 pr-8 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-dark dark:bg-dark-900 dark:text-white ${
+          aria-describedby={error ? `${generatedId}-error` : undefined}
+          className={`h-11 w-full rounded-lg border bg-white px-3 pr-8 text-sm text-gray-800 shadow-sm transition-[border-color,box-shadow] focus:outline-none focus:ring-2 focus:ring-primary-dark/30 dark:bg-dark-900 dark:text-white ${
             error
               ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:border-primary-dark dark:border-dark-600'
+              : 'border-gray-300 hover:border-primary-dark/60 focus:border-primary-dark dark:border-dark-600'
           } ${className ?? ''}`}
           {...rest}
         >
@@ -51,7 +54,7 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
           ))}
         </select>
         {error && (
-          <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+          <p id={`${generatedId}-error`} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
             {error}
           </p>
         )}

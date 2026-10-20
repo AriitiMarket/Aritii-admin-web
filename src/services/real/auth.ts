@@ -41,8 +41,7 @@ interface BackendUser {
   adminScope?: Record<string, unknown>;
   /**
    * Effective admin roles resolved by the Identity Service from the RBAC tables
-   * (SUPER_ADMIN / OPERATIONAL_ADMIN / SELLER_ADMIN / RIDER_ADMIN /
-   * CUSTOMER_ADMIN). Identity-owned.
+   * (SUPER_ADMIN / SELLER_ADMIN / RIDER_ADMIN / CUSTOMER_ADMIN). Identity-owned.
    */
   adminRoles?: unknown;
   /** Effective permission keys resolved by the Identity Service. Identity-owned. */
@@ -81,26 +80,26 @@ interface BackendMeResponse {
 }
 
 const ROLE_MAP: Record<string, AdminRole> = {
+  ADMIN: 'SUPER_ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN',
-  OPERATIONAL_ADMIN: 'OPERATIONAL_ADMIN',
-  SELLER: 'SELLER_ADMIN',
-  SELLER_ADMIN: 'SELLER_ADMIN',
-  RIDER: 'RIDER_ADMIN',
-  RIDER_ADMIN: 'RIDER_ADMIN',
-  // Buy-side role: canonical `BUYER`, plus the legacy `CUSTOMER` spelling that
-  // older rows/payloads still carry (both resolve to the same console role).
-  BUYER: 'CUSTOMER_ADMIN',
-  CUSTOMER: 'CUSTOMER_ADMIN',
-  CUSTOMER_ADMIN: 'CUSTOMER_ADMIN',
   STAFF: 'SUPER_ADMIN',
+  // Legacy roles → map to OPERATIONS_ADMIN
+  SELLER: 'OPERATIONS_ADMIN',
+  SELLER_ADMIN: 'OPERATIONS_ADMIN',
+  RIDER: 'OPERATIONS_ADMIN',
+  RIDER_ADMIN: 'OPERATIONS_ADMIN',
+  BUYER: 'OPERATIONS_ADMIN',
+  CUSTOMER: 'OPERATIONS_ADMIN',
+  CUSTOMER_ADMIN: 'OPERATIONS_ADMIN',
 };
 
 /**
  * The Identity Service is the single source of truth for who an admin is.
  *
  * `adminRoles` (RBAC) and `permissions` both come from `/user/getuser`, which
- * resolves them from the RBAC tables. A missing or empty adminRoles claim is
- * rejected for ADMIN accounts: the backend requires an explicit assignment.
+ * resolves them from the RBAC tables. The `role`→AdminRole map below is only a
+ * FALLBACK for accounts that have no explicit RBAC assignment — the coarse
+ * `users.role` value ('ADMIN') cannot express the four console roles on its own.
  *
  * `adminScope` describes *which data* an admin may act on; it is NOT a
  * permission list and must never be used as one.
@@ -116,21 +115,19 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
     name: raw.name,
     image: raw.avatar?.url ?? undefined,
     role,
-    adminRoles: Array.isArray(raw.adminRoles)
-      ? raw.adminRoles.filter((name): name is string => typeof name === 'string')
-      : undefined,
     userType: role.includes('SELLER')
       ? 'VENDOR'
       : role.includes('RIDER')
         ? 'RESTAURANT'
         : 'ADMIN',
+    // Identity already returns the wildcard for an unrestricted admin, so an
+    // absent list means "older backend" rather than "no permissions".
     permissions: Array.isArray(raw.permissions) &&
       raw.permissions.every((permission): permission is string => typeof permission === 'string')
       ? raw.permissions
-      : [],
+      : (role === 'SUPER_ADMIN' ? ['*'] : []),
     sectors: [],
     isActive: raw.status === 'active',
-    adminScope: raw.adminScope,
   };
 };
 
@@ -140,12 +137,7 @@ function resolveAdminRole(raw: BackendUser): AdminRole {
     throw new UnsupportedAdminRoleError();
   }
 
-  const adminRoles = raw.adminRoles as unknown[] | undefined;
-  if (typeof raw.role === 'string' && raw.role.toUpperCase() === 'ADMIN' && (!adminRoles || adminRoles.length === 0)) {
-    throw new UnsupportedAdminRoleError();
-  }
-
-  const fromRbac = adminRoles?.find(
+  const fromRbac = (raw.adminRoles as unknown[] | undefined)?.find(
     (name): name is AdminRole =>
       typeof name === 'string' && ADMIN_ROLES.includes(name as AdminRole)
   );

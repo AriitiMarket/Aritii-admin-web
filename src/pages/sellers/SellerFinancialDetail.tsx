@@ -9,7 +9,7 @@ import { walletService } from '@/services/financial.service';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Spinner } from '@/components/common/Spinner';
 import { StatCard } from '@/components/common/StatCard';
-import { DataTable } from '@/components/tables/DataTable';
+import { DataTable, type LegacyColumn } from '@/components/tables/DataTable';
 import { SearchInput } from '@/components/common/SearchInput';
 import './SellerFinancialDetail.css';
 
@@ -105,7 +105,7 @@ const SellerFinancialDetail = () => {
     return colors[type] || '#6b7280';
   };
 
-  const transactionColumns = [
+  const transactionColumns: LegacyColumn<Transaction>[] = [
     {
       key: 'type',
       label: 'Type',
@@ -254,7 +254,7 @@ const SellerFinancialDetail = () => {
           </div>
         ) : (
           <>
-            <DataTable
+            <DataTable<Transaction>
               columns={transactionColumns}
               data={transactions}
               onPageChange={setTransactionPage}

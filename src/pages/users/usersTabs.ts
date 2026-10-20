@@ -33,9 +33,9 @@ export interface UsersTabDefinition {
 }
 
 export const USERS_TABS: UsersTabDefinition[] = [
-  { id: 'all', labelKey: 'All Users', roles: ['SUPER_ADMIN', 'OPERATIONAL_ADMIN', 'CUSTOMER_ADMIN'] },
-  { id: 'customers', labelKey: 'Customers', roles: ['SUPER_ADMIN', 'CUSTOMER_ADMIN'] },
-  { id: 'sellers', labelKey: 'Sellers', roles: ['SUPER_ADMIN', 'SELLER_ADMIN'] },
+  { id: 'all', labelKey: 'All Users', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+  { id: 'customers', labelKey: 'Customers', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+  { id: 'sellers', labelKey: 'Sellers', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
   { id: 'admins', labelKey: 'Admins', roles: ['SUPER_ADMIN'] },
 ];
 
