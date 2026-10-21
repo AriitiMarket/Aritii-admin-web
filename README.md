@@ -40,15 +40,12 @@ npm run preview      # Serves production build locally on http://localhost:4173
 
 ### Seeded Admin Credentials (Local Development)
 
-The backend provides default administrative accounts seeded for testing various permission levels:
+The backend provides default administrative accounts seeded for the **2-role admin system**:
 
-| Role | Email | Password | Primary Scope |
-| :--- | :--- | :--- | :--- |
-| **Super Admin** | `superadmin@aritii.com` | `Admin123!` | Full platform administration, system settings, audit logs & RBAC |
-| **Operations Admin** | `admin@aritii.com` | `Admin123!` | Marketplace operations, user management & catalog |
-| **Seller Admin** | `selleradmin@aritii.com` | `Admin123!` | Business, seller & shop approvals and catalog moderation |
-| **Rider Admin** | `rideradmin@aritii.com` | `Admin123!` | Deliveries, logistics, providers & dispatch |
-| **Customer Admin**| `customeradmin@aritii.com` | `Admin123!` | Users, buyers, customers & dispute resolution |
+| Role | Code | Email | Password | Primary Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| **Super Admin** | `SUPER_ADMIN` | `superadmin@aritii.com` | `SuperAdmin@123` | Complete platform administration, system settings, audit logs, financial reconciliation & RBAC |
+| **Operations Admin** | `OPERATIONS_ADMIN` | `opsadmin@aritii.com` | `OpsAdmin@123` | Daily operational management: users, businesses, shops, deliveries, orders, SLA queues & disputes |
 
 ---
 
@@ -175,27 +172,35 @@ The Admin Web implements an **OAuth 2.1 + OIDC Authorization Code Flow with Proo
 - **Emergency Backup Codes**: 10 one-time recovery codes generated upon setup with Copy, Download `.txt`, and Print options.
 - **Password-Protected Disable**: Disabling 2FA strictly requires account password verification.
 
-### Role-Based Access Control (RBAC)
+### Role-Based Access Control (RBAC) — 2-Role System
 
-Administrators are granted access based on four normalized roles:
+The Ariiti Admin Web operates on a strict **2-role administration architecture**:
 
-| Role | Permissions & Scope |
-| :--- | :--- |
-| `SUPER_ADMIN` | Full access across all modules, platform controls, RBAC, settings, and audit logs. |
-| `SELLER_ADMIN` | Management of sellers, businesses, shops, catalog, sectors, and product reviews. |
-| `RIDER_ADMIN` | Management of delivery logistics, dispatching, riders, and operating zones. |
-| `CUSTOMER_ADMIN` | User account management, customer profiles, order oversight, and dispute resolution. |
+| Role | Code | Responsibility & Module Access |
+| :--- | :--- | :--- |
+| **Super Administrator** | `SUPER_ADMIN` | **Full platform authority.** Access to all operator screens, financial reconciliation, commission audits, payment ledgers, system settings, platform parameters, audit logs, and administrator role assignment (`/admin-roles`). |
+| **Operations Administrator** | `OPERATIONS_ADMIN` | **Marketplace operational authority.** Day-to-day oversight of users, business approvals, shop approvals, delivery tracking, provider management, priority fulfillment queues, SLA monitoring, review moderation, and dispute resolution. Gated from financial ledgers, audit logs, and system settings. |
 
 ```tsx
-// Route Guard Example:
-<Route element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'SELLER_ADMIN']} />}>
+// Common Route Guard (Accessible by both Super and Operations Admins):
+<Route element={<RoleRoute allowedRoles={['SUPER_ADMIN', 'OPERATIONS_ADMIN']} />}>
   <Route path="/businesses" element={<BusinessesPage />} />
+  <Route path="/orders" element={<OrdersPage />} />
+  <Route path="/delivery/deliveries" element={<DeliveriesPage />} />
 </Route>
 
-// Permission Check Example:
+// Super Admin Only Route Guard:
+<Route element={<RoleRoute allowedRoles={['SUPER_ADMIN']} />}>
+  <Route path="/admin-roles" element={<AdminRolesPage />} />
+  <Route path="/audit-logs" element={<AuditLogsPage />} />
+  <Route path="/settings/platform" element={<PlatformSettingsPage />} />
+  <Route path="/commerce/reconciliation" element={<ReconciliationPage />} />
+</Route>
+
+// In-Component Permission Check:
 const { hasPermission } = usePermissions();
 if (hasPermission('orders:cancel')) {
-  // Render cancel action
+  // Render privileged order cancellation action
 }
 ```
 
