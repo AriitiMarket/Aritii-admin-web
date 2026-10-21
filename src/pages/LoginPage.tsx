@@ -44,7 +44,7 @@ export function LoginPage() {
     return Object.keys(next).length === 0;
   };
 
-  const handleTwoFASuccess = async (_data: Record<string, unknown>) => {
+  const handleTwoFASuccess = async (data: Record<string, unknown>) => {
     try {
       if (data.access_token && data.refresh_token) {
         await loginWith2FAResult({
