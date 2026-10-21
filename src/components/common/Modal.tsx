@@ -8,19 +8,29 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
+export interface ModalAction {
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+}
+
+export interface ModalProps {
+  open?: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  size?: 'sm' | 'md' | 'lg';
+  /** Accepted for callers that supply their own footer buttons. */
+  actions?: ModalAction[];
+}
+
 export function Modal({
   open,
   onClose,
   title,
   children,
   size = 'md',
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
-}) {
+}: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 

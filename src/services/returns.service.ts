@@ -1,4 +1,4 @@
-import { httpClient } from './client/httpClient';
+import { http } from './client/httpClient';
 
 export interface ReturnItem {
   productId: string;
@@ -48,33 +48,42 @@ export const returnsService = {
     if (buyerId) params.append('buyerId', buyerId);
     if (sellerId) params.append('sellerId', sellerId);
 
-    const { data } = await httpClient.get(`/return/admin/list?${params.toString()}`);
+    const { data } = await http.get<{ data: ReturnsResponse }>(
+      `/return/admin/list?${params.toString()}`
+    );
     return data;
   },
 
   // Get return details
   async getReturn(returnId: string): Promise<Return> {
-    const { data } = await httpClient.get(`/return/${returnId}`);
+    const { data } = await http.get<{ data: { return: Return } }>(`/return/${returnId}`);
     return data.return;
   },
 
   // Approve return
   async approveReturn(returnId: string, notes?: string): Promise<Return> {
-    const { data } = await httpClient.post(`/return/${returnId}/approve`, { notes });
+    const { data } = await http.post<{ data: { return: Return } }>(
+      `/return/${returnId}/approve`,
+      { notes }
+    );
     return data.return;
   },
 
   // Reject return
   async rejectReturn(returnId: string, rejectionReason: string): Promise<Return> {
-    const { data } = await httpClient.post(`/return/${returnId}/reject`, {
-      rejectionReason,
-    });
+    const { data } = await http.post<{ data: { return: Return } }>(
+      `/return/${returnId}/reject`,
+      { rejectionReason }
+    );
     return data.return;
   },
 
   // Process refund
   async processRefund(returnId: string, paymentId: string): Promise<Return> {
-    const { data } = await httpClient.post(`/return/${returnId}/refund`, { paymentId });
+    const { data } = await http.post<{ data: { return: Return } }>(
+      `/return/${returnId}/refund`,
+      { paymentId }
+    );
     return data.return;
   },
 
@@ -84,7 +93,9 @@ export const returnsService = {
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
-    const { data } = await httpClient.get(`/return/admin/stats?${params.toString()}`);
+    const { data } = await http.get<{ data: unknown }>(
+      `/return/admin/stats?${params.toString()}`
+    );
     return data;
   },
 };

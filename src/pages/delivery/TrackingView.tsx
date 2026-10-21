@@ -126,22 +126,15 @@ export function TrackingView({
   /**
    * Latest location per listed delivery.
    *
-   * The backend has no batch location endpoint, so this is one small GET per
-   * row. A failure on an individual delivery is swallowed to `null` — one
-   * missing ping must not blank out the whole list.
+   * One request for the whole page (GET /delivery/tracking/latest?deliveryIds=…)
+   * instead of one per row — a 25-row page used to cost 25 round trips. A
+   * delivery the caller may not read is simply absent from the map and shows
+   * as "No location".
    */
   const locations = useAsync(async () => {
     const rows = list.data?.deliveries ?? [];
-    const entries = await Promise.all(
-      rows.map(async (d) => {
-        try {
-          return [d.id, await trackingService.getLatestLocation(d.id)] as const;
-        } catch {
-          return [d.id, null] as const;
-        }
-      })
-    );
-    return new Map<string, TrackingLocation | null>(entries);
+    if (!rows.length) return new Map<string, TrackingLocation | null>();
+    return trackingService.getLatestLocations(rows.map((d) => d.id));
   }, [list.data]);
 
   const detail = useAsync(async () => {
@@ -229,7 +222,7 @@ export function TrackingView({
             </div>
             <p className="mt-0.5 font-mono text-xs text-gray-500">{coords}</p>
             <p className="text-xs text-gray-400" title={meta.hint}>
-              {delivery.status === 'pending' || delivery.status === 'validated'
+              {delivery.status === 'pending'
                 ? 'Not moving yet — position is from the pickup area'
                 : meta.hint}
             </p>

@@ -33,6 +33,9 @@ export function EnhancedZoneForm({
   // Delivery Rules
   const [serviceable, setServiceable] = useState(initial?.deliveryRules?.serviceable ?? true);
   const [deliveryFee, setDeliveryFee] = useState(initial?.deliveryRules?.deliveryFee?.toString() ?? '');
+  const [quantityFees, setQuantityFees] = useState((initial?.deliveryRules?.quantityFees || []).map((band) => ({
+    minQty: String(band.minQty), maxQty: band.maxQty == null ? '' : String(band.maxQty), fee: String(band.fee), enabled: band.enabled !== false,
+  })));
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(initial?.deliveryRules?.freeDeliveryThreshold?.toString() ?? '');
   const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState(initial?.deliveryRules?.estimatedDeliveryTime ?? '');
   const [minimumOrder, setMinimumOrder] = useState(initial?.deliveryRules?.minimumOrder?.toString() ?? '');
@@ -68,6 +71,26 @@ export function EnhancedZoneForm({
       return;
     }
 
+    const bands = quantityFees.filter((band) => band.minQty !== '' || band.maxQty !== '' || band.fee !== '');
+    for (const band of bands) {
+      const min = Number(band.minQty); const max = band.maxQty === '' ? null : Number(band.maxQty); const fee = Number(band.fee);
+      if (!Number.isSafeInteger(min) || min < 1) { setError('Minimum quantity must be a positive whole number'); return; }
+      if (max !== null && (!Number.isSafeInteger(max) || max < min)) { setError('Max must be greater than or equal to Min'); return; }
+      if (!Number.isFinite(fee) || fee < 0 || Math.round(fee * 100) !== fee * 100) { setError('Fee must be zero or more with at most 2 decimals'); return; }
+    }
+    const sortedBands = bands.filter((band) => band.enabled).map((band) => ({ min: Number(band.minQty), max: band.maxQty === '' ? Infinity : Number(band.maxQty) })).sort((a, b) => a.min - b.min);
+    for (let i = 1; i < sortedBands.length; i += 1) {
+      if (sortedBands[i].min <= sortedBands[i - 1].max) { setError('Quantity ranges cannot overlap'); return; }
+    }
+
+    const newBaseFee = deliveryFee ? Number(deliveryFee) : 0;
+    const oldBaseFee = Number(initial?.deliveryRules?.deliveryFee || 0);
+    const normalizedBands = bands.map((band) => ({ minQty: Number(band.minQty), maxQty: band.maxQty === '' ? null : Number(band.maxQty), fee: Number(band.fee), enabled: band.enabled }));
+    const originalBands = (initial?.deliveryRules?.quantityFees || []).map((band) => ({ minQty: Number(band.minQty), maxQty: band.maxQty == null ? null : Number(band.maxQty), fee: Number(band.fee), enabled: band.enabled !== false }));
+    if (isEditing && (oldBaseFee !== newBaseFee || JSON.stringify(originalBands) !== JSON.stringify(normalizedBands))) {
+      if (!window.confirm(`Change delivery fee rules for ${initial?.name}? Existing orders keep their fee; new orders use the updated fee.`)) return;
+    }
+
     setSaving(true);
     try {
       const coverage: ZoneCoverage = {
@@ -77,6 +100,9 @@ export function EnhancedZoneForm({
       const deliveryRules: DeliveryRules = {
         serviceable,
         deliveryFee: deliveryFee ? parseFloat(deliveryFee) : 0,
+        quantityFees: quantityFees.filter((band) => band.minQty !== '' || band.maxQty !== '' || band.fee !== '').map((band) => ({
+          minQty: Number(band.minQty), maxQty: band.maxQty === '' ? null : Number(band.maxQty), fee: Number(band.fee), enabled: band.enabled,
+        })),
         freeDeliveryThreshold: freeDeliveryThreshold ? parseFloat(freeDeliveryThreshold) : undefined,
         estimatedDeliveryTime: estimatedDeliveryTime || '30-45 min',
         minimumOrder: minimumOrder ? parseFloat(minimumOrder) : undefined,
@@ -251,6 +277,27 @@ export function EnhancedZoneForm({
           placeholder="e.g. 50"
           type="number"
         />
+
+        <div className="space-y-3 rounded-md border border-gray-200 p-3 dark:border-dark-600">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold dark:text-white">Quantity fee bands</h4>
+              <p className="text-xs text-gray-500">Optional. Bands override the flat zone fee; unmatched quantities use the platform default.</p>
+            </div>
+            <Button type="button" variant="outline" onClick={() => setQuantityFees((bands) => [...bands, { minQty: '1', maxQty: '', fee: '0', enabled: true }])}>Add band</Button>
+          </div>
+          {quantityFees.map((band, index) => (
+            <div key={index} className="grid grid-cols-1 items-end gap-2 sm:grid-cols-4">
+              <TextField label="Min items" type="number" min="1" value={band.minQty} onChange={(e) => setQuantityFees((bands) => bands.map((row, i) => i === index ? { ...row, minQty: e.target.value } : row))} />
+              <TextField label="Max items (blank = any)" type="number" min="1" value={band.maxQty} onChange={(e) => setQuantityFees((bands) => bands.map((row, i) => i === index ? { ...row, maxQty: e.target.value } : row))} />
+              <TextField label="Fee (ETB)" type="number" min="0" step="0.01" value={band.fee} onChange={(e) => setQuantityFees((bands) => bands.map((row, i) => i === index ? { ...row, fee: e.target.value } : row))} />
+              <div className="flex items-center justify-between gap-2 pb-2">
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={band.enabled} onChange={(e) => setQuantityFees((bands) => bands.map((row, i) => i === index ? { ...row, enabled: e.target.checked } : row))} />Enabled</label>
+                <Button type="button" variant="outline" onClick={() => setQuantityFees((bands) => bands.filter((_, i) => i !== index))}>Remove</Button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <TextField
           label="Free Delivery Threshold (ETB)"

@@ -17,7 +17,7 @@ Ariiti API Gateway (:8000, /api/*)   <- the only published port
         |             |            |
         v             v            v
    Identity       Commerce      Delivery
-   (:8001)        (:8002)       (:8003)
+   (:3000)        (:3002)       (:3003)
 ```
 
 ---

@@ -135,6 +135,49 @@ const PromotionsPage = lazy(() =>
     default: m.PromotionsPage,
   }))
 );
+// Financial Management Pages
+const WalletsPage = lazy(() =>
+  import('@/pages/commerce/WalletsPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const PayoutsPage = lazy(() =>
+  import('@/pages/commerce/PayoutsPage').then((m) => ({
+    default: m.default,
+  }))
+);
+const SellerFinancialDetail = lazy(() =>
+  import('@/pages/sellers/SellerFinancialDetail').then((m) => ({
+    default: m.default,
+  }))
+);
+// Phase-1 fulfilment ops — priority queue, SLA breaches, payment reconciliation
+const PriorityQueuePage = lazy(() =>
+  import('@/pages/commerce/PriorityQueuePage').then((m) => ({
+    default: m.PriorityQueuePage,
+  }))
+);
+const SLADashboardPage = lazy(() =>
+  import('@/pages/commerce/SLADashboardPage').then((m) => ({
+    default: m.SLADashboardPage,
+  }))
+);
+const PaymentReconciliationPage = lazy(() =>
+  import('@/pages/commerce/PaymentReconciliationPage').then((m) => ({
+    default: m.PaymentReconciliationPage,
+  }))
+);
+// Admin audit pages — commission & payment ledger
+const CommissionAuditPage = lazy(() =>
+  import('@/pages/commerce/CommissionAuditPage').then((m) => ({
+    default: m.CommissionAuditPage,
+  }))
+);
+const PaymentLedgerPage = lazy(() =>
+  import('@/pages/commerce/PaymentLedgerPage').then((m) => ({
+    default: m.PaymentLedgerPage,
+  }))
+);
 const PlatformSettingsPage = lazy(() =>
   import('@/pages/settings/PlatformSettingsPage').then((m) => ({
     default: m.PlatformSettingsPage,
@@ -223,6 +266,9 @@ const DeliveryRequestsPage = lazy(() =>
 const DeliveriesPage = lazy(() =>
   import('@/pages/delivery/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage }))
 );
+const DelivererPayoutsPage = lazy(() =>
+  import('@/pages/delivery/DelivererPayoutsPage').then((m) => ({ default: m.DelivererPayoutsPage }))
+);
 
 export function AppRoutes() {
   const router = createBrowserRouter([
@@ -289,7 +335,18 @@ export function AppRoutes() {
         { path: 'commerce/products', element: <Suspend roles={SUPER}><ProductsPage /></Suspend> },
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
-        
+        // Financial Management — Wallets & Payouts
+        { path: 'commerce/wallets', element: <Suspend roles={SUPER}><WalletsPage /></Suspend> },
+        { path: 'commerce/payouts', element: <Suspend roles={SUPER}><PayoutsPage /></Suspend> },
+        { path: 'sellers/:sellerId/financial', element: <Suspend roles={SUPER}><SellerFinancialDetail /></Suspend> },
+        // Phase-1 fulfilment ops — priority queue, SLA dashboard, reconciliation
+        { path: 'commerce/priority', element: <Suspend roles={OPS}><PriorityQueuePage /></Suspend> },
+        { path: 'commerce/sla', element: <Suspend roles={OPS}><SLADashboardPage /></Suspend> },
+        { path: 'commerce/reconciliation', element: <Suspend roles={SUPER}><PaymentReconciliationPage /></Suspend> },
+        // Admin audit pages — commission & payment ledger
+        { path: 'commerce/commission-audit', element: <Suspend roles={SUPER}><CommissionAuditPage /></Suspend> },
+        { path: 'commerce/payment-ledger', element: <Suspend roles={SUPER}><PaymentLedgerPage /></Suspend> },
+
         // Delivery Module Routes — ONE operational screen (Deliveries) with the
         // assignment action inside each delivery. There are deliberately no
         // separate Assignments / Dispatch / Shipments / Consolidation pages:
@@ -301,6 +358,7 @@ export function AppRoutes() {
         { path: 'delivery/services', element: <Suspend roles={OPS}><DeliveryServicesPage /></Suspend> },
         { path: 'delivery/requests', element: <Suspend roles={OPS}><DeliveryRequestsPage /></Suspend> },
         { path: 'delivery/deliveries', element: <Suspend roles={OPS}><DeliveriesPage /></Suspend> },
+        { path: 'delivery/payouts', element: <Suspend roles={OPS}><DelivererPayoutsPage /></Suspend> },
         { path: 'delivery/shipments', element: <Navigate to="/delivery" replace /> },
         { path: 'delivery/consolidation', element: <Navigate to="/delivery" replace /> },
         // Tracking is the second view of the Deliveries screen (same records, same
@@ -311,7 +369,7 @@ export function AppRoutes() {
         // zone/port/route list pages redirect into the matching tab so old links
         // and bookmarks (including the sidebar entries) keep working without
         // creating duplicate dashboards.
-        { path: 'locations', element: <Suspend roles={SUPER}><LocationsExpansionPage /></Suspend> },
+        { path: 'locations', element: <Suspend roles={OPS}><LocationsExpansionPage /></Suspend> },
         { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
         { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
         { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },

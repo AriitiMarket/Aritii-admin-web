@@ -15,17 +15,45 @@
  * files and fails on any divergence. It is a plain Node script (no test runner),
  * matching the convention of `test:map`.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const repoRoot = path.resolve(root, '..');
 const require = createRequire(import.meta.url);
 
-const SERVICE_CONSTANTS = path.join(
-  repoRoot, 'backend-services/delivery-service/src/shared/constants/index.js'
-);
+/**
+ * Locate the delivery service's constants file.
+ *
+ * The console and the delivery service are separate applications that are not
+ * always checked out as siblings (the console is also built on its own), so
+ * walk up from the console until the service is found instead of assuming one
+ * fixed relative path — a check that cannot find its input is a check that
+ * silently stops protecting anything.
+ */
+function findServiceConstants() {
+  const candidates = [];
+  let dir = root;
+  for (let depth = 0; depth < 6; depth += 1) {
+    candidates.push(path.join(dir, 'backend-services/delivery-service/src/shared/constants/index.js'));
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  // The service may also live inside this repository.
+  candidates.push(path.join(root, 'backend-services/delivery-service/src/shared/constants/index.js'));
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) {
+    console.error(
+      'could not locate backend-services/delivery-service/src/shared/constants/index.js\n'
+      + 'looked in:\n  ' + candidates.join('\n  ')
+    );
+    process.exit(1);
+  }
+  return found;
+}
+
+const SERVICE_CONSTANTS = findServiceConstants();
 
 // The console's constants are TypeScript, but every list we compare is a plain
 // data literal, so it is read as text and parsed structurally rather than
@@ -102,7 +130,7 @@ const readInlineArray = (file, name) => {
 check('TERMINAL_DELIVERY_STATUSES', readInlineArray(CONSOLE_CONSTANTS, 'TERMINAL_DELIVERY_STATUSES'), service.TERMINAL_DELIVERY_STATUSES);
 check('BLOCKED_DELIVERY_STATUSES', readInlineArray(CONSOLE_CONSTANTS, 'BLOCKED_DELIVERY_STATUSES'), service.BLOCKED_DELIVERY_STATUSES);
 check('CANCELLATION_OVERRIDE_FROM', readInlineArray(CONSOLE_CONSTANTS, 'CANCELLATION_OVERRIDE_FROM'), ['in_transit']);
-check('FAILURE_NEXT_ACTIONS', readList(CONSOLE_CONSTANTS, 'FAILURE_NEXT_ACTIONS').filter((v) => v), require(path.join(repoRoot, 'backend-services/delivery-service/src/modules/delivery-fulfillment/constants.js')).FAILURE_NEXT_ACTIONS);
+check('FAILURE_NEXT_ACTIONS', readList(CONSOLE_CONSTANTS, 'FAILURE_NEXT_ACTIONS').filter((v) => v), require(path.join(path.dirname(SERVICE_CONSTANTS), '../../modules/delivery-fulfillment/constants.js')).FAILURE_NEXT_ACTIONS);
 
 // ── 4. The `DeliveryStatus` union matches the service enum ──────────────────
 const typesSource = readFileSync(CONSOLE_TYPES, 'utf8');

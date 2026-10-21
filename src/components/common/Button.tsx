@@ -3,7 +3,14 @@ import { twMerge } from 'tailwind-merge';
 import { Spinner } from '@/components/common/Spinner';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'ghost'
+    | 'danger'
+    | 'destructive'
+    | 'success';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 }
@@ -17,7 +24,12 @@ const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {
     'border border-slate-300 bg-white hover:bg-slate-50 dark:border-dark-600 dark:bg-transparent dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
   ghost:
     'bg-transparent hover:bg-slate-100 dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
-  danger: 'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+  danger:
+    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+  destructive:
+    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+  success:
+    'bg-green-600 text-white shadow-sm hover:-translate-y-px hover:bg-green-500 disabled:pointer-events-none disabled:opacity-50',
 };
 
 const SIZE_CLASSES: Record<NonNullable<ButtonProps['size']>, string> = {
