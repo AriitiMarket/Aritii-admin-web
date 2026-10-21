@@ -43,26 +43,58 @@ export type AnyColumn<T> = Column<T> | LegacyColumn<T>;
  * name (`accessor: 'total'`), so the value is resolved first.
  */
 function renderCell<T>(column: AnyColumn<T>, row: T): ReactNode {
+  if (!row) return null;
+
   const legacy = column as LegacyColumn<T>;
   const modern = column as Column<T>;
 
-  if (legacy.accessor !== undefined && typeof legacy.accessor === 'string') {
-    const value = (row as unknown as Record<string, unknown>)[legacy.accessor];
-    if (legacy.render) return legacy.render(value);
-    if (legacy.cell) return legacy.cell(row);
-    return value === undefined || value === null ? '—' : String(value);
+  if (legacy.cell) {
+    return legacy.cell(row);
   }
 
-  if (legacy.render) {
-    const value = legacy.accessor
-      ? (legacy.accessor as (row: T) => ReactNode)(row)
-      : undefined;
-    return legacy.render(value);
-  }
-  if (legacy.cell) return legacy.cell(row);
+  // Legacy column shape: identified by `label` without `header`.
+  // Legacy cell renderers expect (value, row), where value is resolved from `accessor` or `key`.
+  const isLegacy = Boolean(legacy.label && !legacy.header);
 
-  if (modern.render) return modern.render(row);
-  if (modern.accessor) return String(modern.accessor(row) ?? '—');
+  if (isLegacy) {
+    const rawValue =
+      typeof legacy.accessor === 'string'
+        ? (row as unknown as Record<string, unknown>)[legacy.accessor]
+        : typeof legacy.accessor === 'function'
+          ? legacy.accessor(row)
+          : legacy.key
+            ? (row as unknown as Record<string, unknown>)[legacy.key]
+            : undefined;
+
+    if (legacy.render) {
+      return legacy.render(rawValue, row);
+    }
+    return rawValue === undefined || rawValue === null ? '—' : (rawValue as ReactNode);
+  }
+
+  // Modern column shape: `render` receives the whole row object: `render(row)`
+  if (modern.render) {
+    return modern.render(row);
+  }
+
+  // Modern accessor fn: `accessor(row)`
+  if (typeof modern.accessor === 'function') {
+    const val = modern.accessor(row);
+    return val === undefined || val === null ? '—' : (val as ReactNode);
+  }
+
+  // Legacy string accessor fallback on modern column
+  if (typeof legacy.accessor === 'string') {
+    const val = (row as unknown as Record<string, unknown>)[legacy.accessor];
+    return val === undefined || val === null ? '—' : String(val);
+  }
+
+  // Key fallback
+  if (column.key) {
+    const val = (row as unknown as Record<string, unknown>)[column.key];
+    return val === undefined || val === null ? '—' : (val as ReactNode);
+  }
+
   return null;
 }
 
@@ -159,9 +191,15 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {list.map((row) => (
+          {list.map((row, index) => (
             <tr
-              key={rowKey?.(row)}
+              key={
+                rowKey
+                  ? rowKey(row)
+                  : ((row as unknown as Record<string, unknown>)?.id as string) ??
+                    ((row as unknown as Record<string, unknown>)?._id as string) ??
+                    index
+              }
               onClick={hasRowClick ? () => onRowClick?.(row) : undefined}
               onKeyDown={
                 hasRowClick
