@@ -21,6 +21,7 @@ import {
   getStoredUser,
   getRefreshToken,
   persistUserSession,
+  setAuthTokens,
 } from '@/utils/auth-storage';
 
 interface AuthContextValue {
@@ -28,6 +29,12 @@ interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<AdminUser>;
+  loginWith2FAResult: (data: {
+    access_token: string;
+    refresh_token: string;
+    expires_in?: number | string;
+    user?: unknown;
+  }) => Promise<AdminUser>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<AdminUser | null>;
 }
@@ -186,16 +193,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const loginWith2FAResult = useCallback(
+    async (data: {
+      access_token: string;
+      refresh_token: string;
+      expires_in?: number | string;
+      user?: unknown;
+    }): Promise<AdminUser> => {
+      try {
+        setAuthTokens({
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+          expiresAt: String(data.expires_in ?? ''),
+        });
+        const adminUser = await authService.getCurrentAdmin();
+        persistUserSession(adminUser, {
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+          expiresAt: String(data.expires_in ?? ''),
+        });
+        setUser(adminUser);
+        return adminUser;
+      } catch (error) {
+        clearStoredSessionState();
+        setUser(null);
+        throw error;
+      }
+    },
+    []
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       loading,
       isAuthenticated: !!user,
       login,
+      loginWith2FAResult,
       logout,
       refreshSession,
     }),
-    [user, loading, login, logout, refreshSession]
+    [user, loading, login, loginWith2FAResult, logout, refreshSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

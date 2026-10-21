@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAccessToken } from '@/utils/auth-storage';
 import { http } from '@/services/client/httpClient';
 import { env } from '@/utils/env';
@@ -33,7 +34,13 @@ interface VerifySetupResponse {
   message: string;
 }
 
-export function TwoFactorSetup() {
+interface TwoFactorSetupProps {
+  onComplete?: () => void;
+  onCancel?: () => void;
+}
+
+export function TwoFactorSetup({ onComplete, onCancel }: TwoFactorSetupProps = {}) {
+  const navigate = useNavigate();
   const [step, setStep] = useState<'choose-method' | 'setup' | 'verify' | 'backup' | 'success'>('choose-method');
   const [method, setMethod] = useState<'EMAIL' | 'SMS' | 'TOTP' | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -256,7 +263,10 @@ export function TwoFactorSetup() {
               {loading && <Spinner size="sm" className="mr-2" />}
               Continue
             </Button>
-            <Button variant="ghost" onClick={() => (window.location.href = '/settings')}>
+            <Button
+              variant="ghost"
+              onClick={() => (onCancel ? onCancel() : navigate('/settings/security'))}
+            >
               Cancel
             </Button>
           </div>
@@ -446,7 +456,7 @@ export function TwoFactorSetup() {
 
           <Button
             variant="primary"
-            onClick={() => (window.location.href = '/settings')}
+            onClick={() => (onComplete ? onComplete() : navigate('/settings/security'))}
             className="w-full"
           >
             Back to Settings
