@@ -187,15 +187,17 @@ export function ProductsPage() {
       key: 'stock',
       header: t('Stock'),
       render: (row) => {
-        const available = Math.max(0, Number(row.stock ?? 0) - Number(row.reserved ?? 0));
+        const total = Number(row.stock ?? (row as any)._doc?.stock ?? 0);
+        const reserved = Number(row.reserved ?? (row as any)._doc?.reserved ?? 0);
+        const available = Math.max(0, total - reserved);
         return (
           <div className="text-sm">
             <span className={available < 1 ? 'text-red-600 font-semibold' : available <= 5 ? 'text-amber-600 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
               {available}
             </span>
-            <span className="text-gray-400 ml-1 text-xs">available</span>
-            {row.reserved != null && row.reserved > 0 && (
-              <span className="text-blue-600 ml-1 text-xs">({row.stock ?? 0} total, {row.reserved} reserved)</span>
+            <span className="text-gray-400 ml-1 text-xs">{t('available')}</span>
+            {reserved > 0 && (
+              <span className="text-blue-600 ml-1 text-xs">({total} total, {reserved} reserved)</span>
             )}
             {available < 1 && (
               <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] bg-red-50 text-red-700 font-semibold">
