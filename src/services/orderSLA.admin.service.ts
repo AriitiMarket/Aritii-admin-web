@@ -8,6 +8,7 @@ import { http } from '@/services/client/httpClient';
  *   GET  /order-sla/:orderId/status          SLA record for an order
  *   GET  /order-sla/:orderId/compliance      { compliant, timeRemaining, … }
  *   POST /order-sla                          set { orderId, stateName, durationHours }
+ *   POST /order-sla/breaches                 push in a breach { orderId, reason }
  *
  * Controllers wrap replies in `{ success, data }`.
  */
@@ -18,6 +19,16 @@ export interface OrderSLA {
   durationHours: number;
   deadline: string;
   setBy?: string;
+  /** True once the SLA was missed — detected automatically or pushed in by hand. */
+  breached?: boolean;
+  /** When the breach happened. */
+  breachedAt?: string | null;
+  /** Why the breach happened. */
+  breachReason?: string | null;
+  /** Who recorded the breach. */
+  breachedBy?: string | null;
+  /** 'AUTO' when the deadline passed on its own, 'MANUAL' when pushed in. */
+  breachSource?: 'AUTO' | 'MANUAL';
   createdAt?: string;
 }
 
@@ -75,6 +86,30 @@ class OrderSLAService {
       orderId,
       stateName,
       durationHours,
+    });
+    return res?.data as OrderSLA;
+  }
+
+  /**
+   * Push in a breach against an order.
+   *
+   * Used when the SLA was missed for a reason the deadline alone cannot show —
+   * an upheld dispute, a mis-declared target. The breach lands on the order's
+   * existing SLA record when it has one, and on a new record when it does not,
+   * so the order always ends up with a single, coherent SLA story.
+   */
+  async createBreach(
+    orderId: string,
+    reason: string,
+    extra?: { stateName?: string; durationHours?: number; deadline?: string }
+  ): Promise<OrderSLA> {
+    if (!orderId || !reason.trim()) {
+      throw new Error('Order ID and a reason are required');
+    }
+    const res = await http.post<Envelope<OrderSLA>>('/order-sla/breaches', {
+      orderId,
+      reason: reason.trim(),
+      ...extra,
     });
     return res?.data as OrderSLA;
   }

@@ -28,7 +28,7 @@ export const ReviewsModerationPage = () => {
       const result = await reviewsService.getPendingReviews(page, limit);
       setReviews(result.reviews);
       setTotal(result.total);
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to load reviews', type: 'error' });
     } finally {
       setLoading(false);
@@ -43,7 +43,7 @@ export const ReviewsModerationPage = () => {
       setSelectedReview(null);
       setAction(null);
       loadReviews();
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to approve review', type: 'error' });
     }
   };
@@ -57,7 +57,7 @@ export const ReviewsModerationPage = () => {
       setAction(null);
       setRejectReason('');
       loadReviews();
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to reject review', type: 'error' });
     }
   };

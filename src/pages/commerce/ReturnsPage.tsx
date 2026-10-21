@@ -30,7 +30,7 @@ export const ReturnsManagementPage = () => {
       const result = await returnsService.listReturns(page, limit, statusFilter || undefined);
       setReturns(result.returns);
       setTotal(result.total);
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to load returns', type: 'error' });
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export const ReturnsManagementPage = () => {
       setAction(null);
       setNotes('');
       loadReturns();
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to approve return', type: 'error' });
     }
   };
@@ -60,7 +60,7 @@ export const ReturnsManagementPage = () => {
       setAction(null);
       setNotes('');
       loadReturns();
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to reject return', type: 'error' });
     }
   };
@@ -75,7 +75,7 @@ export const ReturnsManagementPage = () => {
       setSelectedReturn(null);
       setAction(null);
       loadReturns();
-    } catch (err) {
+    } catch (_err) {
       toast({ message: 'Failed to process refund', type: 'error' });
     }
   };
