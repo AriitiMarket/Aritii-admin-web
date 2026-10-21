@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '@/utils/auth-storage';
+import { http } from '@/services/client/httpClient';
 import { TwoFactorSetup } from './TwoFactorSetup';
 
 interface TwoFAStatus {
@@ -29,15 +30,6 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const getApiGateway = (): string => {
-    const env = import.meta.env.VITE_API_GATEWAY_URL;
-    console.log('VITE_API_GATEWAY_URL:', env); // Debug log
-    if (!env || env.trim() === '') {
-      throw new Error('API Gateway URL is empty - check .env.local has VITE_API_GATEWAY_URL');
-    }
-    return env;
-  };
-
   const fetchStatus = async () => {
     try {
       const token = getAccessToken();
@@ -46,23 +38,8 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
         return;
       }
 
-      let gateway: string;
-      try {
-        gateway = getApiGateway();
-      } catch (err) {
-        console.error('Gateway error:', err);
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${gateway}/user/2fa/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      if (response.ok) {
+      const data = await http.get<TwoFAStatus>('/user/2fa/status', { authenticated: true });
+      if (data) {
         setStatus(data);
       }
     } catch (err) {
@@ -87,17 +64,6 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
     setSuccess('');
 
     try {
-      // Check gateway URL FIRST
-      let gateway: string;
-      try {
-        gateway = getApiGateway();
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : 'API Gateway URL not configured';
-        setError(errMsg);
-        setDisabling(false);
-        return;
-      }
-
       const token = getAccessToken();
       if (!token) {
         setError('Authentication required');
@@ -105,22 +71,11 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
         return;
       }
 
-      const response = await fetch(`${gateway}/user/2fa/disable`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Failed to disable 2FA');
-        setDisabling(false);
-        return;
-      }
+      await http.post(
+        '/user/2fa/disable',
+        { password },
+        { authenticated: true }
+      );
 
       setStatus({ enabled: false });
       setPassword('');
@@ -137,35 +92,17 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
 
   const handleRegenerateBackupCodes = async () => {
     try {
-      // Check gateway URL FIRST
-      let gateway: string;
-      try {
-        gateway = getApiGateway();
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : 'API Gateway URL not configured';
-        setError(errMsg);
-        return;
-      }
-
       const token = getAccessToken();
       if (!token) {
         setError('Authentication required');
         return;
       }
 
-      const response = await fetch(`${gateway}/user/2fa/backup-codes/regenerate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Failed to regenerate backup codes');
-        return;
-      }
+      await http.post(
+        '/user/2fa/backup-codes/regenerate',
+        {},
+        { authenticated: true }
+      );
 
       setSuccess('Backup codes regenerated successfully');
       fetchStatus();
@@ -192,11 +129,21 @@ export function TwoFactorSettings({ onSettingsUpdate }: TwoFactorSettingsProps) 
             setShowSetup(false);
             fetchStatus();
           }}
-          className="mb-4 text-blue-500 hover:text-blue-700 text-sm underline"
+          className="mb-4 text-primary-dark hover:text-primary-dark/80 text-sm font-medium flex items-center gap-1"
         >
           ← Back to Settings
         </button>
-        <TwoFactorSetup />
+        <TwoFactorSetup
+          onComplete={() => {
+            setShowSetup(false);
+            fetchStatus();
+            onSettingsUpdate?.();
+          }}
+          onCancel={() => {
+            setShowSetup(false);
+            fetchStatus();
+          }}
+        />
       </div>
     );
   }

@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { env } from '@/utils/env';
 
 interface TwoFactorVerifyProps {
   method: 'TOTP' | 'EMAIL' | 'SMS';
@@ -34,7 +35,7 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
     }
   }, [resendCountdown]);
 
-  const gateway = import.meta.env.VITE_API_GATEWAY_URL;
+  const gateway = env.apiGatewayUrl;
 
   if (!gateway) {
     setError('API Gateway URL is not configured. Set VITE_API_GATEWAY_URL in your .env file.');
