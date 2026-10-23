@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { http } from '@/services/client/httpClient';
+import { settingsService } from '@/services/settings.service';
+import './AdminCommissionSettingsPage.css';
 
 /** A commission override for one seller (or one seller type). */
 export interface SellerCommissionVariation {
@@ -76,10 +79,9 @@ export function AdminCommissionSettingsPage() {
 
   const loadCommissionHistory = useCallback(async () => {
     try {
-      const response = await fetch('/settings/platform/audit');
-      if (!response.ok) return;
-      const data = await response.json();
-      setCommissionHistory(data.data || data || []);
+      const res = await http.get<{ data?: CommissionChangeEntry[] }>('/settings/platform/audit');
+      const list = res.data || (Array.isArray(res) ? res : []);
+      setCommissionHistory(list);
     } catch (err) {
       console.error('Commission history load error:', err);
     }
@@ -91,13 +93,7 @@ export function AdminCommissionSettingsPage() {
       setError(null);
 
       // Load platform settings from backend
-      const response = await fetch('/settings/platform');
-      if (!response.ok) {
-        throw new Error(`Failed to load settings: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const platformSettings = data.data || data;
+      const platformSettings = await settingsService.getPlatform() as any;
 
       setSettings(platformSettings);
       setFormData({
@@ -161,18 +157,12 @@ export function AdminCommissionSettingsPage() {
       }
 
       // Save to backend
-      const response = await fetch('/settings/platform', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, ...(reason ? { reason } : {}) }),
-      });
+      const result = await settingsService.updatePlatform({
+        ...formData,
+        ...(reason ? { reason } : {}),
+      } as any) as any;
 
-      if (!response.ok) {
-        throw new Error(`Failed to save settings: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      setSettings(result.data || result);
+      setSettings(result);
       await loadCommissionHistory();
       setEditMode(false);
       setSuccessMessage('Commission settings saved successfully!');
