@@ -61,7 +61,7 @@ const exportUsersToCSV = (users: User[]) => {
     u.status,
     u.isVerified ? 'Yes' : 'No',
     new Date(u.createdAt).toLocaleDateString(),
-  ]);
+  ]); kno
 
   const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
@@ -163,9 +163,9 @@ export function UsersListPanel({ role: pinnedRole }: { role?: UsersRoleFilter })
       render: (row) => (
         <input
           type="checkbox"
-          checked={selectedUsers.has(row.id)}
-          onChange={() => toggleSelectUser(row.id)}
-          aria-label={`Select ${row.name}`}
+          checked={row?.id ? selectedUsers.has(row.id) : false}
+          onChange={() => row?.id && toggleSelectUser(row.id)}
+          aria-label={`Select ${row?.name || 'user'}`}
           className="rounded border-gray-300"
         />
       ),
@@ -176,41 +176,41 @@ export function UsersListPanel({ role: pinnedRole }: { role?: UsersRoleFilter })
       header: t('Name'),
       render: (row) => (
         <div className="flex items-center gap-3">
-          <Avatar name={row.name} size="sm" />
+          <Avatar name={row?.name || 'Unknown'} size="sm" />
           <span className="font-medium text-gray-800 dark:text-gray-100">
-            {row.name}
+            {row?.name || 'Unknown'}
           </span>
         </div>
       ),
     },
-    { key: 'email', header: t('Email'), accessor: (row) => row.email },
+    { key: 'email', header: t('Email'), accessor: (row) => row?.email || '—' },
     {
       key: 'role',
       header: t('Role'),
       render: (row) => (
         <span className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
-          {USER_ROLES[row.role] ?? row.role}
+          {row?.role ? (USER_ROLES[row.role] ?? row.role) : '—'}
         </span>
       ),
     },
     {
       key: 'status',
       header: t('Status'),
-      render: (row) => <StatusBadge label={row.status} />,
+      render: (row) => <StatusBadge label={row?.status || 'unknown'} />,
     },
     {
       key: 'isVerified',
       header: t('Verified'),
       render: (row) => (
-        <span className={`text-xs font-semibold ${row.isVerified ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-          {row.isVerified ? '✓ Yes' : '○ No'}
+        <span className={`text-xs font-semibold ${row?.isVerified ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+          {row?.isVerified ? '✓ Yes' : '○ No'}
         </span>
       ),
     },
     {
       key: 'createdAt',
       header: t('Joined'),
-      accessor: (row) => formatDate(row.createdAt),
+      accessor: (row) => row?.createdAt ? formatDate(row.createdAt) : '—',
     },
   ];
 
@@ -305,12 +305,12 @@ export function UsersListPanel({ role: pinnedRole }: { role?: UsersRoleFilter })
         <>
           <DataTable<User>
             columns={columns}
-            rows={data?.items ?? []}
-            rowKey={(row) => row.id}
+            rows={(data?.items ?? []).filter(Boolean)}
+            rowKey={(row) => row?.id || String(Math.random())}
             loading={loading}
             emptyTitle={t('No users found')}
             emptyDescription={t('Try adjusting your search or filters')}
-            onRowClick={(row) => navigate(`/users/${row.id}`)}
+            onRowClick={(row) => row?.id && navigate(`/users/${row.id}`)}
           />
           {(data?.totalPages ?? 0) > 1 && (
             <Pagination

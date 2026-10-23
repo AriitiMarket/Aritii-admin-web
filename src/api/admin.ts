@@ -197,7 +197,7 @@ export const identityAdmin = {
       totalPages: number;
     }>('/admin/users', { params: { page, limit, search, role } });
     return {
-      items: res.users || [],
+      items: (res.users || []).filter((user): user is Customer | AdminUser => user != null && typeof user === 'object' && 'id' in user),
       total: res.total || 0,
       page: res.page || page,
       limit: res.limit || limit,
@@ -652,7 +652,7 @@ export const deliveryAdmin = {
     if (search) params.search = search;
     if (status) params.status = status;
     if (isOnline !== undefined) params.isOnline = String(isOnline);
-    
+
     const res = await http.get<{
       success: boolean;
       providers?: RiderRecord[];
@@ -742,7 +742,7 @@ export const deliveryAdmin = {
     const params: Record<string, string | number> = { page, limit };
     if (status) params.status = status;
     if (search) params.search = search;
-    
+
     const res = await http.get<{
       success: boolean;
       zones?: any[];

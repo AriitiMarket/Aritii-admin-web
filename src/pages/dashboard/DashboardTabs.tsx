@@ -43,6 +43,17 @@ export function DashboardTabs() {
     return <PageLoader label={t('Loading Dashboard')} />;
   }
 
+  // Check if any data fetch failed and display error
+  const firstError = stats.error || growth.error || recentUsers.error || recentSellers.error || recentStores.error || pendingRiders.error || recentOrders.error;
+  if (firstError) {
+    return (
+      <ErrorState
+        message={typeof firstError === 'string' ? firstError : 'Something went wrong'}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
   const tabsConfig = [
     { id: 'overview', label: t('Overview'), icon: '📊' },
     { id: 'users', label: t('Users'), icon: '👥' },
