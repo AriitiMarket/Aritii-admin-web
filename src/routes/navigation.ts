@@ -107,38 +107,18 @@ export const NAV_GROUPS: NavigationGroup[] = [
         roles: ['SUPER_ADMIN'],
       },
       {
+        labelKey: 'Seller Wallets',
+        path: '/commerce/wallets',
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+      },
+      {
+        labelKey: 'Seller Payouts',
+        path: '/commerce/payouts',
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+      },
+      {
         labelKey: 'Promotions',
         path: '/commerce/promotions',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        // Priority queue (VIP/urgent orders) — Phase-1 fulfilment ops.
-        labelKey: 'Priority Queue',
-        path: '/commerce/priority',
-        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
-      },
-      {
-        // SLA breach dashboard — Phase-1 fulfilment ops.
-        labelKey: 'SLA Dashboard',
-        path: '/commerce/sla',
-        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
-      },
-      {
-        // Payment reconciliation — Phase-1 financial ops.
-        labelKey: 'Reconciliation',
-        path: '/commerce/reconciliation',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        // Commission audit — Phase-1 financial ops.
-        labelKey: 'Commission Audit',
-        path: '/commerce/commission-audit',
-        roles: ['SUPER_ADMIN'],
-      },
-      {
-        // Payment ledger audit — Phase-1 financial ops.
-        labelKey: 'Payment Ledger',
-        path: '/commerce/payment-ledger',
         roles: ['SUPER_ADMIN'],
       },
     ],
@@ -227,6 +207,11 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'General Settings',
         path: '/settings/platform',
+        roles: ['SUPER_ADMIN'],
+      },
+      {
+        labelKey: 'Commission Settings',
+        path: '/settings/commission',
         roles: ['SUPER_ADMIN'],
       },
       {

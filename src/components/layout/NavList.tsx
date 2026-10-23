@@ -24,6 +24,9 @@ import {
   faClock,
   faChevronDown,
   faChevronRight,
+  faWallet,
+  faMoneyBillWave,
+  faPercent,
   type IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { useLocalization } from '@/i18n/I18nProvider';
@@ -60,6 +63,10 @@ const ICONS: Record<string, IconDefinition> = {
   'Providers': faMotorcycle,
   'Requests': faListCheck,
   'Deliveries': faTruck,
+  'Deliverer payouts': faMoneyBillWave,
+  'Seller Wallets': faWallet,
+  'Seller Payouts': faMoneyBillWave,
+  'Commission Settings': faPercent,
 };
 
 export function NavList({

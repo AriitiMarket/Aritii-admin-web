@@ -44,9 +44,14 @@ export function SellerDetailPage() {
         title={seller.name}
         description={seller.email}
         actions={
-          <Link to="/users?tab=sellers">
-            <Button variant="outline">{t('Back to sellers')}</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to={`/sellers/${sellerId}/financial`}>
+              <Button variant="primary">Financial & Wallet Details</Button>
+            </Link>
+            <Link to="/users?tab=sellers">
+              <Button variant="outline">{t('Back to sellers')}</Button>
+            </Link>
+          </div>
         }
       />
 
