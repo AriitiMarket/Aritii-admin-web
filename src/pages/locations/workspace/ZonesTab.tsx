@@ -7,6 +7,7 @@ import { Modal } from '@/components/common/Modal';
 import { Pagination } from '@/components/common/Pagination';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { zonesService, locationsService, type Zone } from '@/services/locations.service';
+import { portsService } from '@/services/ports.service';
 import { EnhancedZoneForm } from '../components/EnhancedZoneForm';
 import { FilterBar } from '@/components/workspace/FilterBar';
 import { DataSection, RowActions, ViewToggle, type ViewMode } from '@/components/workspace/DataSection';
@@ -52,6 +53,8 @@ export function ZonesTab() {
 
   // The zone form needs the full location list to offer for coverage.
   const { data: allLocations } = useAsync(() => locationsService.list(), []);
+  // Load ports so zones can be linked to dispatch ports.
+  const { data: portsData } = useAsync(() => portsService.list({ limit: 100 }), []);
   // The map needs every zone, not just the current page of the table.
   const mapData = useMapData(view === 'map');
 
@@ -77,7 +80,15 @@ export function ZonesTab() {
       ),
     },
     { key: 'locations', header: 'Locations', accessor: (r) => r.locationIds?.length ?? 0 },
-    { key: 'port', header: 'Port', render: (r) => (r.portId ? 'Assigned' : '—') },
+    {
+      key: 'port',
+      header: 'Dispatch Port',
+      render: (r) => {
+        if (!r.portId) return <span className="text-gray-400">—</span>;
+        const p = portsData?.ports?.find((port) => port._id === r.portId);
+        return <span className="font-medium text-gray-700 dark:text-gray-200">{p ? p.name : 'Assigned'}</span>;
+      },
+    },
     { key: 'coverage', header: 'Coverage', render: (r) => (r.coverage?.radiusKm ? `${r.coverage.radiusKm} km` : '—') },
     {
       key: 'serviceable',
@@ -207,12 +218,23 @@ const z = detail;
 
       {creating && (
         <Modal open onClose={() => setCreating(false)} title="Add Delivery Zone" size="lg">
-          <EnhancedZoneForm locations={allLocations ?? []} onSuccess={() => { setCreating(false); refetch(); }} onCancel={() => setCreating(false)} />
+          <EnhancedZoneForm
+            locations={allLocations ?? []}
+            ports={portsData?.ports ?? []}
+            onSuccess={() => { setCreating(false); refetch(); }}
+            onCancel={() => setCreating(false)}
+          />
         </Modal>
       )}
       {editing && (
         <Modal open onClose={() => setEditing(null)} title={`Edit ${editing.name}`} size="lg">
-          <EnhancedZoneForm initial={editing} locations={allLocations ?? []} onSuccess={() => { setEditing(null); refetch(); }} onCancel={() => setEditing(null)} />
+          <EnhancedZoneForm
+            initial={editing}
+            locations={allLocations ?? []}
+            ports={portsData?.ports ?? []}
+            onSuccess={() => { setEditing(null); refetch(); }}
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
 

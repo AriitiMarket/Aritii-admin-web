@@ -151,6 +151,8 @@ export const NAV_GROUPS: NavigationGroup[] = [
     items: [
       { labelKey: 'Overview', path: '/delivery', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       { labelKey: 'Locations', path: '/locations', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Delivery Zones', path: '/delivery/zones', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Ports', path: '/delivery/ports', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       { labelKey: 'Providers', path: '/delivery/providers', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       // Deliveries is the ONE operational screen: its second tab is Tracking.

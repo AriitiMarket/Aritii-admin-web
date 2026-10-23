@@ -53,6 +53,7 @@ const ICONS: Record<string, IconDefinition> = {
   Expansion: faMap,
   Commerce: faShoppingCart,
   'Delivery Zones': faLayerGroup,
+  'Ports': faBuilding,
   'Active Deliveries': faClock,
   'Delivery & Logistics': faTruck,
   'Overview': faChartLine,
