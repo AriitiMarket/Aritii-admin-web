@@ -9,7 +9,7 @@ import { Pagination } from '@/components/common/Pagination';
 import { TextField } from '@/components/forms/TextField';
 import { DataTable, type Column } from '@/components/tables/DataTable';
 import { portsService, type Port } from '@/services/ports.service';
-import { locationsService } from '@/services/locations.service';
+import { locationsService, zonesService } from '@/services/locations.service';
 import { FilterBar } from '@/components/workspace/FilterBar';
 import { DataSection, RowActions } from '@/components/workspace/DataSection';
 import { Facts } from '@/components/workspace/DetailList';
@@ -27,6 +27,7 @@ interface PortDraft {
   id?: string;
   name: string;
   locationId: string;
+  zoneId?: string;
   capacity: string;
   contactPhone: string;
   contactEmail: string;
@@ -34,7 +35,7 @@ interface PortDraft {
 }
 
 const EMPTY: PortDraft = {
-  name: '', locationId: '', capacity: '', contactPhone: '', contactEmail: '', description: '',
+  name: '', locationId: '', zoneId: '', capacity: '', contactPhone: '', contactEmail: '', description: '',
 };
 
 /** Ports tab: physical/logistical sites and their real zone/route/provider counts. */
@@ -60,6 +61,7 @@ export function PortsTab() {
     [page, status, locationId, debouncedSearch]
   );
   const { data: locations } = useAsync(() => locationsService.list(), []);
+  const { data: zonesData } = useAsync(() => zonesService.list({ limit: 100 }), []);
   const { data: stats } = useAsync(() => portsService.getStats(), []);
 
   const ports = data?.ports ?? [];
@@ -70,6 +72,7 @@ export function PortsTab() {
     id: port._id,
     name: port.name,
     locationId: port.locationId,
+    zoneId: port.zoneId ?? '',
     capacity: port.capacity != null ? String(port.capacity) : '',
     contactPhone: port.contactPhone ?? '',
     contactEmail: port.contactEmail ?? '',
@@ -82,19 +85,23 @@ export function PortsTab() {
     setFormError(null);
     try {
       const payload = {
-        name: draft.name,
+        name: draft.name.trim(),
         locationId: draft.locationId,
-        description: draft.description,
-        contactPhone: draft.contactPhone,
-        contactEmail: draft.contactEmail,
-        capacity: draft.capacity === '' ? undefined : Number(draft.capacity),
+        zoneId: draft.zoneId || null,
+        capacity: draft.capacity ? parseInt(draft.capacity, 10) : undefined,
+        contactPhone: draft.contactPhone.trim() || undefined,
+        contactEmail: draft.contactEmail.trim() || undefined,
+        description: draft.description.trim() || undefined,
       };
-      if (draft.id) await portsService.update(draft.id, payload as unknown as Record<string, unknown>);
-      else await portsService.create(payload);
+      if (draft.id) {
+        await portsService.update(draft.id, payload);
+      } else {
+        await portsService.create(payload as any);
+      }
       setDraft(null);
       refetch();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not save the port');
+      setFormError(err instanceof Error ? err.message : 'Could not save port');
     } finally {
       setSaving(false);
     }
@@ -235,6 +242,19 @@ const h = detail;
                 <option value="">Select a location</option>
                 {(locations ?? []).map((l) => (
                   <option key={l._id} value={l._id}>{l.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">Delivery Zone (Optional)</span>
+              <select
+                value={draft.zoneId || ''}
+                onChange={(e) => setDraft({ ...draft, zoneId: e.target.value })}
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm dark:border-dark-600 dark:bg-dark-900"
+              >
+                <option value="">No zone assigned (Direct location port)</option>
+                {(zonesData?.zones ?? []).map((z) => (
+                  <option key={z._id} value={z._id}>{z.name} ({z.code})</option>
                 ))}
               </select>
             </label>

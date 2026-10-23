@@ -11,6 +11,8 @@ interface EnhancedZoneFormProps {
   initial?: Zone;
   /** Locations the zone can cover. Loaded by the tab and passed in. */
   locations: { _id: string; name: string; type: string; code?: string | null }[];
+  /** Optional ports list to associate with the zone */
+  ports?: { _id: string; name: string; status?: string }[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -18,6 +20,7 @@ interface EnhancedZoneFormProps {
 export function EnhancedZoneForm({
   initial,
   locations,
+  ports = [],
   onSuccess,
   onCancel,
 }: EnhancedZoneFormProps) {
@@ -120,6 +123,7 @@ export function EnhancedZoneForm({
         code: code.trim(),
         description: description.trim(),
         status,
+        portId: portId || null,
         locationIds: selectedLocations,
         coverage: coverage as any,
         deliveryRules,
@@ -338,12 +342,15 @@ export function EnhancedZoneForm({
         />
 
         <SelectField
-          label="Port"
+          label="Dispatch Port"
           value={portId}
           onChange={(e) => setPortId(e.target.value)}
           options={[
-            { value: '', label: 'No Port' },
-            // Will be populated with actual ports
+            { value: '', label: 'No Port (Direct Delivery)' },
+            ...ports.map((p) => ({
+              value: p._id,
+              label: `${p.name}${p.status && p.status !== 'active' ? ` (${p.status})` : ''}`,
+            })),
           ]}
         />
       </div>

@@ -23,6 +23,8 @@ export interface Port {
   locationId: string;
   locationName?: string | null;
   locationType?: string | null;
+  zoneId?: string | null;
+  zoneName?: string | null;
   status: 'active' | 'inactive' | 'suspended';
   capacity?: number | null;
   currentLoad?: number | null;
@@ -105,6 +107,7 @@ export const portsService = {
   async create(data: {
     name: string;
     locationId: string;
+    zoneId?: string | null;
     description?: string;
     status?: string;
     capacity?: number;
