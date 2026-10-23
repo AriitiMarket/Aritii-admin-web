@@ -336,9 +336,9 @@ export function AppRoutes() {
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
         // Financial Management — Wallets & Payouts
-        { path: 'commerce/wallets', element: <Suspend roles={SUPER}><WalletsPage /></Suspend> },
-        { path: 'commerce/payouts', element: <Suspend roles={SUPER}><PayoutsPage /></Suspend> },
-        { path: 'sellers/:sellerId/financial', element: <Suspend roles={SUPER}><SellerFinancialDetail /></Suspend> },
+        { path: 'commerce/wallets', element: <Suspend roles={OPS}><WalletsPage /></Suspend> },
+        { path: 'commerce/payouts', element: <Suspend roles={OPS}><PayoutsPage /></Suspend> },
+        { path: 'sellers/:sellerId/financial', element: <Suspend roles={OPS}><SellerFinancialDetail /></Suspend> },
         // Phase-1 fulfilment ops — priority queue, SLA dashboard, reconciliation
         { path: 'commerce/priority', element: <Suspend roles={OPS}><PriorityQueuePage /></Suspend> },
         { path: 'commerce/sla', element: <Suspend roles={OPS}><SLADashboardPage /></Suspend> },

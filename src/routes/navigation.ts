@@ -107,6 +107,16 @@ export const NAV_GROUPS: NavigationGroup[] = [
         roles: ['SUPER_ADMIN'],
       },
       {
+        labelKey: 'Seller Wallets',
+        path: '/commerce/wallets',
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+      },
+      {
+        labelKey: 'Seller Payouts',
+        path: '/commerce/payouts',
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+      },
+      {
         labelKey: 'Promotions',
         path: '/commerce/promotions',
         roles: ['SUPER_ADMIN'],
