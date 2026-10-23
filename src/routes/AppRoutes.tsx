@@ -294,7 +294,7 @@ export function AppRoutes() {
       ),
       children: [
         { index: true, element: <Navigate to="/home" replace /> },
-        { path: 'home', element: <Suspend roles={SUPER}><HomePage /></Suspend> },
+        { path: 'home', element: <Suspend roles={OPS}><HomePage /></Suspend> },
         // The old live-operations feed is now the delivery history inside each
         // delivery (Deliveries page) — no separate Operations page.
         { path: 'operations', element: <Navigate to="/delivery/deliveries" replace /> },
@@ -338,7 +338,7 @@ export function AppRoutes() {
         { path: 'settings/system', element: <Suspend roles={SUPER}><SystemSettingsPage /></Suspend> },
         { path: 'settings/security', element: <Suspend roles={OPS}><SecuritySettingsPage /></Suspend> },
         { path: 'commerce', element: <Suspend roles={SUPER}><CommerceOverviewPage /></Suspend> },
-        { path: 'commerce/products', element: <Suspend roles={SUPER}><ProductsPage /></Suspend> },
+        { path: 'commerce/products', element: <Suspend roles={OPS}><ProductsPage /></Suspend> },
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
         // Financial Management — Wallets & Payouts
@@ -377,12 +377,12 @@ export function AppRoutes() {
         // and bookmarks (including the sidebar entries) keep working without
         // creating duplicate dashboards.
         { path: 'locations', element: <Suspend roles={OPS}><LocationsExpansionPage /></Suspend> },
-        { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
-        { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
+        { path: 'locations/tree', element: <Suspend roles={OPS}><LocationsPage /></Suspend> },
+        { path: 'locations/:id', element: <Suspend roles={OPS}><LocationDetailPage /></Suspend> },
         { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },
         { path: 'delivery/ports', element: <Navigate to="/locations?tab=ports" replace /> },
         { path: 'delivery/routes', element: <Navigate to="/locations?tab=routes" replace /> },
-        { path: 'delivery/routes/:id', element: <Suspend roles={SUPER}><RouteDetailPage /></Suspend> },
+        { path: 'delivery/routes/:id', element: <Suspend roles={OPS}><RouteDetailPage /></Suspend> },
       ],
     },
     { path: '/forbidden', element: <ForbiddenPage /> },

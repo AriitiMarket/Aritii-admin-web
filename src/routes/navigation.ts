@@ -79,7 +79,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Products',
         path: '/commerce/products',
-        roles: ['SUPER_ADMIN'],
+        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
       },
       {
         labelKey: 'Categories',

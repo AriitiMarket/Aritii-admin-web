@@ -83,6 +83,13 @@ const ROLE_MAP: Record<string, AdminRole> = {
   ADMIN: 'SUPER_ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN',
   STAFF: 'SUPER_ADMIN',
+  OPERATIONS_ADMIN: 'OPERATIONS_ADMIN',
+  OPERATIONAL_ADMIN: 'OPERATIONS_ADMIN',
+  OPS_ADMIN: 'OPERATIONS_ADMIN',
+  OPSADMIN: 'OPERATIONS_ADMIN',
+  OS_ADMIN: 'OPERATIONS_ADMIN',
+  OSADMIN: 'OPERATIONS_ADMIN',
+  OPERATIONS: 'OPERATIONS_ADMIN',
   // Legacy roles → map to OPERATIONS_ADMIN
   SELLER: 'OPERATIONS_ADMIN',
   SELLER_ADMIN: 'OPERATIONS_ADMIN',
@@ -137,21 +144,34 @@ function resolveAdminRole(raw: BackendUser): AdminRole {
     throw new UnsupportedAdminRoleError();
   }
 
-  const fromRbac = (raw.adminRoles as unknown[] | undefined)?.find(
-    (name): name is AdminRole =>
-      typeof name === 'string' && ADMIN_ROLES.includes(name as AdminRole)
-  );
-  if (fromRbac) return fromRbac as AdminRole;
-
-  if (typeof raw.role !== 'string') {
-    throw new UnsupportedAdminRoleError();
+  // 1. Check explicit RBAC adminRoles
+  if (Array.isArray(raw.adminRoles)) {
+    for (const r of raw.adminRoles) {
+      if (typeof r === 'string') {
+        const normalized = r.toUpperCase().trim();
+        if (ADMIN_ROLES.includes(normalized as AdminRole)) {
+          return normalized as AdminRole;
+        }
+        if (ROLE_MAP[normalized]) {
+          return ROLE_MAP[normalized];
+        }
+      }
+    }
   }
 
-  const mappedRole = ROLE_MAP[raw.role];
-  if (!mappedRole) {
-    throw new UnsupportedAdminRoleError();
+  // 2. Check coarse role
+  if (typeof raw.role === 'string') {
+    const normalized = raw.role.toUpperCase().trim();
+    if (ADMIN_ROLES.includes(normalized as AdminRole)) {
+      return normalized as AdminRole;
+    }
+    const mappedRole = ROLE_MAP[normalized];
+    if (mappedRole) {
+      return mappedRole;
+    }
   }
-  return mappedRole;
+
+  throw new UnsupportedAdminRoleError();
 }
 
 function toAuthTokens(res: BackendTokenResponse): AuthTokens {
