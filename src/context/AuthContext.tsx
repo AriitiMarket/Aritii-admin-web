@@ -239,10 +239,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+const DEFAULT_AUTH_CONTEXT: AuthContextValue = {
+  user: null,
+  loading: true,
+  isAuthenticated: false,
+  login: async () => {
+    throw new Error('AuthProvider not ready');
+  },
+  loginWith2FAResult: async () => {
+    throw new Error('AuthProvider not ready');
+  },
+  logout: async () => {},
+  refreshSession: async () => null,
+};
+
 export function useAuthContext(): AuthContextValue {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
+  return context ?? DEFAULT_AUTH_CONTEXT;
 }

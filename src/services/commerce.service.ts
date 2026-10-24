@@ -701,26 +701,48 @@ export const commerceService = {
     return { allocation: { ...res.allocation, id: res.allocation._id || res.allocation.id } };
   },
 
-  // ── Coupons ──
+  // ── Coupons / Promotions ──
   async listCoupons(params: {
     page?: number;
     limit?: number;
     search?: string;
   }): Promise<{ items: CouponRecord[]; total: number }> {
-    const searchTerm = params.search || 'all';
-    const query = new URLSearchParams();
-    if (params.page) query.set('page', String(params.page));
-    if (params.limit) query.set('limit', String(params.limit));
+    try {
+      const res = await http.get<{ promotions?: any[]; count?: number; total?: number }>(
+        '/promotion/get-all-promotions'
+      );
+      const rawList = res.promotions || [];
+      const filtered = params.search
+        ? rawList.filter((p: any) =>
+            String(p.name || p.title || p.code || '')
+              .toLowerCase()
+              .includes(params.search!.toLowerCase())
+          )
+        : rawList;
 
-    const res = await http.get<{ coupons?: any[]; total?: number }>(
-      `/coupon/get-coupon-value/${searchTerm}?${query}`
-    );
-    return {
-      items: (res.coupons || []).map((c: any) => ({
-        ...c,
-        id: c._id || c.id,
-      })),
-      total: res.total || 0,
-    };
+      const items: CouponRecord[] = filtered.map((c: any) => ({
+        id: c._id || c.id || String(Math.random()),
+        name: c.name || c.title || c.code || 'Promotion',
+        value: Number(c.discountValue || c.value || c.discount || 0),
+        minAmount: c.minOrderAmount || c.minAmount,
+        maxAmount: c.maxDiscountAmount || c.maxAmount,
+        shopId: c.shopId || c.shop,
+        shopName: c.shopName,
+        selectedProduct: c.selectedProduct,
+        status: c.status || (c.isActive ? 'ACTIVE' : 'INACTIVE'),
+        startDate: c.startDate || c.validFrom,
+        endDate: c.endDate || c.validUntil,
+        usageCount: c.usageCount || c.usedCount || 0,
+        maxUsage: c.maxUsage || c.usageLimit,
+        createdAt: c.createdAt,
+      }));
+
+      return {
+        items,
+        total: res.total ?? items.length,
+      };
+    } catch {
+      return { items: [], total: 0 };
+    }
   },
 };

@@ -61,7 +61,7 @@ const exportUsersToCSV = (users: User[]) => {
     u.status,
     u.isVerified ? 'Yes' : 'No',
     new Date(u.createdAt).toLocaleDateString(),
-  ]); kno
+  ]);
 
   const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 

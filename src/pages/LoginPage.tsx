@@ -3,11 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
-import { Button } from '@/components/common/Button';
 import { TextField } from '@/components/forms/TextField';
 import { PasswordField } from '@/components/forms/PasswordField';
 import { isEmail, isRequired } from '@/utils/validation';
 import { TwoFactorVerify } from '@/components/TwoFactorVerify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faShieldHalved,
+  faArrowRight,
+  faKey,
+  faUserTie,
+} from '@fortawesome/free-solid-svg-icons';
 
 interface LoginFormState {
   email: string;
@@ -31,6 +37,7 @@ export function LoginPage() {
     email: '',
     password: '',
   });
+  const [rememberMe, setRememberMe] = useState(true);
   const [errors, setErrors] = useState<Partial<LoginFormState>>({});
   const [submitting, setSubmitting] = useState(false);
   const [twoFA, setTwoFA] = useState<TwoFAState>({ required: false });
@@ -42,6 +49,11 @@ export function LoginPage() {
     if (!isRequired(form.password)) next.password = t('Password is required');
     setErrors(next);
     return Object.keys(next).length === 0;
+  };
+
+  const fillQuickAccount = (email: string, pass: string) => {
+    setForm({ email, password: pass });
+    setErrors({});
   };
 
   const handleTwoFASuccess = async (data: Record<string, unknown>) => {
@@ -131,13 +143,16 @@ export function LoginPage() {
   // Show 2FA verification screen if required
   if (twoFA.required && twoFA.method && twoFA.tempToken) {
     return (
-      <div>
-        <div className="mb-6 flex flex-col gap-1">
-          <h1 className="heading-4 dark:text-white">
+      <div className="rounded-3xl border border-slate-200/90 bg-white/90 p-8 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/90">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-100 text-lime-700 shadow-sm dark:bg-lime-950/60 dark:text-lime-400">
+            <FontAwesomeIcon icon={faShieldHalved} className="text-2xl" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
             {t('Two-Factor Authentication')}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('Verify your identity to continue')}
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {t('Enter your one-time verification code to continue.')}
           </p>
         </div>
 
@@ -148,55 +163,134 @@ export function LoginPage() {
           onError={handleTwoFAError}
         />
 
-        <button
-          onClick={() => setTwoFA({ required: false })}
-          className="mt-4 w-full text-gray-500 hover:text-gray-700 text-sm underline"
-        >
-          {t('Back to Login')}
-        </button>
+        <div className="mt-6 border-t border-slate-100 pt-4 text-center dark:border-dark-700">
+          <button
+            type="button"
+            onClick={() => setTwoFA({ required: false })}
+            className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+          >
+            ← {t('Back to Login')}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6 flex flex-col gap-1">
-        <h1 className="heading-4 dark:text-white">
-          {t('Login to your account')}
+    <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-9">
+      {/* Top Header Card */}
+      <div className="mb-6">
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lime-700 dark:text-lime-400">
+          <FontAwesomeIcon icon={faKey} className="text-[9px]" />
+          {t('Enterprise Sign In')}
+        </div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+          {t('Sign in to Console')}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('Welcome back! Please enter your details')}.
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {t('Enter your administrator credentials to access marketplace controls.')}
         </p>
+      </div>
 
+      {/* Quick Role Fill Pills (Convenience for Admins/Testers) */}
+      <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-dark-800 dark:bg-dark-950/50">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          {t('Quick Access Accounts')}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => fillQuickAccount('superadmin@aritii.com', 'SuperAdmin@123')}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-lime-500 hover:bg-lime-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
+          >
+            <FontAwesomeIcon icon={faShieldHalved} className="text-lime-600 text-[11px]" />
+            <span>Super Admin</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => fillQuickAccount('opsadmin@aritii.com', 'OpsAdmin@123')}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-lime-500 hover:bg-lime-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
+          >
+            <FontAwesomeIcon icon={faUserTie} className="text-emerald-600 text-[11px]" />
+            <span>Operations</span>
+          </button>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        <TextField
-          name="email"
-          type="email"
-          label={t('Email')}
-          placeholder={t('Email')}
-          autoComplete="email"
-          value={form.email}
-          error={errors.email}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, email: event.target.value }))
-          }
-        />
-        <PasswordField
-          name="password"
-          label={t('Password')}
-          placeholder={t('Password')}
-          autoComplete="current-password"
-          value={form.password}
-          error={errors.password}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, password: event.target.value }))
-          }
-        />
-        <Button type="submit" className="w-full" loading={submitting}>
-          {t('Login')}
-        </Button>
+        {/* Email Field with Icon */}
+        <div className="space-y-1">
+          <div className="relative">
+            <TextField
+              name="email"
+              type="email"
+              label={t('Administrator Email')}
+              placeholder="admin@aritii.com"
+              autoComplete="email"
+              value={form.email}
+              error={errors.email}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, email: event.target.value }))
+              }
+              className="rounded-xl border-slate-200 pl-3 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+            />
+          </div>
+        </div>
+
+        {/* Password Field */}
+        <div className="space-y-1">
+          <PasswordField
+            name="password"
+            label={t('Security Password')}
+            placeholder="••••••••••••"
+            autoComplete="current-password"
+            value={form.password}
+            error={errors.password}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, password: event.target.value }))
+            }
+            className="rounded-xl border-slate-200 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+          />
+        </div>
+
+        {/* Remember Me & Support */}
+        <div className="flex items-center justify-between pt-1">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded-md border-slate-300 text-lime-600 focus:ring-lime-500 dark:border-dark-600 dark:bg-dark-900"
+            />
+            <span>{t('Remember this device')}</span>
+          </label>
+
+          <span className="text-xs font-medium text-slate-500 hover:text-lime-600 dark:text-slate-400 dark:hover:text-lime-400 cursor-pointer">
+            {t('Need assistance?')}
+          </span>
+        </div>
+
+        {/* Sign In CTA Button */}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700 hover:shadow-lg hover:shadow-lime-500/35 disabled:opacity-60"
+        >
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span>{t('Authenticating credentials...')}</span>
+            </span>
+          ) : (
+            <>
+              <span>{t('Sign in to Dashboard')}</span>
+              <FontAwesomeIcon
+                icon={faArrowRight}
+                className="text-xs transition-transform group-hover:translate-x-1"
+              />
+            </>
+          )}
+        </button>
       </form>
     </div>
   );

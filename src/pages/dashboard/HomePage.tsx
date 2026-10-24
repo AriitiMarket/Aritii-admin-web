@@ -202,11 +202,11 @@ export function AdminDashboardPage() {
   // always produced `t(x)`. Typed with the real slice shape instead of `any`.
   const donutData = orderSlices.length > 0
     ? {
-        labels: orderSlices.map((slice: DistributionSlice) => t(slice.label)),
+        labels: orderSlices.map((slice: DistributionSlice) => t(slice?.label || '')),
         datasets: [
           {
             label: t('Orders'),
-            data: orderSlices.map((slice: DistributionSlice) => slice.value || 0),
+            data: orderSlices.map((slice: DistributionSlice) => slice?.value || 0),
             backgroundColor: ['#b1c748', '#5ac12f'],
           },
         ],
@@ -216,7 +216,7 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${t('Welcome back')}, ${user?.name?.split(' ')[0] ?? 'Admin'}`}
+        title={`${t('Welcome back')}, ${typeof user?.name === 'string' && user.name.trim() ? user.name.split(' ')[0] : 'Admin'}`}
         description={
           selectedSectorName
             ? `${t('Dashboard')} — ${selectedSectorName}`

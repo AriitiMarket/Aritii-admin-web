@@ -448,6 +448,47 @@ export function StoresManagementPage() {
         description={t('Manage marketplace stores')}
       />
 
+      {/* Modern Segmented Status Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3 dark:border-dark-700">
+        {[
+          { key: 'all', label: t('All Shops'), count: data?.total },
+          { key: 'PENDING_APPROVAL', label: t('Pending Approval'), count: data?.statusCounts?.PENDING_APPROVAL },
+          { key: 'APPROVED', label: t('Approved / Active'), count: (data?.statusCounts?.APPROVED ?? 0) + (data?.statusCounts?.ACTIVE ?? 0) },
+          { key: 'SUSPENDED', label: t('Suspended'), count: data?.statusCounts?.SUSPENDED },
+        ].map((tab) => {
+          const isActive = status === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setStatus(tab.key);
+                setStatusParam(tab.key);
+                setPage(1);
+              }}
+              className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                isActive
+                  ? 'bg-lime-500 text-white shadow-sm shadow-lime-500/25 dark:bg-lime-600'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 dark:border-dark-600 dark:bg-dark-900 dark:text-slate-300 dark:hover:bg-dark-800'
+              }`}
+            >
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    isActive
+                      ? 'bg-white/25 text-white'
+                      : 'bg-slate-100 text-slate-600 dark:bg-dark-800 dark:text-slate-400'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <FilterBar
         searchValue={search}
         onSearchChange={setSearch}

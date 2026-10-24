@@ -5,6 +5,8 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+
 /**
  * Authenticated application shell: sticky header + sidebar + route outlet.
  * The sidebar and page content scroll independently.
@@ -25,7 +27,9 @@ export function DashboardLayout() {
         <main className="min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1600px] p-4 sm:p-5 lg:p-8">
             <Breadcrumbs />
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

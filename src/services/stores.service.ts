@@ -66,6 +66,7 @@ export const storesService = {
       page: result.page || filter.page,
       limit: result.limit || filter.limit,
       totalPages: result.totalPages || 1,
+      statusCounts: result.statusCounts || {},
     };
   },
 

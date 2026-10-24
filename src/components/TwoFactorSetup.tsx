@@ -93,7 +93,7 @@ export function TwoFactorSetup({ onComplete, onCancel }: TwoFactorSetupProps = {
       if (response.tempOTP) {
         setTempOTP(response.tempOTP);
       }
-      setBackupCodes(response.backupCodes.map((code) => ({ code })));
+      setBackupCodes((response.backupCodes || []).map((code) => ({ code })));
       setStep('setup');
       setLoading(false);
     } catch (err) {
@@ -128,7 +128,7 @@ export function TwoFactorSetup({ onComplete, onCancel }: TwoFactorSetupProps = {
         { authenticated: true }
       );
 
-      setBackupCodes(response.backupCodes.map((code) => ({ code })));
+      setBackupCodes((response.backupCodes || []).map((code) => ({ code })));
       setStep('backup');
       setLoading(false);
     } catch (err) {

@@ -61,19 +61,23 @@ function renderCell<T>(column: AnyColumn<T>, row: T): ReactNode {
       typeof legacy.accessor === 'string'
         ? (row as unknown as Record<string, unknown>)[legacy.accessor]
         : typeof legacy.accessor === 'function'
-          ? legacy.accessor(row)
+          ? (legacy.accessor as (row: T) => ReactNode)(row)
           : legacy.key
             ? (row as unknown as Record<string, unknown>)[legacy.key]
             : undefined;
 
     if (legacy.render) {
-      return legacy.render(rawValue, row);
+      return (legacy.render as (value: unknown, row: T) => ReactNode)(rawValue, row);
     }
     return rawValue === undefined || rawValue === null ? '—' : (rawValue as ReactNode);
   }
 
   // Modern column shape: `render` receives the whole row object: `render(row)`
   if (modern.render) {
+    if (typeof legacy.accessor === 'function' && legacy.render && legacy.render.length > 1) {
+      const val = (legacy.accessor as (row: T) => ReactNode)(row);
+      return (legacy.render as (value: unknown, row: T) => ReactNode)(val, row);
+    }
     return modern.render(row);
   }
 
@@ -86,6 +90,9 @@ function renderCell<T>(column: AnyColumn<T>, row: T): ReactNode {
   // Legacy string accessor fallback on modern column
   if (typeof legacy.accessor === 'string') {
     const val = (row as unknown as Record<string, unknown>)[legacy.accessor];
+    if (legacy.render) {
+      return (legacy.render as (value: unknown, row: T) => ReactNode)(val, row);
+    }
     return val === undefined || val === null ? '—' : String(val);
   }
 
