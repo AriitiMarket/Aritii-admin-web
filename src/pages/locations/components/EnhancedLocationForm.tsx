@@ -305,7 +305,10 @@ export function EnhancedLocationForm({
 
       {/* Port Configuration */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold dark:text-white">Port Configuration</h3>
+        <h3 className="text-lg font-semibold dark:text-white">Port Configuration (Categorisation)</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Note: Active logistics dispatch and collection hubs are managed in the dedicated <strong>Ports</strong> workspace tab. Setting port metadata here classifies this location node.
+        </p>
         
         <div className="flex items-center gap-2">
           <input

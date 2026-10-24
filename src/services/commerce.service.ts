@@ -412,10 +412,19 @@ export const commerceService = {
     const res = await http.get<{ items?: any[]; products?: any[]; total?: number; totalPages?: number }>(
       `/product/get-all-products?${query}`
     );
-    const items = (res.items || res.products || []).map((p: any) => ({
-      ...p,
-      id: p._id || p.id,
-    }));
+    const items = (res.items || res.products || []).map((p: any) => {
+      const doc = p._doc && typeof p._doc === 'object' ? p._doc : {};
+      const merged = { ...doc, ...p };
+      delete merged._doc;
+      delete merged.$__;
+      delete merged.$isNew;
+      return {
+        ...merged,
+        id: merged._id || merged.id || p._id || p.id,
+        stock: Number(merged.stock ?? doc.stock ?? p.stock ?? 0),
+        reserved: Number(merged.reserved ?? doc.reserved ?? p.reserved ?? 0),
+      };
+    });
     return {
       items,
       total: res.total || 0,

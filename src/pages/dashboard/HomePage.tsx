@@ -136,19 +136,19 @@ export function AdminDashboardPage() {
   }, [paymentRows]);
 
   const sellerColumns: Column<SellerActivity>[] = [
-    { key: 'business', header: t('Business / Seller'), width: '250px', accessor: (row) => row.name },
+    { key: 'business', header: t('Business / Seller'), width: '250px', accessor: (row) => row?.name ?? '—' },
     {
       key: 'transactions',
       header: t('Transactions'),
       width: '140px',
       numeric: true,
-      render: (row) => formatNumber(row.transactions),
+      render: (row) => formatNumber(row?.transactions ?? 0),
     },
     {
       key: 'latest',
       header: t('Latest transaction'),
       width: '180px',
-      render: (row) => (row.latest ? formatDateTime(row.latest) : '—'),
+      render: (row) => (row?.latest ? formatDateTime(row.latest) : '—'),
     },
   ];
 

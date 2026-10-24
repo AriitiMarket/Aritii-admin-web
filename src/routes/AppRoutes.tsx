@@ -147,6 +147,11 @@ const PayoutsPage = lazy(() =>
     default: m.default,
   }))
 );
+const CommissionSettingsPage = lazy(() =>
+  import('@/pages/AdminCommissionSettingsPage').then((m) => ({
+    default: m.AdminCommissionSettingsPage,
+  }))
+);
 const SellerFinancialDetail = lazy(() =>
   import('@/pages/sellers/SellerFinancialDetail').then((m) => ({
     default: m.default,
@@ -331,17 +336,19 @@ export function AppRoutes() {
         { path: 'analytics', element: <Suspend roles={OPS}><AnalyticsPage /></Suspend> },
         { path: 'audit-logs', element: <Suspend roles={SUPER}><AuditLogsPage /></Suspend> },
         { path: 'settings/platform', element: <Suspend roles={SUPER}><PlatformSettingsPage /></Suspend> },
+        { path: 'settings/commission', element: <Suspend roles={SUPER}><CommissionSettingsPage /></Suspend> },
         { path: 'settings/notifications', element: <Suspend roles={SUPER}><NotificationsSettingsPage /></Suspend> },
         { path: 'settings/system', element: <Suspend roles={SUPER}><SystemSettingsPage /></Suspend> },
         { path: 'settings/security', element: <Suspend roles={OPS}><SecuritySettingsPage /></Suspend> },
         { path: 'commerce', element: <Suspend roles={SUPER}><CommerceOverviewPage /></Suspend> },
-        { path: 'commerce/products', element: <Suspend roles={SUPER}><ProductsPage /></Suspend> },
+        { path: 'commerce/products', element: <Suspend roles={OPS}><ProductsPage /></Suspend> },
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
         // Financial Management — Wallets & Payouts
-        { path: 'commerce/wallets', element: <Suspend roles={SUPER}><WalletsPage /></Suspend> },
-        { path: 'commerce/payouts', element: <Suspend roles={SUPER}><PayoutsPage /></Suspend> },
-        { path: 'sellers/:sellerId/financial', element: <Suspend roles={SUPER}><SellerFinancialDetail /></Suspend> },
+        { path: 'commerce/wallets', element: <Suspend roles={OPS}><WalletsPage /></Suspend> },
+        { path: 'commerce/payouts', element: <Suspend roles={OPS}><PayoutsPage /></Suspend> },
+        { path: 'commerce/commission', element: <Navigate to="/settings/commission" replace /> },
+        { path: 'sellers/:sellerId/financial', element: <Suspend roles={OPS}><SellerFinancialDetail /></Suspend> },
         // Phase-1 fulfilment ops — priority queue, SLA dashboard, reconciliation
         { path: 'commerce/priority', element: <Suspend roles={OPS}><PriorityQueuePage /></Suspend> },
         { path: 'commerce/sla', element: <Suspend roles={OPS}><SLADashboardPage /></Suspend> },
@@ -373,12 +380,12 @@ export function AppRoutes() {
         // and bookmarks (including the sidebar entries) keep working without
         // creating duplicate dashboards.
         { path: 'locations', element: <Suspend roles={OPS}><LocationsExpansionPage /></Suspend> },
-        { path: 'locations/tree', element: <Suspend roles={SUPER}><LocationsPage /></Suspend> },
-        { path: 'locations/:id', element: <Suspend roles={SUPER}><LocationDetailPage /></Suspend> },
+        { path: 'locations/tree', element: <Suspend roles={OPS}><LocationsPage /></Suspend> },
+        { path: 'locations/:id', element: <Suspend roles={OPS}><LocationDetailPage /></Suspend> },
         { path: 'delivery/zones', element: <Navigate to="/locations?tab=zones" replace /> },
         { path: 'delivery/ports', element: <Navigate to="/locations?tab=ports" replace /> },
         { path: 'delivery/routes', element: <Navigate to="/locations?tab=routes" replace /> },
-        { path: 'delivery/routes/:id', element: <Suspend roles={SUPER}><RouteDetailPage /></Suspend> },
+        { path: 'delivery/routes/:id', element: <Suspend roles={OPS}><RouteDetailPage /></Suspend> },
       ],
     },
     { path: '/forbidden', element: <ForbiddenPage /> },
