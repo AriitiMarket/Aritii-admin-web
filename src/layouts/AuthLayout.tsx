@@ -20,15 +20,15 @@ export function AuthLayout() {
         {/* Left Hero Pane (Visible on lg and above) */}
         <aside className="relative hidden flex-col justify-between overflow-hidden bg-slate-950 p-10 text-white lg:col-span-5 lg:flex xl:col-span-5 xl:p-14">
           {/* Ambient Background Glows */}
-          <div className="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-lime-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-teal-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
 
           {/* Top Logo & Enterprise Badge */}
           <div className="relative z-10 flex items-center justify-between">
             <Logo />
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-500/30 bg-lime-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-lime-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Console v2.0
             </span>
           </div>
@@ -37,7 +37,7 @@ export function AuthLayout() {
           <div className="relative z-10 my-auto py-10">
             <h1 className="text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
               {t('The Operating System for')} <br />
-              <span className="bg-gradient-to-r from-lime-400 via-emerald-300 to-green-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
                 {t('Modern Multi-Vendor Commerce')}
               </span>
             </h1>
@@ -50,8 +50,8 @@ export function AuthLayout() {
 
             {/* Feature Pills */}
             <div className="mt-8 space-y-3.5">
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-lime-500/40">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-lime-500/20 text-lime-400">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-emerald-500/40">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
                   <FontAwesomeIcon icon={faShieldHalved} className="text-sm" />
                 </span>
                 <div>
@@ -60,8 +60,8 @@ export function AuthLayout() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-lime-500/40">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-emerald-500/40">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500/20 text-teal-400">
                   <FontAwesomeIcon icon={faStore} className="text-sm" />
                 </span>
                 <div>
@@ -70,7 +70,7 @@ export function AuthLayout() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-lime-500/40">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors hover:border-emerald-500/40">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
                   <FontAwesomeIcon icon={faTruckFast} className="text-sm" />
                 </span>
@@ -125,7 +125,7 @@ export function AuthLayout() {
           {/* Bottom Compliance Badge */}
           <div className="mt-auto pt-6 text-center text-xs text-slate-400 dark:text-slate-500">
             <div className="flex items-center justify-center gap-2">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-lime-600 dark:text-lime-400 text-xs" />
+              <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-600 dark:text-emerald-400 text-xs" />
               <span>{t('Encrypted Session · TLS 1.3 · Restricted Operator Access')}</span>
             </div>
           </div>

@@ -102,7 +102,7 @@ export function ResetPasswordPage() {
   if (verifying) {
     return (
       <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-8 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-10 text-center">
-        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-3 border-lime-600 border-t-transparent" />
+        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
         <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
           {t('Verifying secure reset token...')}
         </p>
@@ -127,7 +127,7 @@ export function ResetPasswordPage() {
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700"
           >
             <span>{t('Request New Reset Link')}</span>
           </button>
@@ -161,7 +161,7 @@ export function ResetPasswordPage() {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700"
           >
             <span>{t('Sign In With New Password')}</span>
             <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
@@ -175,7 +175,7 @@ export function ResetPasswordPage() {
   return (
     <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-9">
       <div className="mb-6">
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lime-700 dark:text-lime-400">
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
           <FontAwesomeIcon icon={faLock} className="text-[9px]" />
           {t('Set New Credentials')}
         </div>
@@ -202,7 +202,7 @@ export function ResetPasswordPage() {
               setNewPassword(e.target.value);
               if (errors.newPassword) setErrors((prev) => ({ ...prev, newPassword: undefined }));
             }}
-            className="rounded-xl border-slate-200 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+            className="rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-dark-700"
           />
         </div>
 
@@ -218,14 +218,14 @@ export function ResetPasswordPage() {
               setConfirmPassword(e.target.value);
               if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
             }}
-            className="rounded-xl border-slate-200 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+            className="rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-dark-700"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700 hover:shadow-lg hover:shadow-lime-500/35 disabled:opacity-60"
+          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60"
         >
           {submitting ? (
             <span className="flex items-center gap-2">

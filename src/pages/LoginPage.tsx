@@ -145,7 +145,7 @@ export function LoginPage() {
     return (
       <div className="rounded-3xl border border-slate-200/90 bg-white/90 p-8 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/90">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-100 text-lime-700 shadow-sm dark:bg-lime-950/60 dark:text-lime-400">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 shadow-xs dark:bg-emerald-950/60 dark:text-emerald-400">
             <FontAwesomeIcon icon={faShieldHalved} className="text-2xl" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
@@ -180,7 +180,7 @@ export function LoginPage() {
     <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-9">
       {/* Top Header Card */}
       <div className="mb-6">
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lime-700 dark:text-lime-400">
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
           <FontAwesomeIcon icon={faKey} className="text-[9px]" />
           {t('Enterprise Sign In')}
         </div>
@@ -201,17 +201,17 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => fillQuickAccount('superadmin@aritii.com', 'SuperAdmin@123')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-lime-500 hover:bg-lime-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-emerald-500 hover:bg-emerald-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
           >
-            <FontAwesomeIcon icon={faShieldHalved} className="text-lime-600 text-[11px]" />
+            <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-600 text-[11px]" />
             <span>Super Admin</span>
           </button>
           <button
             type="button"
             onClick={() => fillQuickAccount('opsadmin@aritii.com', 'OpsAdmin@123')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-lime-500 hover:bg-lime-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-emerald-500 hover:bg-emerald-50/50 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800"
           >
-            <FontAwesomeIcon icon={faUserTie} className="text-emerald-600 text-[11px]" />
+            <FontAwesomeIcon icon={faUserTie} className="text-teal-600 text-[11px]" />
             <span>Operations</span>
           </button>
         </div>
@@ -232,7 +232,7 @@ export function LoginPage() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, email: event.target.value }))
               }
-              className="rounded-xl border-slate-200 pl-3 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+              className="rounded-xl border-slate-200 pl-3 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-dark-700"
             />
           </div>
         </div>
@@ -249,7 +249,7 @@ export function LoginPage() {
             onChange={(event) =>
               setForm((prev) => ({ ...prev, password: event.target.value }))
             }
-            className="rounded-xl border-slate-200 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+            className="rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-dark-700"
           />
         </div>
 
@@ -260,7 +260,7 @@ export function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded-md border-slate-300 text-lime-600 focus:ring-lime-500 dark:border-dark-600 dark:bg-dark-900"
+              className="h-4 w-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-dark-600 dark:bg-dark-900"
             />
             <span>{t('Remember this device')}</span>
           </label>
@@ -268,7 +268,7 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => navigate('/forgot-password')}
-            className="text-xs font-medium text-slate-500 hover:text-lime-600 dark:text-slate-400 dark:hover:text-lime-400 transition-colors"
+            className="text-xs font-medium text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
           >
             {t('Forgot password?')}
           </button>
@@ -278,7 +278,7 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700 hover:shadow-lg hover:shadow-lime-500/35 disabled:opacity-60"
+          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60"
         >
           {submitting ? (
             <span className="flex items-center gap-2">

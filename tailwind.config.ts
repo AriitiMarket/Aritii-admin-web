@@ -13,6 +13,10 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
       colors: {
         'primary-color': 'var(--primary-color)',
         'primary-dark': 'var(--primary-dark)',
@@ -23,9 +27,10 @@ const config: Config = {
         'dark-600': 'var(--dark-600)',
       },
       fontSize: {
-        'heading-1': '20px',
-        'heading-2': '36px',
-        'card-h1': '16px',
+        'heading-1': ['2rem', { lineHeight: '2.5rem', letterSpacing: '-0.025em', fontWeight: '700' }],
+        'heading-2': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.015em', fontWeight: '600' }],
+        'heading-3': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
+        'card-h1': ['1rem', { lineHeight: '1.5rem', fontWeight: '600' }],
       },
     },
   },

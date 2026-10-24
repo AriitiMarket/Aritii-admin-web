@@ -5,7 +5,6 @@ import { useAsync } from '@/hooks/useAsync';
 import { useToast } from '@/hooks/useToast';
 import { useLocalization } from '@/i18n/I18nProvider';
 import { Card } from '@/components/common/Card';
-import { PageHeader } from '@/components/common/PageHeader';
 import { PageLoader } from '@/components/common/PageLoader';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Button } from '@/components/common/Button';
@@ -124,11 +123,42 @@ export function StoreDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={(store as any).name}
-        description={getLocationDisplay()}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Unified Store Hero Header */}
+      <Card className="p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <Avatar src={(store as any).image} name={(store as any).name} size="lg" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {(store as any).name}
+                </h1>
+                <StatusBadge label={getShopStatusBadge()} />
+                {(store as any).ratings != null && Number((store as any).ratings) > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                    ★ {Number((store as any).ratings).toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {getLocationDisplay()}
+              </p>
+              <p
+                className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium ${
+                  publiclyVisible
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-slate-400 dark:text-slate-500'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${publiclyVisible ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                {publiclyVisible
+                  ? t('Visible on the public marketplace')
+                  : t('Hidden from the public marketplace')}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {status === 'PENDING_APPROVAL' && (
               <>
                 <Button variant="primary" loading={busy} onClick={handleApprove}>
@@ -158,29 +188,6 @@ export function StoreDetailPage() {
               <Button variant="outline">{t('Back to stores')}</Button>
             </Link>
           </div>
-        }
-      />
-
-      {/* Shop Header Card */}
-      <Card className="flex flex-col items-center gap-3 p-6">
-        <Avatar src={(store as any).image} name={(store as any).name} size="lg" />
-        <div className="text-center">
-          <p className="heading-4 dark:text-white">{(store as any).name}</p>
-          <div className="mt-2 flex items-center justify-center gap-3">
-            <StatusBadge label={getShopStatusBadge()} />
-            {(store as any).ratings != null && Number((store as any).ratings) > 0 && (
-              <span className="text-sm text-gray-500">{Number((store as any).ratings).toFixed(1)} ★</span>
-            )}
-          </div>
-          <p
-            className={`mt-1.5 text-xs font-medium ${
-              publiclyVisible ? 'text-green-600' : 'text-gray-400'
-            }`}
-          >
-            {publiclyVisible
-              ? t('Visible on the public marketplace')
-              : t('Hidden from the public marketplace')}
-          </p>
         </div>
       </Card>
 

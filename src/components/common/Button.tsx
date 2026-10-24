@@ -17,25 +17,25 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_CLASSES: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'bg-primary-dark text-white shadow-sm hover:-translate-y-px hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+    'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 active:bg-emerald-800 disabled:pointer-events-none disabled:opacity-50',
   secondary:
-    'bg-dark-900 text-white shadow-sm hover:-translate-y-px hover:bg-dark-600 disabled:pointer-events-none disabled:opacity-50',
+    'bg-slate-900 text-white shadow-xs hover:bg-slate-800 active:bg-slate-950 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white disabled:pointer-events-none disabled:opacity-50',
   outline:
-    'border border-slate-300 bg-white hover:bg-slate-50 dark:border-dark-600 dark:bg-transparent dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
+    'border border-slate-200 bg-white text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900 dark:border-dark-700 dark:bg-dark-900 dark:text-slate-200 dark:hover:bg-dark-800 disabled:pointer-events-none disabled:opacity-50',
   ghost:
-    'bg-transparent hover:bg-slate-100 dark:hover:bg-dark-900 disabled:pointer-events-none disabled:opacity-50',
+    'bg-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-dark-800 dark:hover:text-white disabled:pointer-events-none disabled:opacity-50',
   danger:
-    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+    'bg-rose-600 text-white shadow-xs hover:bg-rose-700 active:bg-rose-800 disabled:pointer-events-none disabled:opacity-50',
   destructive:
-    'bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-500 disabled:pointer-events-none disabled:opacity-50',
+    'bg-rose-600 text-white shadow-xs hover:bg-rose-700 active:bg-rose-800 disabled:pointer-events-none disabled:opacity-50',
   success:
-    'bg-green-600 text-white shadow-sm hover:-translate-y-px hover:bg-green-500 disabled:pointer-events-none disabled:opacity-50',
+    'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 active:bg-emerald-800 disabled:pointer-events-none disabled:opacity-50',
 };
 
 const SIZE_CLASSES: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-6 text-base',
+  sm: 'h-8 px-3 text-xs rounded-md',
+  md: 'h-9 px-4 text-sm rounded-lg',
+  lg: 'h-11 px-5 text-base rounded-xl',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -57,7 +57,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       type={type}
       disabled={disabled || loading}
       className={twMerge(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-[background-color,box-shadow,transform] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
+        'inline-flex items-center justify-center gap-2 font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className

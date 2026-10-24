@@ -632,7 +632,7 @@ export function BusinessDetailPage() {
               <Button variant="outline" className="flex-1" onClick={() => setShowRejectDialog(false)}>
                 {t('Cancel')}
               </Button>
-              <Button variant="danger" className="flex-1" loading={actionLoading} onClick={handleReject}>
+              <Button variant="danger" className="flex-1" loading={actionLoading === 'reject'} onClick={handleReject}>
                 {t('Reject')}
               </Button>
             </div>

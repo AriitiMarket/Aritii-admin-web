@@ -53,7 +53,7 @@ export function ForgotPasswordPage() {
   if (submitted) {
     return (
       <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-9 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-lime-100 text-lime-600 dark:bg-lime-950/60 dark:text-lime-400">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
           <FontAwesomeIcon icon={faEnvelope} className="text-2xl" />
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
@@ -70,7 +70,7 @@ export function ForgotPasswordPage() {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700 hover:shadow-lg hover:shadow-lime-500/35"
+            className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700 active:bg-emerald-800"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="text-xs transition-transform group-hover:-translate-x-1" />
             <span>{t('Back to Sign In')}</span>
@@ -83,7 +83,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-7 shadow-xl backdrop-blur-md dark:border-dark-700/80 dark:bg-dark-900/95 sm:p-9">
       <div className="mb-6">
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-lime-700 dark:text-lime-400">
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
           <FontAwesomeIcon icon={faKey} className="text-[9px]" />
           {t('Account Recovery')}
         </div>
@@ -109,14 +109,14 @@ export function ForgotPasswordPage() {
               setEmail(e.target.value);
               if (error) setError(undefined);
             }}
-            className="rounded-xl border-slate-200 pl-3 focus:border-lime-500 focus:ring-lime-500/20 dark:border-dark-700"
+            className="rounded-xl border-slate-200 pl-3 focus:border-emerald-500 focus:ring-emerald-500/20 dark:border-dark-700"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-lime-500 via-lime-600 to-green-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-lime-500/25 transition-all hover:from-lime-600 hover:to-green-700 hover:shadow-lg hover:shadow-lime-500/35 disabled:opacity-60"
+          className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60"
         >
           {submitting ? (
             <span className="flex items-center gap-2">

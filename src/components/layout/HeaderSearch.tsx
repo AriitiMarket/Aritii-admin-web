@@ -114,7 +114,7 @@ export function HeaderSearch() {
     <div ref={containerRef} className="relative w-full max-w-xl">
       <div className="group relative flex items-center">
         {/* Search Icon */}
-        <span className="pointer-events-none absolute left-3.5 flex items-center text-slate-400 transition-colors group-focus-within:text-lime-600 dark:text-slate-500 dark:group-focus-within:text-lime-400">
+        <span className="pointer-events-none absolute left-3.5 flex items-center text-slate-400 transition-colors group-focus-within:text-emerald-600 dark:text-slate-500 dark:group-focus-within:text-emerald-400">
           <FontAwesomeIcon icon={faSearch} className="text-sm" />
         </span>
 
@@ -130,7 +130,7 @@ export function HeaderSearch() {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={t('Search shops, orders, products, users...')}
-          className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-100/70 pl-10 pr-20 text-sm text-slate-800 placeholder-slate-400 shadow-inner backdrop-blur-sm transition-all focus:border-lime-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-lime-500/15 dark:border-dark-600 dark:bg-dark-950/80 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-lime-400 dark:focus:bg-dark-900 dark:focus:ring-lime-400/20"
+          className="h-10 w-full rounded-xl border border-slate-200/90 bg-slate-100/70 pl-10 pr-20 text-sm text-slate-800 placeholder-slate-400 shadow-inner backdrop-blur-sm transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/15 dark:border-dark-600 dark:bg-dark-950/80 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-emerald-400 dark:focus:bg-dark-900 dark:focus:ring-emerald-400/20"
         />
 
         {/* Right side controls: Clear + Shortcut badge */}
@@ -168,7 +168,7 @@ export function HeaderSearch() {
                 onClick={() => setScope(s)}
                 className={`rounded-lg px-2.5 py-1 text-xs font-semibold capitalize transition-all ${
                   scope === s
-                    ? 'bg-lime-500 text-white shadow-sm dark:bg-lime-600'
+                    ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-dark-800'
                 }`}
               >
@@ -186,10 +186,10 @@ export function HeaderSearch() {
               <button
                 type="button"
                 onClick={() => handleSearchSubmit('stores')}
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-slate-700 hover:bg-lime-50 hover:text-lime-900 dark:text-slate-200 dark:hover:bg-lime-950/40 dark:hover:text-lime-300 transition-colors"
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 dark:text-slate-200 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-300">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
                     <FontAwesomeIcon icon={faStore} className="text-xs" />
                   </span>
                   <div>

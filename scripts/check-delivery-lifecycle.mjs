@@ -34,18 +34,28 @@ const require = createRequire(import.meta.url);
 function findServiceConstants() {
   const candidates = [];
   let dir = root;
+  const subpaths = [
+    'backend-services/delivery-service/src/shared/constants/index.js',
+    'Ariti-backend/backend-micro/delivery-service/src/shared/constants/index.js',
+    'backend-micro/delivery-service/src/shared/constants/index.js',
+    'delivery-service/src/shared/constants/index.js',
+  ];
+
   for (let depth = 0; depth < 6; depth += 1) {
-    candidates.push(path.join(dir, 'backend-services/delivery-service/src/shared/constants/index.js'));
+    for (const sub of subpaths) {
+      candidates.push(path.join(dir, sub));
+    }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
-  // The service may also live inside this repository.
-  candidates.push(path.join(root, 'backend-services/delivery-service/src/shared/constants/index.js'));
+  for (const sub of subpaths) {
+    candidates.push(path.join(root, sub));
+  }
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) {
     console.error(
-      'could not locate backend-services/delivery-service/src/shared/constants/index.js\n'
+      'could not locate delivery-service constants index.js\n'
       + 'looked in:\n  ' + candidates.join('\n  ')
     );
     process.exit(1);
