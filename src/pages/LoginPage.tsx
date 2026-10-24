@@ -265,9 +265,13 @@ export function LoginPage() {
             <span>{t('Remember this device')}</span>
           </label>
 
-          <span className="text-xs font-medium text-slate-500 hover:text-lime-600 dark:text-slate-400 dark:hover:text-lime-400 cursor-pointer">
-            {t('Need assistance?')}
-          </span>
+          <button
+            type="button"
+            onClick={() => navigate('/forgot-password')}
+            className="text-xs font-medium text-slate-500 hover:text-lime-600 dark:text-slate-400 dark:hover:text-lime-400 transition-colors"
+          >
+            {t('Forgot password?')}
+          </button>
         </div>
 
         {/* Sign In CTA Button */}
