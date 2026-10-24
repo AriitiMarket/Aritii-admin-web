@@ -15,6 +15,8 @@ import { USERS_TAB_ROLES } from '@/pages/users/usersTabs';
 
 // Auth
 import { LoginPage } from '@/pages/LoginPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 
 // Static error pages
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
@@ -285,6 +287,8 @@ export function AppRoutes() {
       children: [
         { index: true, element: <Navigate to="/login" replace /> },
         { path: 'login', element: <LoginPage /> },
+        { path: 'forgot-password', element: <ForgotPasswordPage /> },
+        { path: 'reset-password', element: <ResetPasswordPage /> },
       ],
     },
     {

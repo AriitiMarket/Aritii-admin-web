@@ -59,7 +59,7 @@ export function BusinessDetailPage() {
   const { businessId } = useParams<{ businessId: string }>();
   const { t } = useLocalization();
   const { showToast } = useToast();
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -85,7 +85,7 @@ export function BusinessDetailPage() {
 
   const handleApprove = async () => {
     if (!application) return;
-    setActionLoading(true);
+    setActionLoading('approve');
     try {
       await businessesService.approveApplication(application.id);
       showToast({ type: 'success', title: t('Success'), message: 'Application approved' });
@@ -94,13 +94,13 @@ export function BusinessDetailPage() {
     } catch (err) {
       showToast({ type: 'error', title: t('Error'), message: err instanceof Error ? err.message : 'Failed to approve' });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const handleReject = async () => {
     if (!application) return;
-    setActionLoading(true);
+    setActionLoading('reject');
     try {
       await businessesService.rejectApplication(application.id, rejectReason);
       showToast({ type: 'success', title: t('Success'), message: 'Application rejected' });
@@ -109,7 +109,7 @@ export function BusinessDetailPage() {
     } catch (err) {
       showToast({ type: 'error', title: t('Error'), message: err instanceof Error ? err.message : 'Failed to reject' });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -117,7 +117,7 @@ export function BusinessDetailPage() {
     if (!application) return;
     const reason = window.prompt('What information should the seller provide?')?.trim();
     if (!reason) return;
-    setActionLoading(true);
+    setActionLoading('info');
     try {
       await businessesService.requestInformation(application.id, reason);
       showToast({ type: 'success', title: t('Success'), message: 'Additional information requested' });
@@ -125,13 +125,13 @@ export function BusinessDetailPage() {
     } catch (err) {
       showToast({ type: 'error', title: t('Error'), message: err instanceof Error ? err.message : 'Failed to request information' });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const handleSuspend = async () => {
     if (!application) return;
-    setActionLoading(true);
+    setActionLoading('suspend');
     try {
       await businessesService.suspendBusiness(application.id);
       showToast({ type: 'success', title: t('Success'), message: 'Business suspended' });
@@ -139,13 +139,13 @@ export function BusinessDetailPage() {
     } catch (err) {
       showToast({ type: 'error', title: t('Error'), message: err instanceof Error ? err.message : 'Failed to suspend' });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const handleReactivate = async () => {
     if (!application) return;
-    setActionLoading(true);
+    setActionLoading('reactivate');
     try {
       await businessesService.reactivateBusiness(application.id);
       showToast({ type: 'success', title: t('Success'), message: 'Business reactivated' });
@@ -153,7 +153,7 @@ export function BusinessDetailPage() {
     } catch (err) {
       showToast({ type: 'error', title: t('Error'), message: err instanceof Error ? err.message : 'Failed to reactivate' });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -250,20 +250,20 @@ export function BusinessDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
 {isPending && (
     <>
-        <Button variant="primary" loading={actionLoading} onClick={handleApprove}>
+        <Button variant="primary" loading={actionLoading === 'approve'} disabled={Boolean(actionLoading)} onClick={handleApprove}>
             {t('Approve')}
         </Button>
-        <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
+        <Button variant="secondary" loading={actionLoading === 'info'} disabled={Boolean(actionLoading)} onClick={handleRequestInformation}>
             {t('Request information')}
         </Button>
-        <Button variant="danger" loading={actionLoading} onClick={() => setShowRejectDialog(true)}>
+        <Button variant="danger" loading={actionLoading === 'reject'} disabled={Boolean(actionLoading)} onClick={() => setShowRejectDialog(true)}>
             {t('Reject')}
         </Button>
     </>
 )}
 {isMoreInfo && (
     <>
-        <Button variant="secondary" loading={actionLoading} onClick={handleRequestInformation}>
+        <Button variant="secondary" loading={actionLoading === 'info'} disabled={Boolean(actionLoading)} onClick={handleRequestInformation}>
             {t('Request information')}
         </Button>
         <p className="text-sm text-gray-500">
@@ -272,12 +272,12 @@ export function BusinessDetailPage() {
     </>
 )}
             {isApproved && (
-              <Button variant="danger" loading={actionLoading} onClick={handleSuspend}>
+              <Button variant="danger" loading={actionLoading === 'suspend'} disabled={Boolean(actionLoading)} onClick={handleSuspend}>
                 {t('Suspend')}
               </Button>
             )}
             {isSuspended && (
-              <Button variant="primary" loading={actionLoading} onClick={handleReactivate}>
+              <Button variant="primary" loading={actionLoading === 'reactivate'} disabled={Boolean(actionLoading)} onClick={handleReactivate}>
                 {t('Reactivate')}
               </Button>
             )}

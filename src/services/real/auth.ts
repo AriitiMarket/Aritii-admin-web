@@ -283,3 +283,33 @@ export async function realLogout(): Promise<void> {
     clearAuthTokens();
   }
 }
+
+export async function realForgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  assertGatewayConfigured();
+  return http.post<{ success: boolean; message: string }>(
+    '/auth/forgot-password',
+    { email, clientType: 'admin' },
+    { authenticated: false }
+  );
+}
+
+export async function realVerifyResetToken(token: string): Promise<{ valid: boolean; email?: string; message?: string }> {
+  assertGatewayConfigured();
+  return http.get<{ valid: boolean; email?: string; message?: string }>(
+    `/auth/verify-reset-token?token=${encodeURIComponent(token)}`,
+    { authenticated: false }
+  );
+}
+
+export async function realResetPassword(
+  token: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ success: boolean; message: string }> {
+  assertGatewayConfigured();
+  return http.post<{ success: boolean; message: string }>(
+    '/auth/reset-password',
+    { token, newPassword, confirmPassword },
+    { authenticated: false }
+  );
+}

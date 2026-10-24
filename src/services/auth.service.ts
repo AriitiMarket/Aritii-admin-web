@@ -7,6 +7,9 @@ import {
   realLogin,
   realLogout,
   realRefreshSession,
+  realForgotPassword,
+  realVerifyResetToken,
+  realResetPassword,
 } from './real/auth';
 import { registerAuthHandlers } from './client/httpClient';
 import type { UnauthorizedHandler } from './client/httpClient';
@@ -24,6 +27,19 @@ export const authService = {
   /** Revokes the server-side session (RFC 7009) and clears local tokens. */
   logout(): Promise<void> {
     return realLogout();
+  },
+  forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    return realForgotPassword(email);
+  },
+  verifyResetToken(token: string): Promise<{ valid: boolean; email?: string; message?: string }> {
+    return realVerifyResetToken(token);
+  },
+  resetPassword(
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<{ success: boolean; message: string }> {
+    return realResetPassword(token, newPassword, confirmPassword);
   },
   /** Wires the 401 refresh/unauthorized flow used by the shared HTTP client. */
   configureAuthHandlers(handlers: {
