@@ -9,6 +9,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { RoleRoute } from '@/routes/RoleRoute';
 import { PageLoader } from '@/components/common/PageLoader';
+import { RouteErrorBoundary } from '@/components/common/ErrorBoundary';
 import type { AdminRole } from '@/types/auth';
 import { USERS_TAB_ROLES } from '@/pages/users/usersTabs';
 
@@ -275,6 +276,7 @@ export function AppRoutes() {
     {
       path: '/',
       element: <AuthLayout />,
+      errorElement: <RouteErrorBoundary />,
       children: [
         { index: true, element: <Navigate to="/login" replace /> },
         { path: 'login', element: <LoginPage /> },
@@ -287,9 +289,10 @@ export function AppRoutes() {
           <DashboardLayout />
         </ProtectedRoute>
       ),
+      errorElement: <RouteErrorBoundary />,
       children: [
         { index: true, element: <Navigate to="/home" replace /> },
-        { path: 'home', element: <Suspend roles={SUPER}><HomePage /></Suspend> },
+        { path: 'home', element: <Suspend roles={OPS}><HomePage /></Suspend> },
         // The old live-operations feed is now the delivery history inside each
         // delivery (Deliveries page) — no separate Operations page.
         { path: 'operations', element: <Navigate to="/delivery/deliveries" replace /> },

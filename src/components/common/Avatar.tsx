@@ -14,7 +14,8 @@ export function Avatar({
 }) {
   const dimensions =
     size === 'sm' ? 'h-8 w-8 text-xs' : size === 'lg' ? 'h-14 w-14 text-lg' : 'h-10 w-10 text-sm';
-  const initials = name
+  const safeName = typeof name === 'string' ? name : '';
+  const initials = safeName
     .split(' ')
     .map((part) => part[0])
     .filter(Boolean)

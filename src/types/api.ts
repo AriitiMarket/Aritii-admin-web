@@ -29,6 +29,7 @@ export interface PaginatedResult<T> {
   page: number;
   limit: number;
   totalPages: number;
+  statusCounts?: Record<string, number>;
 }
 
 /** Normalised HTTP error surfaced by the API client. */

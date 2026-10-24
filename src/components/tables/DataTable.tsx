@@ -43,26 +43,38 @@ export type AnyColumn<T> = Column<T> | LegacyColumn<T>;
  * name (`accessor: 'total'`), so the value is resolved first.
  */
 function renderCell<T>(column: AnyColumn<T>, row: T): ReactNode {
+  if (!row) return null;
+
   const legacy = column as LegacyColumn<T>;
   const modern = column as Column<T>;
 
-  if (legacy.accessor !== undefined && typeof legacy.accessor === 'string') {
-    const value = (row as unknown as Record<string, unknown>)[legacy.accessor];
-    if (legacy.render) return legacy.render(value);
-    if (legacy.cell) return legacy.cell(row);
+  // 1. Explicit cell renderer always receives the row
+  if (legacy.cell) return legacy.cell(row);
+
+  // 2. String accessor (e.g. accessor: 'email')
+  if (typeof legacy.accessor === 'string') {
+    const value = (row as unknown as Record<string, unknown>)?.[legacy.accessor];
+    if (legacy.render) return legacy.render(value, row);
     return value === undefined || value === null ? '—' : String(value);
   }
 
-  if (legacy.render) {
-    const value = legacy.accessor
-      ? (legacy.accessor as (row: T) => ReactNode)(row)
-      : undefined;
-    return legacy.render(value);
+  // 3. Modern render function (render: (row) => ReactNode)
+  if (modern.render) {
+    // If a function accessor is also provided, support legacy render(val, row)
+    if (typeof legacy.accessor === 'function') {
+      const val = (legacy.accessor as (row: T) => ReactNode)(row);
+      return (legacy.render as (value: unknown, ...rest: unknown[]) => ReactNode)(val, row);
+    }
+    // Modern render expects the entire row object
+    return modern.render(row);
   }
-  if (legacy.cell) return legacy.cell(row);
 
-  if (modern.render) return modern.render(row);
-  if (modern.accessor) return String(modern.accessor(row) ?? '—');
+  // 4. Accessor function with no render
+  if (typeof modern.accessor === 'function') {
+    const val = modern.accessor(row);
+    return val === undefined || val === null ? '—' : String(val);
+  }
+
   return null;
 }
 
@@ -139,62 +151,64 @@ export function DataTable<T>({
   const hasRowClick = typeof onRowClick === 'function';
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-dark-600 dark:bg-dark-900">
-      <table aria-label={ariaLabel} className="w-full min-w-[640px] border-collapse text-left text-sm">
-        <caption className="sr-only">{ariaLabel}</caption>
-        <thead>
-          <tr className="border-b border-gray-200 bg-primary-color/10 dark:border-dark-600 dark:bg-dark-950">
-            {columns.map((column, columnIndex) => (
-              <th
-                key={column.key ?? columnIndex}
-                scope="col"
-                style={column.width ? { width: column.width } : undefined}
-                className={`px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-gray-600 dark:text-gray-300 ${
-                  column.numeric ? 'text-right' : 'text-left'
-                }`}
-              >
-                {column.header ?? column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((row) => (
-            <tr
-              key={rowKey?.(row)}
-              onClick={hasRowClick ? () => onRowClick?.(row) : undefined}
-              onKeyDown={
-                hasRowClick
-                  ? (event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onRowClick?.(row);
-                      }
-                    }
-                  : undefined
-              }
-              tabIndex={hasRowClick ? 0 : undefined}
-              aria-label={hasRowClick ? `Open ${ariaLabel} row` : undefined}
-              className={
-                hasRowClick
-                  ? 'cursor-pointer border-b border-gray-100 transition-colors hover:bg-primary-color/5 dark:border-dark-600/50 dark:hover:bg-dark-950'
-                  : 'border-b border-gray-100 dark:border-dark-600/50'
-              }
-            >
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-dark-700/80 dark:bg-dark-900">
+      <div className="overflow-x-auto">
+        <table aria-label={ariaLabel} className="w-full min-w-[640px] border-collapse text-left text-sm">
+          <caption className="sr-only">{ariaLabel}</caption>
+          <thead>
+            <tr className="border-b border-slate-200/80 bg-slate-50/90 dark:border-dark-700/80 dark:bg-dark-950/90">
               {columns.map((column, columnIndex) => (
-                <td
+                <th
                   key={column.key ?? columnIndex}
-                  className={`px-4 py-3 text-gray-700 dark:text-gray-200 ${
-                    column.numeric ? 'text-right' : ''
-                  } ${column.className ?? ''}`}
+                  scope="col"
+                  style={column.width ? { width: column.width } : undefined}
+                  className={`px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ${
+                    column.numeric ? 'text-right' : 'text-left'
+                  }`}
                 >
-                  {renderCell(column, row)}
-                </td>
+                  {column.header ?? column.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-dark-700/50">
+            {list.map((row) => (
+              <tr
+                key={rowKey?.(row)}
+                onClick={hasRowClick ? () => onRowClick?.(row) : undefined}
+                onKeyDown={
+                  hasRowClick
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onRowClick?.(row);
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={hasRowClick ? 0 : undefined}
+                aria-label={hasRowClick ? `Open ${ariaLabel} row` : undefined}
+                className={
+                  hasRowClick
+                    ? 'cursor-pointer transition-colors duration-150 hover:bg-lime-50/40 dark:hover:bg-lime-950/20'
+                    : 'transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-dark-800/40'
+                }
+              >
+                {columns.map((column, columnIndex) => (
+                  <td
+                    key={column.key ?? columnIndex}
+                    className={`px-4 py-3.5 text-slate-700 dark:text-slate-200 ${
+                      column.numeric ? 'text-right tabular-nums' : ''
+                    } ${column.className ?? ''}`}
+                  >
+                    {renderCell(column, row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

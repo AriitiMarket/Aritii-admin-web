@@ -1,0 +1,71 @@
+ADMIN WEB - BACKEND MICROSERVICES INTEGRATION ANALYSIS
+=======================================================
+
+ROUTING (API Gateway)
+---------------------
+Gateway routes (routes.js):
+- /uploads -> uploads service
+- /.well-known -> identity
+- /auth, /user, /agent, /address -> identity  
+- Commerce admin specific (priority): /admin/platform, /admin/businesses, /admin/shops, /admin/orders, /admin/operations, /admin/growth-analytics -> commerce
+- Remaining /admin/* -> identity
+- /shop, /product, /category, /order, /cart, /wishlist, /coupon, /review, /promotion, /request, /event, /conversation, /message, /payment, /subscription, /sector, /seller-application, /disputes, /analytics, /settings -> commerce
+- /delivery, /provider-application -> delivery
+
+All routes match between admin web and backend. Routing order is correct (specific commerce admin paths before generic identity /admin).
+
+INTEGRATION POINTS CHECKED
+--------------------------
+
+Identity Service (/admin/* routes to identity):
+✓ GET /admin/users (listUsers) - admin.ts:190-206, identity admin.routes.js:14 ✓
+✓ GET /admin/users/:id - admin.ts:226-231, identity admin.routes.js:15 ✓
+✓ PUT /admin/users/:id/status - admin.ts:233-239,1844-1849 ✓
+✓ PUT /admin/users/:id/role - admin.ts:241-247 ✓
+✓ GET /admin/sellers - admin.ts:169-181, identity admin.routes.js:23 ✓
+✓ GET /admin/sellers/:id - admin.ts:183-188, identity admin.routes.js:24 ✓
+
+Commerce Service:
+✓ GET /admin/shops (via adminPlatform) - admin.ts:1756-1769, adminPlatform routes ✓
+✓ GET /shop/admin/shops (via shops routes) - admin.ts:300-302 ✓
+✓ GET /shop/admin/shops/pending - admin.ts:254-263, stores.service.ts:72-74 ✓
+✓ POST /shop/admin/shops/:id/approve/reject/suspend/activate - admin.ts:284-326 ✓
+✓ PUT /shop/admin/shops/:id/coverage - admin.ts:276-282 ✓
+✓ PATCH /shop/admin/shops/:id/public - admin.ts:1775-1781 ✓
+✓ GET /admin/orders - admin.ts:342-374, 1784-1805, adminPlatform routes ✓
+✓ GET /admin/orders/:id/pickup-delivery - admin.ts:376-414, 1807-1812 ✓
+✓ GET /admin/operations, /admin/operations/:stage - admin.ts:1815-1825 ✓
+✓ GET /order/admin/reviews/pending - admin.ts:416-428, adminOrders routes mounted at /order ✓
+✓ POST /order/admin/reviews/:id/approve|reject - admin.ts:430-444 ✓
+✓ GET /seller-application - admin.ts:446-462, commerce mounts at /seller-application ✓
+✓ GET /seller-application/:id, approve, reject, request-information, suspend - admin.ts:464-506 ✓
+✓ GET /category, /sector - admin.ts:328-340 ✓
+
+Analytics:
+✓ GET /analytics/* - admin.ts:511-563, analytics routes mounted at root in commerce, gateway routes /analytics to commerce ✓
+
+Delivery:
+✓ GET/POST/PUT /delivery/* - admin.ts:575+, gateway routes /delivery to delivery ✓
+
+HTTP Client:
+✓ Base URL from VITE_API_GATEWAY_URL, auth tokens attached, token refresh on 401 ✓
+✓ Correctly handles JSON responses, timeouts, errors ✓
+
+POTENTIAL ISSUES / OBSERVATIONS
+-------------------------------
+1. **Dual shop route implementations** - Shops can be accessed via:
+   - /admin/shops (via commerce adminPlatform routes) - used by adminApi.getShopsPaged
+   - /shop/admin/shops/* (via commerce shops routes) - used by commerceAdmin methods
+   Both go to commerce service but different route handlers. Both appear intentionally used for different purposes based on admin.ts comments. Response shapes seem compatible.
+
+2. **Environment config** - Admin web .env.development uses VITE_API_GATEWAY_URL=http://localhost:3000/api while gateway defaults to port 8000. This is environment-specific config, not a code integration issue.
+
+3. **Response envelope handling** - Backend uses ok()/fail() helpers returning {success, message, ...data}. Admin web expects this structure and accesses fields directly. Consistent.
+
+4. **ID field normalization** - Admin web handles both _id and id from MongoDB documents. Backend returns _id from MongoDB; admin web normalizes. Correct defensive coding.
+
+5. **Review mapping** - Admin web correctly maps reviewId to id (comment in admin.ts explains this). Backend returns reviewId in DTO. Correct.
+
+6. **Order status filtering** - Admin web passes status, converts dates to from/to. Backend expects from/to. Correct mapping.
+
+All route mappings, HTTP methods, and data contracts appear consistent between admin web and backend microservices. No obvious integration bugs found.

@@ -77,12 +77,14 @@ export interface UserDirectory {
  * names arrive. Pass the ids a screen displays — the hook dedupes, batches
  * and caches the lookups itself.
  */
-export function useUserDirectory(ids: (string | null | undefined)[]): UserDirectory {
+export function useUserDirectory(ids: (string | null | undefined)[] = []): UserDirectory {
+  const safeList = Array.isArray(ids) ? ids : [];
+  const joined = safeList.join(',');
   const idsKey = useMemo(
-    () => Array.from(new Set(ids.filter((id): id is string => Boolean(id)))).sort().join(','),
+    () => Array.from(new Set(safeList.filter((id): id is string => Boolean(id)))).sort().join(','),
     // `ids` is usually built inline, so the join is the real identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ids.join(',')]
+    [joined]
   );
 
   const [version, setVersion] = useState(0);

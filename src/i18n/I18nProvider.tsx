@@ -40,6 +40,7 @@ export const I18nContext = createContext<I18nContextValue | undefined>(undefined
 const STORAGE_KEY = 'ariiti-locale';
 
 function lookup(messages: LocaleMessages, key: string): unknown {
+  if (!key || typeof key !== 'string') return undefined;
   const parts = key.split('.');
   let current: unknown = messages;
   for (const part of parts) {
@@ -79,6 +80,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback<TranslateFn>(
     (key, values) => {
+      if (!key || typeof key !== 'string') return '';
       let value = lookup(MESSAGES[locale], key);
       if (typeof value !== 'string') value = lookup(MESSAGES.en, key);
       if (typeof value !== 'string') return key;
