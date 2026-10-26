@@ -178,17 +178,17 @@ export function DataTable<T>({
   const hasRowClick = typeof onRowClick === 'function';
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-xs dark:border-dark-700 dark:bg-dark-900">
+    <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-sm dark:border-dark-600 dark:bg-dark-900">
       <table aria-label={ariaLabel} className="w-full min-w-[640px] border-collapse text-left text-sm">
         <caption className="sr-only">{ariaLabel}</caption>
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50/90 dark:border-dark-700 dark:bg-dark-950/80">
+          <tr className="border-b border-gray-200 bg-primary-color/10 dark:border-dark-600 dark:bg-dark-950">
             {columns.map((column, columnIndex) => (
               <th
                 key={column.key ?? columnIndex}
                 scope="col"
                 style={column.width ? { width: column.width } : undefined}
-                className={`px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500 dark:text-slate-400 ${
+                className={`px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-gray-600 dark:text-gray-300 ${
                   column.numeric ? 'text-right' : 'text-left'
                 }`}
               >
@@ -197,7 +197,7 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-dark-800">
+        <tbody>
           {list.map((row, index) => (
             <tr
               key={
@@ -222,8 +222,8 @@ export function DataTable<T>({
               aria-label={hasRowClick ? `Open ${ariaLabel} row` : undefined}
               className={
                 hasRowClick
-                  ? 'cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-dark-800/40'
-                  : ''
+                  ? 'cursor-pointer border-b border-gray-100 transition-colors hover:bg-primary-color/5 dark:border-dark-600/50 dark:hover:bg-dark-950'
+                  : 'border-b border-gray-100 dark:border-dark-600/50'
               }
             >
               {columns.map((column, columnIndex) => (

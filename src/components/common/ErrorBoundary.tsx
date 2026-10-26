@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex justify-center gap-3">
               <button
                 onClick={this.handleReset}
-                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-emerald-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-lime-600 px-4 py-2 text-sm font-medium text-white hover:bg-lime-700"
               >
                 <FontAwesomeIcon icon={faRedo} />
                 Try Again
@@ -128,7 +128,7 @@ export function RouteErrorBoundary() {
         <div className="flex justify-center gap-3">
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-lime-600 px-4 py-2 text-sm font-medium text-white hover:bg-lime-700"
           >
             <FontAwesomeIcon icon={faRedo} />
             Reload

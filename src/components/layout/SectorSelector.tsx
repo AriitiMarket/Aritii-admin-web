@@ -10,7 +10,7 @@ export function SectorSelector() {
 
   return (
     <div className="hidden items-center gap-1.5 rounded-xl border border-slate-200/90 bg-slate-50/70 px-2.5 py-1 text-xs font-medium shadow-xs transition-all hover:border-slate-300 dark:border-dark-600 dark:bg-dark-950/60 sm:flex">
-      <span className="text-emerald-600 dark:text-emerald-400" aria-hidden="true">
+      <span className="text-lime-600 dark:text-lime-400" aria-hidden="true">
         <FontAwesomeIcon icon={faLayerGroup} className="text-xs" />
       </span>
       <SelectField

@@ -146,11 +146,11 @@ export function StoreDetailPage() {
               <p
                 className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium ${
                   publiclyVisible
-                    ? 'text-emerald-600 dark:text-emerald-400'
+                    ? 'text-green-600 dark:text-green-400'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${publiclyVisible ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                <span className={`h-1.5 w-1.5 rounded-full ${publiclyVisible ? 'bg-green-500' : 'bg-slate-400'}`} />
                 {publiclyVisible
                   ? t('Visible on the public marketplace')
                   : t('Hidden from the public marketplace')}

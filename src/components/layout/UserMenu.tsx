@@ -55,20 +55,20 @@ export function UserMenu() {
       >
         <div className="relative">
           <Avatar src={user?.image} name={name} size="sm" />
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-dark-900" />
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-lime-500 dark:border-dark-900" />
         </div>
         <div className="hidden text-left lg:block">
           <p className="max-w-[120px] truncate text-xs font-bold text-slate-800 dark:text-white">
             {name}
           </p>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-lime-600 dark:text-lime-400">
             {roleLabel}
           </p>
         </div>
         <FontAwesomeIcon
           icon={faChevronDown}
           className={`text-[10px] text-slate-400 transition-transform duration-200 ${
-            open ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''
+            open ? 'rotate-180 text-lime-600 dark:text-lime-400' : ''
           }`}
         />
       </button>
@@ -89,7 +89,7 @@ export function UserMenu() {
                 <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                   {user?.email}
                 </p>
-                <span className="mt-1 inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                <span className="mt-1 inline-flex items-center rounded-md bg-lime-100 px-2 py-0.5 text-[10px] font-semibold text-lime-800 dark:bg-lime-900/50 dark:text-lime-300">
                   {roleLabel}
                 </span>
               </div>

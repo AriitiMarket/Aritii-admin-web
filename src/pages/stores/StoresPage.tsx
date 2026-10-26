@@ -468,7 +468,7 @@ export function StoresManagementPage() {
               }}
               className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-600'
+                  ? 'bg-lime-500 text-white shadow-sm shadow-lime-500/25 dark:bg-lime-600'
                   : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 dark:border-dark-600 dark:bg-dark-900 dark:text-slate-300 dark:hover:bg-dark-800'
               }`}
             >

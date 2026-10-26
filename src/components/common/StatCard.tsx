@@ -34,25 +34,25 @@ export function StatCard({
   return (
     <Card
       className={twMerge(
-        'group relative flex min-h-[135px] flex-col justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-sm dark:border-dark-700/80 dark:bg-dark-900/90 dark:hover:border-dark-600',
+        'group relative flex min-h-[140px] flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-dark-700/80 dark:bg-dark-900/90 dark:hover:border-dark-600',
         className
       )}
     >
-      {/* Top subtle emerald gradient line on hover */}
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/80 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      {/* Top subtle lime gradient line on hover */}
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-lime-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {label}
           </p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-white">
+          <p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-white">
             {value}
           </p>
         </div>
 
         {icon && (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20 shadow-xs transition-transform duration-200 group-hover:scale-105 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-lime-50 to-green-100 text-lime-700 ring-1 ring-lime-400/30 shadow-xs transition-transform duration-300 group-hover:scale-110 dark:from-lime-950/40 dark:to-green-950/30 dark:text-lime-400 dark:ring-lime-500/30">
             {icon}
           </span>
         )}
