@@ -14,16 +14,14 @@ export function Sidebar({ open }: { open: boolean }) {
     >
       <div
         className={twMerge(
-          'flex h-full w-64 flex-col overflow-y-auto transition-opacity duration-300',
+          'flex h-full w-64 flex-col overflow-hidden transition-opacity duration-300',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
       >
         <div className="flex-shrink-0 border-b border-slate-100 px-5 py-5 dark:border-dark-600/70">
           <Logo />
         </div>
-        <nav className="flex-1 overflow-y-auto">
-          <NavList />
-        </nav>
+        <NavList />
       </div>
     </aside>
   );

@@ -14,7 +14,7 @@ export interface HeaderProps {
 
 export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
   return (
-    <header className="sticky top-0 inset-x-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md shadow-xs transition-colors dark:border-dark-700/80 dark:bg-dark-900/95 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-md shadow-xs transition-colors dark:border-dark-700/80 dark:bg-dark-900/80 lg:px-6">
       {/* Left: Sidebar Toggle & Portal Status */}
       <div className="flex items-center gap-3">
         <button
@@ -36,7 +36,7 @@ export function Header({ onToggleSidebar, onToggleMobile }: HeaderProps) {
         </button>
 
         <div className="hidden items-center gap-2 xl:flex pl-1">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="flex h-2 w-2 rounded-full bg-lime-500 animate-pulse" />
           <span className="text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500">
             MARKETPLACE ADMIN
           </span>

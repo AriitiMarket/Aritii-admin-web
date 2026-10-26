@@ -102,7 +102,7 @@ export function NavList({
   };
 
   return (
-    <nav aria-label="Primary" className={twMerge('flex-1 space-y-2 overflow-y-auto px-3 py-4', className)}>
+    <nav aria-label="Primary" className={twMerge('flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3 py-4', className)}>
       {groups.map((group) => {
         const isSingleItem = group.items.length === 1;
         const isExpanded = expandedGroups[group.labelKey];
@@ -120,10 +120,10 @@ export function NavList({
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         twMerge(
-                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600',
+                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-emerald-50 text-emerald-900 font-semibold shadow-2xs border-l-[3px] border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-500'
-                            : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-dark-800/60 dark:hover:text-white'
+                            ? 'bg-lime-100 text-lime-900 font-semibold shadow-sm border-l-4 border-lime-500 dark:bg-lime-900/30 dark:text-lime-400 dark:border-lime-400'
+                            : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
                     >
@@ -133,8 +133,8 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                                ? 'text-lime-900 dark:text-lime-400'
+                                : 'text-gray-400 dark:text-gray-500'
                             }
                           >
                             <FontAwesomeIcon
@@ -159,13 +159,13 @@ export function NavList({
             <button
               type="button"
               onClick={() => toggleGroup(group.labelKey)}
-              className="flex w-full items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors rounded-lg"
+              className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-semibold capitalize text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-dark-900 dark:hover:text-white transition-all rounded-lg"
               aria-expanded={isExpanded}
             >
               <span>{t(group.labelKey)}</span>
               <FontAwesomeIcon
                 icon={isExpanded ? faChevronDown : faChevronRight}
-                className="text-[9px] transition-transform"
+                className="text-[10px] transition-transform"
               />
             </button>
             {isExpanded && (
@@ -178,10 +178,10 @@ export function NavList({
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         twMerge(
-                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600',
+                          'group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark',
                           isActive
-                            ? 'bg-emerald-50 text-emerald-900 font-semibold shadow-2xs border-l-[3px] border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-500'
-                            : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-dark-800/60 dark:hover:text-white'
+                            ? 'bg-lime-100 text-lime-900 font-semibold shadow-sm border-l-4 border-lime-500 dark:bg-lime-900/30 dark:text-lime-400 dark:border-lime-400'
+                            : 'text-gray-600 hover:bg-slate-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-dark-950 dark:hover:text-white'
                         )
                       }
                     >
@@ -191,8 +191,8 @@ export function NavList({
                             aria-hidden="true"
                             className={
                               isActive
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                                ? 'text-lime-900 dark:text-lime-400'
+                                : 'text-gray-400 dark:text-gray-500'
                             }
                           >
                             <FontAwesomeIcon

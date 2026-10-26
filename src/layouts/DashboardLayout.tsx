@@ -16,16 +16,16 @@ export function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="layout-main flex h-screen w-full flex-col bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-white">
+    <div className="layout-main fixed inset-0 flex h-full w-full flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-dark-950 dark:text-white">
       <Header
         onToggleSidebar={() => setDesktopOpen((prev) => !prev)}
         onToggleMobile={() => setMobileOpen(true)}
       />
-      <div className="layout-main-container w-full flex-1 overflow-hidden">
+      <div className="layout-main-container flex-1 min-h-0 min-w-0 w-full flex overflow-hidden">
         <Sidebar open={desktopOpen} />
         <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
-        <main className="min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8 lg:px-8 lg:pt-5 lg:pb-10">
+        <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full max-w-[1600px] px-4 pt-3 pb-8 sm:px-6 sm:pt-4 sm:pb-10 lg:px-8 lg:pt-5 lg:pb-12">
             <Breadcrumbs />
             <ErrorBoundary>
               <Outlet />
