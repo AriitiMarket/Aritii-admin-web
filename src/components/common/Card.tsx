@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={twMerge(
-        'rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-700/50 dark:bg-slate-900 dark:shadow-md',
+        'rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-dark-700/60 dark:bg-dark-900 dark:shadow-md',
         className
       )}
       {...rest}

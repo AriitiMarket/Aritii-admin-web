@@ -34,7 +34,7 @@ export function StatCard({
   return (
     <Card
       className={twMerge(
-        'group relative flex min-h-[140px] flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-dark-700/80 dark:bg-dark-900/90 dark:hover:border-dark-600',
+        'group relative flex min-h-[140px] flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-dark-700/80 dark:bg-dark-900 dark:hover:border-dark-600',
         className
       )}
     >
