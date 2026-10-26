@@ -6,6 +6,13 @@
  */
 
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faShieldHalved,
+  faKey,
+  faTriangleExclamation,
+  faArrowLeft,
+} from '@fortawesome/free-solid-svg-icons';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
@@ -37,30 +44,40 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
 
   const gateway = env.apiGatewayUrl;
 
-  if (!gateway) {
+  if (!gateway && !error) {
     setError('API Gateway URL is not configured. Set VITE_API_GATEWAY_URL in your .env file.');
   }
 
   const getMethodMessage = () => {
-    if (useBackupCode) return 'Enter one of your backup codes';
+    if (useBackupCode) return 'Enter one of your single-use recovery backup codes';
     switch (method) {
-      case 'TOTP': return 'Enter the 6-digit code from your authenticator app';
-      case 'EMAIL': return 'Enter the 6-digit code sent to your email';
-      case 'SMS': return 'Enter the 6-digit code sent to your phone';
+      case 'TOTP':
+        return 'Enter the 6-digit verification code from your authenticator application';
+      case 'EMAIL':
+        return 'Enter the 6-digit verification code sent to your registered email';
+      case 'SMS':
+        return 'Enter the 6-digit verification code sent to your mobile phone';
     }
   };
 
   const getDeviceName = () => {
     switch (method) {
-      case 'TOTP': return 'authenticator app';
-      case 'EMAIL': return 'email';
-      case 'SMS': return 'phone';
+      case 'TOTP':
+        return 'authenticator app';
+      case 'EMAIL':
+        return 'email code';
+      case 'SMS':
+        return 'SMS code';
     }
   };
 
   const handleVerify = async () => {
-    if (!cleanCode) {
-      setError('Please enter the code');
+    if (!useBackupCode && !cleanCode) {
+      setError('Please enter the verification code');
+      return;
+    }
+    if (useBackupCode && !code.trim()) {
+      setError('Please enter your backup code');
       return;
     }
 
@@ -108,7 +125,7 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
   };
 
   const handleResend = async () => {
-    if (method === 'TOTP') return; // TOTP doesn't need resend
+    if (method === 'TOTP') return;
 
     setLoading(true);
     try {
@@ -150,23 +167,28 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
     return (
       <Card className="p-6 sm:p-8 max-w-md mx-auto">
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Two-Factor Authentication
+          <div className="w-12 h-12 rounded-full bg-primary-dark/10 text-primary-dark flex items-center justify-center mx-auto mb-3">
+            <FontAwesomeIcon icon={faShieldHalved} className="text-xl" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5">
+            Two-Factor Verification
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm">
             {getMethodMessage()}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-            {error}
+          <div className="mb-6 p-3.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-400 text-xs md:text-sm flex items-start gap-2.5">
+            <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 text-red-500 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         <div className="mb-6">
           <input
             type="text"
+            inputMode="numeric"
             maxLength={6}
             placeholder="000 000"
             value={code}
@@ -174,7 +196,7 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
               const val = e.target.value.replace(/\D/g, '');
               setCode(val);
             }}
-            className="w-full px-4 py-3 text-2xl text-center tracking-widest border-2 border-slate-300 rounded-lg focus:outline-none focus:border-primary-dark/60 focus:ring-2 focus:ring-primary-dark/30 font-mono dark:bg-dark-900 dark:text-white dark:border-dark-600"
+            className="w-full px-4 py-3 text-2xl text-center tracking-[0.35em] border border-slate-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-primary-dark font-mono font-bold bg-white dark:bg-dark-900 text-slate-900 dark:text-white transition-all"
             autoFocus
           />
         </div>
@@ -184,10 +206,10 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
           disabled={loading || cleanCode.length !== 6}
           onClick={handleVerify}
           loading={loading}
-          className="w-full mb-4"
+          className="w-full mb-3"
         >
           {loading && <Spinner size="sm" className="mr-2" />}
-          Verify
+          Verify Code
         </Button>
 
         {method !== 'TOTP' && (
@@ -197,16 +219,19 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
             onClick={handleResend}
             className="w-full mb-4"
           >
-            {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Code'}
+            {resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : 'Resend Code'}
           </Button>
         )}
 
-        <button
-          onClick={() => setUseBackupCode(true)}
-          className="w-full text-sm text-primary-dark hover:text-primary-dark/80 dark:text-primary-dark dark:hover:text-primary-dark/80 underline"
-        >
-          Can't access your {getDeviceName()}? Use a backup code
-        </button>
+        <div className="pt-3 border-t border-slate-200 dark:border-dark-700 text-center">
+          <button
+            type="button"
+            onClick={() => setUseBackupCode(true)}
+            className="text-xs text-primary-dark hover:underline font-medium"
+          >
+            Cannot access your {getDeviceName()}? Use backup code
+          </button>
+        </div>
       </Card>
     );
   }
@@ -215,17 +240,21 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
   return (
     <Card className="p-6 sm:p-8 max-w-md mx-auto">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          Backup Code
+        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+          <FontAwesomeIcon icon={faKey} className="text-xl" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5">
+          Emergency Backup Code
         </h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
-          Enter one of your backup codes. Each code can only be used once.
+        <p className="text-slate-600 dark:text-slate-400 text-xs md:text-sm">
+          Enter one of your 10-character backup codes. Each code can only be used once.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-          {error}
+        <div className="mb-6 p-3.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-400 text-xs md:text-sm flex items-start gap-2.5">
+          <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 text-red-500 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -235,7 +264,7 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
           placeholder="XXXXXX-XXXXXX"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
-          className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-primary-dark/60 focus:ring-2 focus:ring-primary-dark/30 font-mono text-center text-lg tracking-widest dark:bg-dark-900 dark:text-white dark:border-dark-600"
+          className="w-full px-4 py-3 border border-slate-300 dark:border-dark-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-primary-dark font-mono text-center text-lg tracking-widest font-semibold bg-white dark:bg-dark-900 text-slate-900 dark:text-white transition-all"
           autoFocus
         />
       </div>
@@ -251,15 +280,20 @@ export function TwoFactorVerify({ method = 'TOTP', tempToken, onSuccess, onError
         Verify Backup Code
       </Button>
 
-      <button
-        onClick={() => {
-          setUseBackupCode(false);
-          setCode('');
-        }}
-        className="w-full text-sm text-primary-dark hover:text-primary-dark/80 dark:text-primary-dark dark:hover:text-primary-dark/80 underline"
-      >
-        Back to {getDeviceName()} code
-      </button>
+      <div className="pt-3 border-t border-slate-200 dark:border-dark-700 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            setUseBackupCode(false);
+            setCode('');
+            setError('');
+          }}
+          className="inline-flex items-center text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-medium"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="mr-1.5" />
+          Back to standard verification
+        </button>
+      </div>
     </Card>
   );
 }
