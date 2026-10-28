@@ -128,11 +128,26 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
         ? 'RESTAURANT'
         : 'ADMIN',
     // Identity already returns the wildcard for an unrestricted admin, so an
-    // absent list means "older backend" rather than "no permissions".
+    // absent or empty list falls back to the role's default permissions.
     permissions: Array.isArray(raw.permissions) &&
+      raw.permissions.length > 0 &&
       raw.permissions.every((permission): permission is string => typeof permission === 'string')
       ? raw.permissions
-      : (role === 'SUPER_ADMIN' ? ['*'] : []),
+      : (role === 'SUPER_ADMIN' ? ['*'] : [
+          'dashboard.view',
+          'users.view',
+          'businesses.view',
+          'shops.view',
+          'locations.view',
+          'orders.view',
+          'orders.manage',
+          'delivery.view',
+          'delivery.manage',
+          'disputes.view',
+          'disputes.manage',
+          'reports.view',
+          'audit.view',
+        ]),
     sectors: [],
     isActive: raw.status === 'active',
   };
