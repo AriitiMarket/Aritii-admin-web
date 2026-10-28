@@ -2,11 +2,11 @@
 
 **Modern enterprise operator and platform management console** for the Ariiti Multi-Seller Marketplace. Built with React 18, Vite, TypeScript, and Tailwind CSS.
 
-**Status:** ✅ Production Ready | **Port:** 4000 | **Auth:** OAuth 2.1 + PKCE + 2FA | **Type:** TypeScript Strict
+**Status:** Production Ready | **Port:** 4000 | **Auth:** OAuth 2.1 + PKCE + 2FA | **Type:** TypeScript Strict
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js `>= 20.16.0` (pinned by [`.nvmrc`](./.nvmrc))
@@ -49,7 +49,7 @@ The backend provides default administrative accounts seeded for the **2-role adm
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 The admin console interacts exclusively with the **Ariiti API Gateway**. It never communicates directly with internal microservices.
 
@@ -70,7 +70,7 @@ Identity Service  Commerce Service Delivery Service
 
 ---
 
-## 📋 Project Structure
+## Project Structure
 
 ```text
 Aritii-admin-web/src/
@@ -148,7 +148,7 @@ Aritii-admin-web/src/
 
 ---
 
-## 🔐 Authentication, Security & 2FA
+## Authentication, Security & 2FA
 
 The Admin Web implements an **OAuth 2.1 + OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE - S256)** and integrated **Two-Factor Authentication (2FA)**.
 
@@ -206,7 +206,7 @@ if (hasPermission('orders:cancel')) {
 
 ---
 
-## 🌐 Centralized API Services Layer
+## Centralized API Services Layer
 
 All network requests flow through `src/services/client/httpClient.ts`:
 
@@ -230,7 +230,7 @@ All network requests flow through `src/services/client/httpClient.ts`:
 
 ---
 
-## 🗺️ Multi-Level Platform Hierarchy & Scoping
+## Multi-Level Platform Hierarchy & Scoping
 
 The admin dashboard supports hierarchical scoping across the entire platform:
 
@@ -245,7 +245,7 @@ Platform ──> Region ──> City ──> Area ──> Sector ──> Busines
 
 ---
 
-## 🛍️ Comprehensive Feature Modules
+## Comprehensive Feature Modules
 
 ### 1. KPI & Operational Dashboards
 - Real-time revenue, order volume, active riders, and pending approvals.
@@ -284,7 +284,7 @@ Platform ──> Region ──> City ──> Area ──> Sector ──> Busines
 
 ---
 
-## 🎨 Theming & Internationalization (i18n)
+## Theming & Internationalization (i18n)
 
 ### Design Tokens & Tailwind Dark Mode
 - Full support for dark and light modes via Tailwind's `class` strategy.
@@ -305,7 +305,7 @@ Platform ──> Region ──> City ──> Area ──> Sector ──> Busines
 
 ---
 
-## 🛠️ Available Scripts
+## Available Scripts
 
 | Script | Command | Description |
 | :--- | :--- | :--- |
@@ -318,7 +318,7 @@ Platform ──> Region ──> City ──> Area ──> Sector ──> Busines
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 Configure settings in `.env.local`:
 
@@ -332,7 +332,7 @@ Configure settings in `.env.local`:
 
 ---
 
-## 🧪 Quality Gates & Troubleshooting
+## Quality Gates & Troubleshooting
 
 ### Quality Checks
 ```bash
@@ -358,7 +358,7 @@ npm run prettier
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Create a descriptive feature branch: `git checkout -b feature/admin-feature-name`
 2. Ensure changes follow TypeScript strict guidelines and pass `npm run typecheck`
@@ -367,6 +367,6 @@ npm run prettier
 
 ---
 
-## 📄 License
+## License
 
 All rights reserved © Ariiti Market 2026.
