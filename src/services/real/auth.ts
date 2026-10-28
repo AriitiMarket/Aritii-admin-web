@@ -135,7 +135,6 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
       ? raw.permissions
       : (role === 'SUPER_ADMIN' ? ['*'] : [
           'dashboard.view',
-          'users.view',
           'businesses.view',
           'shops.view',
           'locations.view',
@@ -146,7 +145,6 @@ const toAdminUser = (raw: BackendUser): AdminUser => {
           'disputes.view',
           'disputes.manage',
           'reports.view',
-          'audit.view',
         ]),
     sectors: [],
     isActive: raw.status === 'active',

@@ -11,7 +11,6 @@ import { RoleRoute } from '@/routes/RoleRoute';
 import { PageLoader } from '@/components/common/PageLoader';
 import { RouteErrorBoundary } from '@/components/common/ErrorBoundary';
 import type { AdminRole } from '@/types/auth';
-import { USERS_TAB_ROLES } from '@/pages/users/usersTabs';
 
 // Auth
 import { LoginPage } from '@/pages/LoginPage';
@@ -253,9 +252,6 @@ const RouteDetailPage = lazy(() =>
 // Role constants for route gating (2-role system)
 const SUPER: AdminRole[] = ['SUPER_ADMIN'];
 const OPS: AdminRole[] = ['SUPER_ADMIN', 'OPERATIONS_ADMIN'];
-// Every role that may reach at least one user type — the union of the Users
-// page tabs (see src/pages/users/usersTabs.ts).
-const USERS: AdminRole[] = USERS_TAB_ROLES;
 
 function Suspend({ children, roles }: { children: React.ReactElement; roles: AdminRole[] }) {
   return (
@@ -305,11 +301,11 @@ export function AppRoutes() {
         // The old live-operations feed is now the delivery history inside each
         // delivery (Deliveries page) — no separate Operations page.
         { path: 'operations', element: <Navigate to="/delivery/deliveries" replace /> },
-        { path: 'users', element: <Suspend roles={USERS}><UsersPage /></Suspend> },
-        { path: 'users/:userId', element: <Suspend roles={OPS}><UserDetailPage /></Suspend> },
+        { path: 'users', element: <Suspend roles={SUPER}><UsersPage /></Suspend> },
+        { path: 'users/:userId', element: <Suspend roles={SUPER}><UserDetailPage /></Suspend> },
         // Legacy list paths redirect to Users tabs; detail routes stay unchanged.
         { path: 'sellers', element: <Navigate to="/users?tab=sellers" replace /> },
-        { path: 'sellers/:sellerId', element: <Suspend roles={OPS}><SellerDetailPage /></Suspend> },
+        { path: 'sellers/:sellerId', element: <Suspend roles={SUPER}><SellerDetailPage /></Suspend> },
         { path: 'businesses', element: <Suspend roles={OPS}><BusinessesPage /></Suspend> },
         { path: 'businesses/:businessId', element: <Suspend roles={OPS}><BusinessDetailPage /></Suspend> },
         { path: 'stores', element: <Suspend roles={OPS}><StoresPage /></Suspend> },
@@ -326,7 +322,7 @@ export function AppRoutes() {
         // per-rider page was a duplicate with admin Online/Offline controls.
         { path: 'riders/:riderId', element: <Navigate to="/delivery/providers" replace /> },
         { path: 'customers', element: <Navigate to="/users?tab=customers" replace /> },
-        { path: 'customers/:buyerId', element: <Suspend roles={OPS}><CustomerDetailPage /></Suspend> },
+        { path: 'customers/:buyerId', element: <Suspend roles={SUPER}><CustomerDetailPage /></Suspend> },
         { path: 'disputes', element: <Suspend roles={OPS}><DisputesPage /></Suspend> },
         { path: 'requests', element: <Suspend roles={OPS}><RequestsPage /></Suspend> },
         { path: 'admins', element: <Navigate to="/users?tab=admins" replace /> },
@@ -348,11 +344,11 @@ export function AppRoutes() {
         { path: 'commerce/products', element: <Suspend roles={OPS}><ProductsPage /></Suspend> },
         { path: 'commerce/transactions', element: <Suspend roles={SUPER}><TransactionsPage /></Suspend> },
         { path: 'commerce/promotions', element: <Suspend roles={SUPER}><PromotionsPage /></Suspend> },
-        // Financial Management — Wallets & Payouts
-        { path: 'commerce/wallets', element: <Suspend roles={OPS}><WalletsPage /></Suspend> },
-        { path: 'commerce/payouts', element: <Suspend roles={OPS}><PayoutsPage /></Suspend> },
+        // Financial Management — Wallets & Payouts (SUPER_ADMIN only)
+        { path: 'commerce/wallets', element: <Suspend roles={SUPER}><WalletsPage /></Suspend> },
+        { path: 'commerce/payouts', element: <Suspend roles={SUPER}><PayoutsPage /></Suspend> },
         { path: 'commerce/commission', element: <Navigate to="/settings/commission" replace /> },
-        { path: 'sellers/:sellerId/financial', element: <Suspend roles={OPS}><SellerFinancialDetail /></Suspend> },
+        { path: 'sellers/:sellerId/financial', element: <Suspend roles={SUPER}><SellerFinancialDetail /></Suspend> },
         // Phase-1 fulfilment ops — priority queue, SLA dashboard, reconciliation
         { path: 'commerce/priority', element: <Suspend roles={OPS}><PriorityQueuePage /></Suspend> },
         { path: 'commerce/sla', element: <Suspend roles={OPS}><SLADashboardPage /></Suspend> },
@@ -372,7 +368,7 @@ export function AppRoutes() {
         { path: 'delivery/services', element: <Suspend roles={OPS}><DeliveryServicesPage /></Suspend> },
         { path: 'delivery/requests', element: <Suspend roles={OPS}><DeliveryRequestsPage /></Suspend> },
         { path: 'delivery/deliveries', element: <Suspend roles={OPS}><DeliveriesPage /></Suspend> },
-        { path: 'delivery/payouts', element: <Suspend roles={OPS}><DelivererPayoutsPage /></Suspend> },
+        { path: 'delivery/payouts', element: <Suspend roles={SUPER}><DelivererPayoutsPage /></Suspend> },
         { path: 'delivery/shipments', element: <Navigate to="/delivery" replace /> },
         { path: 'delivery/consolidation', element: <Navigate to="/delivery" replace /> },
         // Tracking is the second view of the Deliveries screen (same records, same

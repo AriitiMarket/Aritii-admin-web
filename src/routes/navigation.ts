@@ -109,12 +109,12 @@ export const NAV_GROUPS: NavigationGroup[] = [
       {
         labelKey: 'Seller Wallets',
         path: '/commerce/wallets',
-        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+        roles: ['SUPER_ADMIN'],
       },
       {
         labelKey: 'Seller Payouts',
         path: '/commerce/payouts',
-        roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+        roles: ['SUPER_ADMIN'],
       },
       {
         labelKey: 'Promotions',
@@ -137,7 +137,7 @@ export const NAV_GROUPS: NavigationGroup[] = [
       { labelKey: 'Requests', path: '/delivery/requests', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
       // Deliveries is the ONE operational screen: its second tab is Tracking.
       { labelKey: 'Deliveries', path: '/delivery/deliveries', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
-      { labelKey: 'Deliverer payouts', path: '/delivery/payouts', roles: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'] },
+      { labelKey: 'Deliverer payouts', path: '/delivery/payouts', roles: ['SUPER_ADMIN'] },
     ],
   },
 
